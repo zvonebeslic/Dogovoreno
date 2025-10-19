@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profil majstora — Dogovoreno.com</title>
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+  <div data-include="header.html"></div>
+
+  <main class="container">
+    <div id="wrap" class="card" style="padding:16px"></div>
+  </main>
+
+  <dialog id="contactDlg" class="card" style="border:1px solid var(--fieldBorder);border-radius:16px;padding:0;max-width:560px">
+    <form method="dialog" id="contactForm" style="padding:16px" onsubmit="return false;">
+      <h3 style="margin:0 0 8px">Pošalji upit majstoru</h3>
+      <p id="cProv" class="help" style="margin:0 0 10px"></p>
+      <div class="grid">
+        <input id="cName" placeholder="Vaše ime *" required>
+        <input id="cPhone" placeholder="Vaš telefon *" required>
+        <input id="cEmail" type="email" placeholder="Vaš e-mail (opcija)">
+        <textarea id="cMsg" placeholder="Kratko opišite posao *" required></textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" type="button" id="cCancel">Odustani</button>
+        <button class="btn btn-primary" type="button" id="cSend">Pošalji</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div data-include="ads.html"></div>
+  <div data-include="footer.html"></div>
+  <script src="include.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    let current = null;
+
+    async function load(){
+      const r = await fetch('api/auth.php?route=provider&id='+encodeURIComponent(id));
+      const j = await r.json(); 
+      if(!r.ok || !j.data){ document.getElementById('wrap').innerHTML = 'Nema podataka.'; return; }
+      current = j.data;
+      const dist = ''; // ovdje po želji možeš prikazati udaljenost ako prosljeđuješ i qlat/qlng
+      document.getElementById('wrap').innerHTML = `
+        <h2 style="margin:0 0 8px">${current.name||'Majstor'}</h2>
+        <div class="help">📍 ${current.location || '—'}</div>
+        <div class="help">🧩 ${(current.skills||[]).join(', ') || '—'}</div>
+        <p style="margin-top:10px">${current.bio||''}</p>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" id="btnMsg">Pošalji upit</button>
+          <a class="btn btn-ghost" href="trazimuslugu.html">← Natrag na rezultate</a>
+        </div>
+      `;
+      document.getElementById('btnMsg').addEventListener('click', ()=>{
+        cProv.textContent = `${current.name} — ${(current.skills||[]).join(', ')}`;
+        cName.value=''; cPhone.value=''; cEmail.value=''; cMsg.value='';
+        contactDlg.showModal();
+      });
+    }
+    load();
+
+    cCancel.addEventListener('click', ()=> contactDlg.close());
+    cSend.addEventListener('click', async ()=>{
+      if(!current) return;
+      const payload = {
+        provider_id: current.id,
+        from_name: cName.value.trim(),
+        from_phone: cPhone.value.trim(),
+        from_email: cEmail.value.trim(),
+        message: cMsg.value.trim()
+      };
+      if(!payload.from_name || !payload.from_phone || !payload.message){
+        alert('Ime, telefon i poruka su obavezni.'); return;
+      }
+      try{
+        const r = await fetch('api/auth.php?route=contact', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const j = await r.json(); if(!r.ok) throw new Error(j.error||'Greška slanja');
+        alert('Upit poslan majstoru. Hvala!');
+        contactDlg.close();
+      }catch(e){ alert(e.message); }
+    });
+  </script>
+</body>
+</html>
