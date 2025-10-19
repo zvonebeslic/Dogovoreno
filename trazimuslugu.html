@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tražim uslugu — Dogovoreno.com</title>
+  <meta name="description" content="Objavi što ti treba: majstor, prijevoz, iskop, dostava ili bilo koja druga usluga.">
+  <link rel="stylesheet" href="base.css">
+  <style>
+    main{display:grid;gap:18px;padding:16px 16px 24px;max-width:780px;margin:0 auto}
+    .card{background:var(--glass);border:1px solid var(--fieldBorder);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0;padding:16px 16px 0;font-size:1.1rem}
+    .card .sub{margin:6px 16px 0;color:var(--muted);font-size:.92rem}
+    form{padding:14px 16px 16px;display:grid;gap:14px}
+    label{display:block;font-size:.92rem;margin-bottom:6px;color:#e9edf6}
+    .help{color:var(--muted);font-size:.86rem}
+    .row{display:grid;gap:10px}
+    input[type="text"],input[type="tel"],textarea,select{
+      width:100%;border-radius:12px;border:1px solid var(--fieldBorder);background:var(--field);
+      color:var(--ink);padding:14px 12px;font-size:16px;outline:none;
+    }
+    textarea{min-height:120px;resize:vertical}
+    .radio-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .radio{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--fieldBorder);border-radius:12px;padding:12px}
+    .radio input{accent-color:var(--cta)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:.78rem;background:rgba(255,255,255,.06);border:1px solid var(--fieldBorder);color:var(--muted)}
+    .actions{display:grid;gap:10px;margin-top:6px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 14px;border-radius:12px;border:0;font-weight:700;box-shadow:var(--shadow)}
+    .btn-primary{background:var(--cta);color:#fff}
+    .btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid var(--fieldBorder)}
+    .btn-ok{background:#10b981;color:#06110e}
+    .btn-warn{background:#f59e0b;color:#1b1205}
+    .preview{padding:14px 16px 16px}
+    .preview pre{white-space:pre-wrap;background:var(--field);border:1px solid var(--fieldBorder);padding:12px;border-radius:12px;line-height:1.45}
+    .price-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+    .switch{position:relative;width:46px;height:26px;display:inline-block}
+    .switch input{opacity:0;width:0;height:0}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#334155;border-radius:999px;transition:.2s}
+    .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+    .switch input:checked + .slider{background:#15803d}
+    .switch input:checked + .slider:before{transform:translateX(20px)}
+  </style>
+</head>
+<body>
+  <!-- include header -->
+  <div data-include="partials/header.html"></div>
+
+  <main>
+    <section class="card">
+      <h2>Tražim uslugu</h2>
+      <p class="sub">Ispuni obrazac — privatnost lokacije je zaštićena
+        <span class="badge">točna lokacija se prikazuje tek nakon dogovora</span>
+      </p>
+
+      <form id="orderForm" novalidate>
+        <div class="row">
+          <label for="phone">Broj telefona *</label>
+          <input type="tel" id="phone" name="phone" inputmode="tel" placeholder="+387 6X XXX XXX" required>
+          <div class="help">Kontakt za izvođača. Format: npr. +387 62 123 456</div>
+        </div>
+
+        <div class="row">
+          <label for="location">Lokacija *</label>
+          <input type="text" id="location" name="location" placeholder="Grad / naselje / ulica (točna lokacija ostaje skrivena)" required>
+          <div class="help">Točna lokacija ostaje skrivena dok ne potvrdiš izvođača.</div>
+        </div>
+
+        <div class="row">
+          <label for="desc">Opis posla *</label>
+          <textarea id="desc" name="desc" placeholder="Opiši što točno treba napraviti. Dimenzije? Materijal? Kada? Posebni uvjeti?" required></textarea>
+        </div>
+
+        <div class="row">
+          <label>Rok izvođenja *</label>
+          <div class="radio-group" role="radiogroup" aria-label="Rok">
+            <label class="radio"><input type="radio" name="urgency" value="Hitno" required> Hitno</label>
+            <label class="radio"><input type="radio" name="urgency" value="Što prije"> Što prije</label>
+            <label class="radio"><input type="radio" name="urgency" value="Nije prioritetno"> Nije prioritetno</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="budget">Procijenjeni budžet (opcionalno)</label>
+          <input type="text" id="budget" name="budget" placeholder="npr. 250 KM (opcionalno)">
+        </div>
+
+        <div class="row">
+          <label for="extras">Dodatno (opcionalno)</label>
+          <input type="text" id="extras" name="extras" placeholder="Fotografije/link, termin dostupnosti, kat, lift…">
+        </div>
+
+        <div class="row price-row">
+          <div>
+            <label>Simbolična naknada za objavu (opcionalno)</label>
+            <div class="help">Pomaže filtrirati spam i prioritetno prikazati tvoj oglas.</div>
+          </div>
+          <label class="switch" title="Uključi simboličnu naknadu">
+            <input type="checkbox" id="tipToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="row">
+          <label><input type="checkbox" id="terms" required> Prihvaćam osnovna pravila objave</label>
+          <div class="help">Bez psovki, diskriminacije i osobnih podataka drugih osoba.</div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="btnPreview" class="btn btn-ghost">Pregledaj poruku</button>
+          <button type="submit" class="btn btn-primary">Kreiraj &amp; pošalji</button>
+          <button type="button" id="btnCopy" class="btn btn-ok" hidden>Kopiraj tekst</button>
+          <a id="btnWA" class="btn btn-warn" href="#" hidden>Pošalji na WhatsApp</a>
+        </div>
+      </form>
+
+      <div class="preview" id="previewBox" hidden>
+        <h2 style="margin:0 0 8px 0;">Pregled poruke</h2>
+        <pre id="previewText"></pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- include ads (isti na svakoj stranici) -->
+  <div data-include="partials/ads.html"></div>
+
+  <!-- include footer (IG + e-mail) -->
+  <div data-include="partials/footer.html"></div>
+
+  <!-- include loader -->
+  <script src="include.js"></script>
+
+  <script>
+    // Helperi
+    const val = id => document.getElementById(id).value.trim();
+    const radioVal = name => (document.querySelector(`input[name="${name}"]:checked`) || {}).value || "";
+
+    function buildMessage(){
+      const phone = val('phone');
+      const location = val('location');
+      const desc = val('desc');
+      const urgency = radioVal('urgency') || '—';
+      const budget = val('budget');
+      const extras = val('extras');
+      const tip = document.getElementById('tipToggle').checked ? 'Da (simbolična naknada)' : 'Ne';
+
+      let msg = "🧩 *TRAŽIM USLUGU — Dogovoreno.com*\n";
+      msg += "———————————————\n";
+      msg += `📞 Kontakt: ${phone || '—'}\n`;
+      msg += `📍 Lokacija: ${location || '—'} (točna lokacija skrivena do dogovora)\n`;
+      msg += `📝 Opis: ${desc || '—'}\n`;
+      msg += `⏱️ Rok: ${urgency}\n`;
+      if (budget) msg += `💰 Budžet: ${budget}\n`;
+      if (extras) msg += `➕ Dodatno: ${extras}\n`;
+      msg += `💠 Simbolična naknada: ${tip}\n`;
+      msg += "———————————————\n";
+      msg += "Poslano s Dogovoreno.com";
+      return msg;
+    }
+
+    function showPreview(){
+      const box = document.getElementById('previewBox');
+      const pre = document.getElementById('previewText');
+      pre.textContent = buildMessage();
+      box.hidden = false;
+      document.getElementById('btnCopy').hidden = false;
+      document.getElementById('btnWA').hidden = false;
+    }
+
+    function updateWhatsAppLink(){
+      const text = encodeURIComponent(buildMessage());
+      document.getElementById('btnWA').href = `https://wa.me/?text=${text}`;
+    }
+
+    document.getElementById('btnPreview').addEventListener('click', ()=>{
+      showPreview(); updateWhatsAppLink();
+      window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+    });
+
+    document.getElementById('btnCopy')?.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(buildMessage()); alert('Tekst kopiran.'); }
+      catch(e){ alert('Ako ne kopira, označi tekst u “Pregled poruke” i kopiraj ručno.'); }
+    });
+
+    document.getElementById('orderForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      let errors = [];
+      if(!val('phone')) errors.push('Unesi telefon.');
+      if(!val('location')) errors.push('Unesi lokaciju.');
+      if(!val('desc')) errors.push('Unesi opis.');
+      if(!radioVal('urgency')) errors.push('Odaberi rok.');
+      if(!document.getElementById('terms').checked) errors.push('Prihvati pravila objave.');
+      if(errors.length){ alert('Nedostaje:\n• ' + errors.join('\n• ')); return; }
+
+      try{
+        localStorage.setItem('dogovoreno_last_request', JSON.stringify({
+          phone: val('phone'), location: val('location'), desc: val('desc'),
+          urgency: radioVal('urgency'), budget: val('budget'), extras: val('extras'),
+          tip: document.getElementById('tipToggle').checked
+        }));
+      }catch(_){}
+
+      showPreview(); updateWhatsAppLink();
+      // Ako želiš odmah otvoriti WhatsApp:
+      // window.location.href = document.getElementById('btnWA').href;
+    });
+  </script>
+</body>
+</html>
