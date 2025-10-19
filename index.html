@@ -17,7 +17,7 @@
     a{color:inherit;text-decoration:none}
 
     /* Raspored: 10% header + 65% hero + 10% slogan + 15% ads = 100vh */
-    .page{height:100vh;overflow:hidden;display:grid;grid-template-rows:10vh 65vh 10vh 15vh}
+    .page{height:100vh;overflow:hidden;display:grid;grid-template-rows:10vh 65vh 12vh 13vh}
 
     /* Header s rukovanjem kao logom */
     header{position:sticky;top:0;z-index:50;display:grid;place-items:center;
@@ -157,7 +157,7 @@
     (function(){
       const slides = Array.from(document.querySelectorAll('.slide'));
       let i = 0;
-      const DURATION = 5000; // 5s po slici
+      const DURATION = 4000; // 4s po slici
 
       setInterval(()=>{
         const cur = slides[i];
