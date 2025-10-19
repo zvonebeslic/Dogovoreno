@@ -21,14 +21,15 @@
 
     /* Header s rukovanjem kao logom */
     header{position:sticky;top:0;z-index:50;display:grid;place-items:center;
-      background:linear-gradient(to bottom, rgba(255,255,255,.05), rgba(255,255,255,0));backdrop-filter:saturate(1.05) blur(6px)}
+      background:linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,0));backdrop-filter:saturate(1.05) blur(6px)}
     .brand{display:inline-flex;align-items:center;gap:10px;padding:.5rem 1rem;border-radius:999px;background:var(--glass);box-shadow:var(--shadow)}
     .brand svg{width:28px;height:28px}
     .brand b{font-size:1.1rem}
 
     /* HERO */
     .hero{position:relative;overflow:hidden;isolation:isolate}
-    .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.20), rgba(0,0,0,.35));z-index:1;pointer-events:none}
+    /* Manje zatamnjenje preko hero-a */
+    .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.18));z-index:1;pointer-events:none}
 
     /* Slideshow pozadina (neklikabilno) */
     .slides{position:absolute;inset:0;pointer-events:none}
@@ -39,7 +40,8 @@
         transform 900ms cubic-bezier(.2,.8,.2,1),
         opacity 900ms ease;
       will-change:transform,opacity;
-      filter:brightness(.86) contrast(1.05);
+      /* Blaži filter (manje “sjene”) */
+      filter:brightness(.92) contrast(1.03);
       overflow:hidden; /* radi Ken Burns unutarnjeg sloja */
     }
     .slide .img{
@@ -162,23 +164,23 @@
         const nextI = (i + 1) % slides.length;
         const nxt = slides[nextI];
 
-        // pripremi sljedeću (na desnoj strani, nevidljiva)
-        nxt.classList.remove('leaving');
-        nxt.style.transform = 'translateX(100%)';
-        nxt.style.opacity = '0';
+        // Očisti stanja sljedeće (bez inline stilova!)
+        nxt.classList.remove('leaving','current');
+        nxt.style.transform = '';
+        nxt.style.opacity = '';
 
-        // pokreni izlaz tekuće i ulaz sljedeće
+        // Trigeriraj prijelaz: trenutna izlazi, sljedeća ulazi
         requestAnimationFrame(()=>{
           cur.classList.remove('current');
-          cur.classList.add('leaving');     // ide lijevo + fade out
-          nxt.classList.add('current');     // ulazi s desna + fade in
+          cur.classList.add('leaving');  // ide lijevo + fade out (definirano u CSS-u)
+          nxt.classList.add('current');  // ulazi s desna + fade in (definirano u CSS-u)
         });
 
-        // kad završi tranzicija izlazne, resetiraj je desno za sljedeći krug
+        // Kad završi tranzicija izlazne, počisti je
         const onEnd = () => {
-          cur.classList.remove('leaving');
-          cur.style.transform = 'translateX(100%)';
-          cur.style.opacity = '0';
+          cur.classList.remove('leaving','current');
+          cur.style.transform = '';
+          cur.style.opacity = '';
           cur.removeEventListener('transitionend', onEnd);
         };
         cur.addEventListener('transitionend', onEnd, {once:true});
@@ -189,10 +191,10 @@
 
     // CTA rute — postavit ćemo prave URL-ove kasnije
     document.getElementById('btn-trazim')?.addEventListener('click', e=>{
-      // window.location.href = '/trazim.html';
+      // window.location.href = 'trazim.html';
     });
     document.getElementById('btn-nudim')?.addEventListener('click', e=>{
-      // window.location.href = '/nudim.html';
+      // window.location.href = 'nudim.html';
     });
   </script>
 </body>
