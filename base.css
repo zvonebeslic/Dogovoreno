@@ -1,0 +1,29 @@
+:root{
+  --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4;
+  --cta:#2563eb; --cta2:#ea580c; --glass:rgba(255,255,255,.08);
+  --shadow:0 10px 30px rgba(0,0,0,.35); --radius:14px;
+  --field:#151823; --fieldBorder:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:inherit;text-decoration:none}
+
+/* HEADER (isti svugdje) */
+header.site-header{position:sticky;top:0;z-index:50;display:grid;place-items:center;height:10vh;min-height:56px;
+  background:linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,0));backdrop-filter:saturate(1.05) blur(6px)}
+.brand{display:inline-flex;align-items:center;gap:10px;padding:.55rem 1rem;border-radius:999px;background:var(--glass);box-shadow:var(--shadow)}
+.brand svg{width:24px;height:24px}
+.brand b{font-weight:700}
+
+/* ADS (isti svugdje) */
+.section-ads{position:relative;overflow:hidden;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06)}
+.section-ads::before{content:"Reklame";position:absolute;left:10px;top:10px;font-size:12px;color:var(--muted);background:rgba(0,0,0,.35);padding:4px 8px;border-radius:999px;z-index:2}
+.ad-track{position:absolute;inset:0;display:flex;gap:14px;align-items:center;padding-left:120%;animation:scrollLeft 28s linear infinite}
+@keyframes scrollLeft{to{transform:translateX(-220%)}}
+.ad{flex:0 0 auto;min-width:68vw;height:56%;border-radius:var(--radius);background:var(--glass);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-weight:700;color:#e6e9f0;pointer-events:none}
+
+/* FOOTER (IG + mail) */
+.site-footer{padding:18px 16px 26px;color:var(--muted);font-size:.9rem;text-align:center;border-top:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+.footer-links{display:flex;gap:14px;justify-content:center;align-items:center;margin-top:8px}
+.icon-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--fieldBorder);color:#fff}
+.icon-btn svg{width:16px;height:16px}
