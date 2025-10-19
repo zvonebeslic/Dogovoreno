@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prijava — Dogovoreno.com</title>
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+  <div data-include="header.html"></div>
+  <main class="container">
+    <div class="card" style="padding:16px">
+      <h2 style="margin:0 0 8px">Prijava</h2>
+      <form id="loginForm" class="grid">
+        <label>Email ili ime ili telefon* <input id="identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…"></label>
+        <label>Lozinka* <input id="password" type="password" required></label>
+        <button class="btn btn-primary" type="submit">Prijavi se</button>
+      </form>
+    </div>
+  </main>
+  <div data-include="footer.html"></div>
+  <script src="include.js"></script>
+  <script>
+  loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const body = { identifier: identifier.value.trim(), password: password.value };
+    const r = await fetch('api/auth.php?route=login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json(); if(!r.ok){ alert(j.error||'Greška'); return; }
+    location.href='nudimuslugu.html';
+  });
+  </script>
+</body>
+</html>
