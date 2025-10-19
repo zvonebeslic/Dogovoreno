@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registracija — Dogovoreno.com</title>
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+  <div data-include="header.html"></div>
+  <main class="container">
+    <div class="card" style="padding:16px">
+      <h2 style="margin:0 0 8px">Registracija</h2>
+      <p class="help">Na e-mail šaljemo potvrdu.</p>
+      <form id="regForm" class="grid">
+        <label>Ime / obrt* <input id="name" required></label>
+        <label>Telefon* <input id="phone" required placeholder="+387 6X XXX XXX"></label>
+        <label>E-mail* <input id="email" type="email" required placeholder="ime@primjer.com"></label>
+        <label>Lozinka* <input id="password" type="password" required placeholder="Min. 8 znakova"></label>
+        <button class="btn btn-primary" type="submit">Registriraj se</button>
+      </form>
+    </div>
+  </main>
+  <div data-include="footer.html"></div>
+  <script src="include.js"></script>
+  <script>
+  regForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const body = {
+      name: name.value.trim(),
+      phone: phone.value.trim(),
+      email: email.value.trim(),
+      password: password.value
+    };
+    const r = await fetch('api/auth.php?route=register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json(); if(!r.ok){ alert(j.error||'Greška'); return; }
+    alert('Uspješno! Provjerite e-mail i potvrdite registraciju, pa se prijavite.');
+    location.href='login.html';
+  });
+  </script>
+</body>
+</html>
