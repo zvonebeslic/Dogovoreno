@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dogovoreno.com — Nađi majstora, dogovori posao</title>
   <meta name="description" content="Tvoja veza do pouzdanog majstora. Objavi potrebu ili ponudi uslugu i dogovori posao.">
+  <!-- Globalni stilovi i zajednički header/ads/footer stilovi -->
+  <link rel="stylesheet" href="base.css">
   <style>
     :root{
       --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4;
@@ -16,100 +18,62 @@
     html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
     a{color:inherit;text-decoration:none}
 
-    /* Raspored: 10% header + 65% hero + 10% slogan + 15% ads = 100vh */
+    /* Raspored: 10% header + 65% hero + 12% slogan + 10% ads = 100vh */
     .page{height:100vh;overflow:hidden;display:grid;grid-template-rows:10vh 65vh 12vh 10vh}
-
-    /* Header s rukovanjem kao logom */
-    header{position:sticky;top:0;z-index:50;display:grid;place-items:center;
-      background:linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,0));backdrop-filter:saturate(1.05) blur(6px)}
-    .brand{display:inline-flex;align-items:center;gap:10px;padding:.5rem 1rem;border-radius:999px;background:var(--glass);box-shadow:var(--shadow)}
-    .brand svg{width:28px;height:28px}
-    .brand b{font-size:1.1rem}
 
     /* HERO */
     .hero{position:relative;overflow:hidden;isolation:isolate}
-    /* Manje zatamnjenje preko hero-a */
     .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.18));z-index:1;pointer-events:none}
 
-    /* Slideshow pozadina (neklikabilno) */
     .slides{position:absolute;inset:0;pointer-events:none}
     .slide{
       position:absolute;inset:0;opacity:0;
       transform:translateX(100%);
-      transition:
-        transform 900ms cubic-bezier(.2,.8,.2,1),
-        opacity 900ms ease;
+      transition:transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms ease;
       will-change:transform,opacity;
-      /* Blaži filter (manje “sjene”) */
       filter:brightness(.92) contrast(1.03);
-      overflow:hidden; /* radi Ken Burns unutarnjeg sloja */
+      overflow:hidden;
     }
     .slide .img{
       position:absolute;inset:0;background-size:cover;background-position:center;
-      transform:scale(1); /* start scale */
+      transform:scale(1);
     }
-    /* aktivna ulazi s desna + fade in */
-    .slide.current{
-      transform:translateX(0); opacity:1;
-    }
-    /* izlazna ide lijevo + fade out */
-    .slide.leaving{
-      transform:translateX(-100%); opacity:0;
-    }
-    /* Ken Burns (samo na aktivnoj) – suptilan 1.02x */
-    .slide.current .img{
-      animation:kenburns 5s linear forwards;
-    }
-    @keyframes kenburns{
-      from{transform:scale(1)}
-      to{transform:scale(1.02)}
-    }
+    .slide.current{ transform:translateX(0); opacity:1; }
+    .slide.leaving{ transform:translateX(-100%); opacity:0; }
+    .slide.current .img{ animation:kenburns 5s linear forwards; }
+    @keyframes kenburns{ from{transform:scale(1)} to{transform:scale(1.02)} }
 
-    /* Foreground: duo PNG, statičan, neklikabilan */
+    /* Foreground: duo PNG */
     .duo-wrap{position:relative;z-index:2;height:100%;display:grid;place-items:end center;padding:0}
     .duo{position:relative;max-width:min(92vw, 720px);width:100%;aspect-ratio:1.3/1;display:grid;place-items:center}
     .duo img{width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 14px 30px rgba(0,0,0,.45))}
 
-    /* CTA gumbi poravnani po lijevoj/desnoj polovici */
+    /* CTA gumbi */
     .cta-row{position:absolute;left:0;right:0;bottom:15px;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 6%}
     .cta{display:inline-flex;align-items:center;justify-content:center;padding:14px 12px;border-radius:12px;font-weight:700;letter-spacing:.2px;box-shadow:var(--shadow);border:0}
     #btn-trazim{background:var(--cta);color:#fff}
     #btn-nudim{background:var(--cta2);color:#fff}
 
     /* Slogan */
-    .slogan{display:grid;place-items:center;text-align:center;padding:0 24px;transform: translateY(-16px);background:linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0))}
+    .slogan{display:grid;place-items:center;text-align:center;padding:0 24px;transform: translateY(-16px);
+      background:linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0))}
     .slogan p{margin:0;color:var(--muted);font-size:clamp(16px,2.4vh,22px);max-width:32ch}
 
-    /* Reklame (ticker) */
-    .ads{position:relative;overflow:hidden;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06)}
-    .ads::before{content:"Reklame";position:absolute;left:10px;top:10px;font-size:12px;color:var(--muted);background:rgba(0,0,0,.35);padding:4px 8px;border-radius:999px;z-index:2}
-    .ad-track{position:absolute;inset:0;display:flex;gap:14px;align-items:center;padding-left:120%;animation:scrollLeft 28s linear infinite}
-    @keyframes scrollLeft{to{transform:translateX(-220%)}}
-    .ad{flex:0 0 auto;min-width:68vw;height:56%;border-radius:var(--radius);background:var(--glass);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-weight:700;color:#e6e9f0;pointer-events:none}
+    /* Reklame iz partiala neka ispune cijeli red grida */
+    .section-ads{height:100%}
 
     @media (min-width:768px){
       .duo{max-width:820px}
-      .ad{min-width:40vw}
     }
   </style>
 </head>
 <body>
   <main class="page" role="main">
-    <!-- HEADER -->
-    <header aria-label="Zaglavlje">
-      <div class="brand">
-        <!-- LOGO: rukovanje -->
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M8.7 13.2l2.1 2.1a2.5 2.5 0 003.6 0l4.7-4.7a2.2 2.2 0 00-3.1-3.1l-3.4 3.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M9.4 8.9L6 12.3a2.2 2.2 0 103.1 3.1l1.2-1.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <b>Dogovoreno.com</b>
-      </div>
-    </header>
+    <!-- HEADER (partial) -->
+    <div data-include="partials/header.html"></div>
 
     <!-- HERO -->
     <section class="hero" aria-label="Hero">
-      <!-- Pozadinski slideshow (10 slika, neklikabilno) -->
       <div class="slides" aria-hidden="true">
         <div class="slide current"><div class="img" style="background-image:url('images/majstor-za-gradjevinske-radove.png')"></div></div>
         <div class="slide"><div class="img" style="background-image:url('images/usluga-vrsenja-iskopa-i-prijevoza-robe.png')"></div></div>
@@ -123,13 +87,12 @@
         <div class="slide"><div class="img" style="background-image:url('images/majstor-za-instalacije-knauf-vodu-struju-grijanje.png')"></div></div>
       </div>
 
-      <!-- Dva lika (jedna PNG slika), statično ispred -->
       <div class="duo-wrap">
         <div class="duo">
           <img src="images/stranica-za-trazim-uslugu-nudim-uslugu.png" alt="Dogovor: klijent i majstor — rukovanje" />
           <div class="cta-row">
-            <a class="cta" id="btn-trazim" href="#trazim">Tražim uslugu</a>
-            <a class="cta" id="btn-nudim" href="#nudim">Nudim uslugu</a>
+            <a class="cta" id="btn-trazim" href="trazimuslugu.html">Tražim uslugu</a>
+            <a class="cta" id="btn-nudim" href="nudimuslugu.html">Nudim uslugu</a>
           </div>
         </div>
       </div>
@@ -140,17 +103,15 @@
       <p>Brzo, Jednostavno, Dogovoreno.</p>
     </section>
 
-    <!-- REKLAME -->
-    <section class="ads" aria-label="Reklamni prostor">
-      <div class="ad-track" aria-hidden="true">
-        <div class="ad">Banner • 320×100</div>
-        <div class="ad">Top ponuda • 320×100</div>
-        <div class="ad">Promo • 320×100</div>
-        <div class="ad">Partner • 320×100</div>
-        <div class="ad">Akcija • 320×100</div>
-      </div>
-    </section>
+    <!-- ADS (partial) -->
+    <div data-include="partials/ads.html"></div>
   </main>
+
+  <!-- FOOTER (partial) -->
+  <div data-include="partials/footer.html"></div>
+
+  <!-- Loader za partiale -->
+  <script src="include.js"></script>
 
   <script>
     // Slideshow: slide + fade, 4s interval, Ken Burns na aktivnoj
@@ -169,14 +130,14 @@
         nxt.style.transform = '';
         nxt.style.opacity = '';
 
-        // Trigeriraj prijelaz: trenutna izlazi, sljedeća ulazi
+        // Tranzicija: trenutna izlazi, sljedeća ulazi
         requestAnimationFrame(()=>{
           cur.classList.remove('current');
-          cur.classList.add('leaving');  // ide lijevo + fade out (definirano u CSS-u)
-          nxt.classList.add('current');  // ulazi s desna + fade in (definirano u CSS-u)
+          cur.classList.add('leaving');
+          nxt.classList.add('current');
         });
 
-        // Kad završi tranzicija izlazne, počisti je
+        // Po završetku izlaza počisti
         const onEnd = () => {
           cur.classList.remove('leaving','current');
           cur.style.transform = '';
@@ -188,14 +149,6 @@
         i = nextI;
       }, DURATION);
     })();
-
-    // CTA rute — postavit ćemo prave URL-ove kasnije
-    document.getElementById('btn-trazim')?.addEventListener('click', e=>{
-      // window.location.href = 'trazim.html';
-    });
-    document.getElementById('btn-nudim')?.addEventListener('click', e=>{
-      // window.location.href = 'nudim.html';
-    });
   </script>
 </body>
 </html>
