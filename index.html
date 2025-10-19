@@ -2,77 +2,54 @@
 <html lang="hr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Dogovoreno.com — Nađi majstora, dogovori posao</title>
   <meta name="description" content="Tvoja veza do pouzdanog majstora. Objavi potrebu ili ponudi uslugu i dogovori posao.">
-  <!-- Globalni stilovi i zajednički header/ads/footer stilovi -->
   <link rel="stylesheet" href="base.css">
   <style>
     :root{
-      --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4;
-      --cta:#2563eb; --cta2:#ea580c;
+      --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4; --cta:#2563eb; --cta2:#ea580c;
       --glass:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:14px;
+      --radius:14px; --header-h:56px; --slogan-h:48px; --promos-h:72px;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
     a{color:inherit;text-decoration:none}
 
-    /* Raspored: 10% header + 65% hero + 12% slogan + 10% ads = 100vh */
-    .page{height:100vh;overflow:hidden;display:grid;grid-template-rows:10vh 65vh 12vh 10vh}
+    /* Cijela stranica = 100svh (stabilni mobilni viewport) */
+    .page{height:100svh;display:grid;grid-template-rows:var(--header-h) 1fr var(--slogan-h) var(--promos-h);overflow:hidden}
 
-    /* HERO */
     .hero{position:relative;overflow:hidden;isolation:isolate}
     .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,.10), rgba(0,0,0,.18));z-index:1;pointer-events:none}
-
     .slides{position:absolute;inset:0;pointer-events:none}
-    .slide{
-      position:absolute;inset:0;opacity:0;
-      transform:translateX(100%);
-      transition:transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms ease;
-      will-change:transform,opacity;
-      filter:brightness(.92) contrast(1.03);
-      overflow:hidden;
-    }
-    .slide .img{
-      position:absolute;inset:0;background-size:cover;background-position:center;
-      transform:scale(1);
-    }
-    .slide.current{ transform:translateX(0); opacity:1; }
-    .slide.leaving{ transform:translateX(-100%); opacity:0; }
-    .slide.current .img{ animation:kenburns 5s linear forwards; }
-    @keyframes kenburns{ from{transform:scale(1)} to{transform:scale(1.02)} }
+    .slide{position:absolute;inset:0;opacity:0;transform:translateX(100%);transition:transform 900ms cubic-bezier(.2,.8,.2,1),opacity 900ms ease;will-change:transform,opacity;filter:brightness(.92) contrast(1.03);overflow:hidden}
+    .slide .img{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1)}
+    .slide.current{transform:translateX(0);opacity:1}
+    .slide.leaving{transform:translateX(-100%);opacity:0}
+    .slide.current .img{animation:kenburns 5s linear forwards}
+    @keyframes kenburns{from{transform:scale(1)} to{transform:scale(1.02)}}
 
-    /* Foreground: duo PNG */
-    .duo-wrap{position:relative;z-index:2;height:100%;display:grid;place-items:end center;padding:0}
+    .duo-wrap{position:relative;z-index:2;height:100%;display:grid;place-items:end center}
     .duo{position:relative;max-width:min(92vw, 720px);width:100%;aspect-ratio:1.3/1;display:grid;place-items:center}
     .duo img{width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 14px 30px rgba(0,0,0,.45))}
 
-    /* CTA gumbi */
-    .cta-row{position:absolute;left:0;right:0;bottom:15px;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 6%}
-    .cta{display:inline-flex;align-items:center;justify-content:center;padding:14px 12px;border-radius:12px;font-weight:700;letter-spacing:.2px;box-shadow:var(--shadow);border:0}
+    .cta-row{position:absolute;left:0;right:0;bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 6%}
+    .cta{display:inline-flex;align-items:center;justify-content:center;padding:12px 10px;border-radius:12px;font-weight:700;letter-spacing:.2px;box-shadow:var(--shadow);border:0}
     #btn-trazim{background:var(--cta);color:#fff}
     #btn-nudim{background:var(--cta2);color:#fff}
 
-    /* Slogan */
-    .slogan{display:grid;place-items:center;text-align:center;padding:0 24px;transform: translateY(-16px);
-      background:linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0))}
-    .slogan p{margin:0;color:var(--muted);font-size:clamp(16px,2.4vh,22px);max-width:32ch}
+    .slogan{display:grid;place-items:center;text-align:center;padding:0 16px;background:linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0))}
+    .slogan p{margin:0;color:var(--muted);font-size:14px}
 
-    /* Reklame iz partiala neka ispune cijeli red grida */
-    .section-ads{height:100%}
-
-    @media (min-width:768px){
-      .duo{max-width:820px}
-    }
+    @media (min-width:768px){ .duo{max-width:820px} .slogan p{font-size:15px} }
   </style>
 </head>
 <body>
   <main class="page" role="main">
-    <!-- HEADER (partial) -->
+    <!-- 1) HEADER (partial) -->
     <div data-include="header.html"></div>
 
-    <!-- HERO -->
+    <!-- 2) HERO -->
     <section class="hero" aria-label="Hero">
       <div class="slides" aria-hidden="true">
         <div class="slide current"><div class="img" style="background-image:url('images/majstor-za-gradjevinske-radove.png')"></div></div>
@@ -98,60 +75,41 @@
       </div>
     </section>
 
-    <!-- SLOGAN -->
-    <section class="slogan">
+    <!-- 3) SLOGAN -->
+    <section class="slogan" aria-label="Slogan">
       <p>Brzo, Jednostavno, Dogovoreno.</p>
     </section>
+
+    <!-- 4) PROMOS (partial) -->
+    <div data-include="promos.html"></div>
   </main>
 
-    <div data-include="ads.html"></div>
+  <!-- 5) FOOTER (partial) -->
   <div data-include="footer.html"></div>
+
+  <!-- loader za partiale MORA biti zadnji -->
   <script src="include.js"></script>
 
   <script>
-    // Slideshow: slide + fade, 4s interval, Ken Burns na aktivnoj
+    // Slideshow
     (function(){
       const slides = Array.from(document.querySelectorAll('.slide'));
-      let i = 0;
-      const DURATION = 4000; // 4s po slici
-
+      let i = 0, DURATION = 4000;
       setInterval(()=>{
         const cur = slides[i];
         const nextI = (i + 1) % slides.length;
         const nxt = slides[nextI];
-
-        // Očisti stanja sljedeće (bez inline stilova!)
-        nxt.classList.remove('leaving','current');
-        nxt.style.transform = '';
-        nxt.style.opacity = '';
-
-        // Tranzicija: trenutna izlazi, sljedeća ulazi
-        requestAnimationFrame(()=>{
-          cur.classList.remove('current');
-          cur.classList.add('leaving');
-          nxt.classList.add('current');
-        });
-
-        // Po završetku izlaza počisti
-        const onEnd = () => {
-          cur.classList.remove('leaving','current');
-          cur.style.transform = '';
-          cur.style.opacity = '';
-          cur.removeEventListener('transitionend', onEnd);
-        };
+        nxt.classList.remove('leaving','current'); nxt.style.transform=''; nxt.style.opacity='';
+        requestAnimationFrame(()=>{ cur.classList.remove('current'); cur.classList.add('leaving'); nxt.classList.add('current'); });
+        const onEnd = ()=>{ cur.classList.remove('leaving','current'); cur.style.transform=''; cur.style.opacity=''; cur.removeEventListener('transitionend', onEnd); };
         cur.addEventListener('transitionend', onEnd, {once:true});
-
         i = nextI;
       }, DURATION);
     })();
 
-  document.getElementById('btn-trazim')?.addEventListener('click', e=>{
-    e.preventDefault(); window.location.href = 'trazimuslugu.html';
-  });
-  document.getElementById('btn-nudim')?.addEventListener('click', e=>{
-    e.preventDefault(); window.location.href = 'nudimuslugu.html';
-  });
-
+    // CTA
+    document.getElementById('btn-trazim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='trazimuslugu.html'; });
+    document.getElementById('btn-nudim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='nudimuslugu.html'; });
   </script>
 </body>
 </html>
