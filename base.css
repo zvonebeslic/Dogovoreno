@@ -73,7 +73,7 @@ input,textarea,select{
 .container{
   max-width:1024px;
   margin:3px auto;
-  padding:0 16px;
+  padding:0 10px;
 }
 
 .grid{
