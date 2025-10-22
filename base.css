@@ -105,10 +105,10 @@ input,textarea,select{
 /* NASLOV – fiksno u centru ekrana */
 .site-title{
   position:absolute;
-  left:43%;
+  left:68%;
   transform:translateX(-50%);
   font-family:'Montserrat', sans-serif;
-  font-weight:750;
+  font-weight:700;
   font-size:clamp(22px, 3.8vw, 20px);
   letter-spacing:0.3px;
   color:var(--ink, #ffffff);
