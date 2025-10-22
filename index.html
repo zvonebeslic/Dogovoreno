@@ -75,8 +75,12 @@
 }
 
 .promo-inner{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 16px; height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  height:100%;
 }
 
 .promo-content{
@@ -86,8 +90,11 @@
 }
 
 .promo-toggle{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:30px; height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
   border-radius:10px;
   border:1px solid var(--fieldBorder, rgba(255,255,255,.12));
   background:var(--glass, rgba(255,255,255,.08));
@@ -97,10 +104,6 @@
 }
 .promo-toggle:hover{ filter:brightness(1.08); }
 .promo-toggle:active{ transform:translateY(1px); }
-
-/* strelica kad je zatvoren */
-.promo-banner.closed .promo-toggle .chev{ transform:rotate(180deg); }
-.chev{ display:inline-block; font-size:16px; line-height:1; }
 
 @media (max-width:420px){
   .promo-inner{ padding:10px; }
