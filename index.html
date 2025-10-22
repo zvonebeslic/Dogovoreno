@@ -191,7 +191,6 @@
             class="promo-toggle"
             title="Zatvori reklamu">
       <span aria-hidden="true">✕</span>
-      <span class="sr-only"></span>
     </button>
   </div>
 </div>
@@ -276,7 +275,8 @@
   }
   syncHeaderHeight();
   window.addEventListener('resize', syncHeaderHeight);
-
+  window.addEventListener('load', syncHeaderHeight);
+  
   // 3 reklame (HTML sadržaj)
   const ADS = [
     `<div class="ad ad-1">
@@ -359,61 +359,67 @@
   const HOLD_MS  = 10000;  // svaka reklama stoji 10 s
   const TRANS_MS = 450;    // trajanje slide animacije
 
-  const viewport = document.querySelector('#bottom-ads .ads-viewport');
+  // čekaj da #bottom-ads bude ubačen iz promos.html
+  function waitForViewport(cb, tries=0){
+    const viewport = document.querySelector('#bottom-ads .ads-viewport');
+    if (viewport) return cb(viewport);
+    if (tries > 200) return; // odustani nakon ~10s (200*50ms)
+    setTimeout(()=>waitForViewport(cb, tries+1), 50);
+  }
 
-  // TRI REKLAME (cijeli oglas je link)
-  const ADS = [
-    {
-      href: "#istakni-profil",
-      html: `<strong>💡 Istakni svoj profil</strong> — budi prvi u rezultatima u svojoj kategoriji. Više poziva = više poslova! <span class="ad-cta">Saznaj više →</span>`
-    },
-    {
-      href: "#promoviraj-usluge",
-      html: `<strong>📢 Promoviraj svoje usluge</strong> — tvoj oglas vidljiv na vrhu rezultata u tvom gradu. <span class="ad-cta">Pokreni promociju →</span>`
-    },
-    {
-      href: "#objavi-akciju",
-      html: `<strong>🔥 Objavi posebnu ponudu</strong> — najavi sezonski popust ili vikend akciju i privuci klijente. <span class="ad-cta">Objavi ponudu →</span>`
+  waitForViewport((viewport)=>{
+    const ADS = [
+      {
+        href: "#istakni-profil",
+        html: `<strong>💡 Istakni svoj profil</strong> — budi prvi u rezultatima u svojoj kategoriji. Više poziva = više poslova! <span class="ad-cta">Saznaj više →</span>`
+      },
+      {
+        href: "#promoviraj-usluge",
+        html: `<strong>📢 Promoviraj svoje usluge</strong> — tvoj oglas vidljiv na vrhu rezultata u tvom gradu. <span class="ad-cta">Pokreni promociju →</span>`
+      },
+      {
+        href: "#objavi-akciju",
+        html: `<strong>🔥 Objavi posebnu ponudu</strong> — najavi sezonski popust ili vikend akciju i privuci klijente. <span class="ad-cta">Objavi ponudu →</span>`
+      }
+    ];
+
+    let i = 0, timer = null;
+
+    function makeAd(ad, extra=''){
+      const a = document.createElement('a');
+      a.className = `ad-card ${extra}`.trim();
+      a.href = ad.href;
+      a.innerHTML = ad.html;
+      a.setAttribute('aria-label', 'Reklama');
+      return a;
     }
-  ];
 
-  let i = 0;
-  let timer = null;
+    function showFirst(){
+      viewport.innerHTML = '';
+      viewport.appendChild(makeAd(ADS[i]));
+    }
 
-  function makeAd(ad, extra=''){
-    const a = document.createElement('a');
-    a.className = `ad-card ${extra}`.trim();
-    a.href = ad.href;
-    a.innerHTML = ad.html;
-    a.setAttribute('aria-label', 'Reklama');
-    return a;
-  }
+    function slideNext(){
+      const current = viewport.querySelector('.ad-card');
+      i = (i + 1) % ADS.length;
+      const next = makeAd(ADS[i], 'ad-enter');
+      viewport.appendChild(next);
 
-  function showFirst(){
-    viewport.innerHTML = '';
-    viewport.appendChild(makeAd(ADS[i]));
-  }
+      requestAnimationFrame(()=>{
+        current.classList.add('ad-leave','ad-animate'); // van udesno
+        next.classList.add('ad-animate');               // s lijeva unutra
+        setTimeout(()=>{ current && current.remove(); }, TRANS_MS);
+      });
+    }
 
-  function slideNext(){
-    const current = viewport.querySelector('.ad-card');
-    i = (i + 1) % ADS.length;
-    const next = makeAd(ADS[i], 'ad-enter');
-    viewport.appendChild(next);
+    function startLoop(){
+      clearInterval(timer);
+      timer = setInterval(slideNext, HOLD_MS);
+    }
 
-    requestAnimationFrame(()=>{
-      current.classList.add('ad-leave','ad-animate'); // van udesno
-      next.classList.add('ad-animate');               // ulaz s lijeva
-      setTimeout(()=>{ current && current.remove(); }, TRANS_MS);
-    });
-  }
-
-  function startLoop(){
-    clearInterval(timer);
-    timer = setInterval(slideNext, HOLD_MS);
-  }
-
-  showFirst();
-  startLoop();
+    showFirst();
+    startLoop();
+  });
 })();
     
   </script>
