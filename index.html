@@ -49,6 +49,24 @@
     <!-- 1) HEADER (partial) -->
     <div data-include="header.html"></div>
 
+    <!-- TOP PROMO BANNER -->
+<div id="top-banner" class="promo-banner" role="region" aria-label="Promo poruka">
+  <div class="promo-inner container">
+    <div id="top-banner-content" class="promo-content">
+      <strong>Akcija:</strong> Istakni svoj profil za 9.99 KM/mj – prvi mjesec GRATIS.
+    </div>
+
+    <button id="top-banner-toggle"
+            class="promo-toggle"
+            aria-expanded="true"
+            aria-controls="top-banner-content"
+            title="Sakrij banner">
+      <span class="chev" aria-hidden="true">˄</span>
+      <span class="sr-only">Sakrij</span>
+    </button>
+  </div>
+</div>
+
     <!-- 2) HERO -->
     <section class="hero" aria-label="Hero">
       <div class="slides" aria-hidden="true">
@@ -110,6 +128,41 @@
     // CTA
     document.getElementById('btn-trazim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='trazimuslugu.html'; });
     document.getElementById('btn-nudim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='nudimuslugu.html'; });
+
+
+(function(){
+  const banner   = document.getElementById('top-banner');
+  const toggle   = document.getElementById('top-banner-toggle');
+  const STORAGE_KEY = 'topBannerHidden';
+
+  // initial state (open unless user already sakrio)
+  const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
+  if (hidden) {
+    banner.classList.add('closed');
+    // ostavi zatvoren (max-height 0)
+  } else {
+    // mali delay da se smanji CLS osjećaj
+    requestAnimationFrame(()=> {
+      banner.classList.add('open');
+    });
+  }
+
+  function setAria(isOpen){
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.title = isOpen ? 'Sakrij banner' : 'Prikaži banner';
+  }
+  setAria(!hidden);
+
+  toggle.addEventListener('click', () => {
+    const isOpen = banner.classList.toggle('open');
+    const nowClosed = !isOpen;
+    banner.classList.toggle('closed', nowClosed);
+    setAria(isOpen);
+    // zapamti preferenciju
+    localStorage.setItem(STORAGE_KEY, String(nowClosed));
+  });
+})();
+  
   </script>
 </body>
 </html>
