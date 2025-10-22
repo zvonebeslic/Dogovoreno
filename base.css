@@ -107,10 +107,13 @@ input,textarea,select{
   position:absolute;
   left:50%;
   transform:translateX(-50%);
-  font-weight:900;
+  font-family:'Montserrat', sans-serif;
+  font-weight:800;
+  font-size:clamp(22px, 3.8vw, 32px);
+  letter-spacing:0.3px;
+  color:var(--ink, #ffffff);
   text-align:center;
-  letter-spacing:.2px;
-  pointer-events:none; /* da klikovi ne blokiraju ništa iza */
+  pointer-events:none;
 }
 
 /* DESNO – “Moj profil” */
