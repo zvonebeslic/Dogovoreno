@@ -117,6 +117,7 @@ input,textarea,select{
 .profile-wrap{
   display:flex;
   justify-content:flex-end;
+  margin-right: 15px;
 }
 
 .profile-btn{
