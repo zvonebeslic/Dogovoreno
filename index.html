@@ -196,35 +196,32 @@
 
 
 (function(){
-  const banner   = document.getElementById('top-banner');
-  const toggle   = document.getElementById('top-banner-toggle');
-  const STORAGE_KEY = 'topBannerHidden';
+  const banner = document.getElementById('top-banner');
+  const toggle = document.getElementById('top-banner-toggle');
 
-  // initial state (open unless user already sakrio)
-  const hidden = localStorage.getItem(STORAGE_KEY) === 'true';
-  if (hidden) {
-    banner.classList.add('closed');
-    // ostavi zatvoren (max-height 0)
-  } else {
-    // mali delay da se smanji CLS osjećaj
-    requestAnimationFrame(()=> {
-      banner.classList.add('open');
-    });
-  }
+  // Uvijek otvori na učitavanju stranice
+  requestAnimationFrame(()=> {
+    banner.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
+    toggle.title = 'Sakrij banner';
+  });
 
-  function setAria(isOpen){
-    toggle.setAttribute('aria-expanded', String(isOpen));
-    toggle.title = isOpen ? 'Sakrij banner' : 'Prikaži banner';
-  }
-  setAria(!hidden);
-
+  // Klik na strelicu: sakrij do idućeg refresh-a
   toggle.addEventListener('click', () => {
     const isOpen = banner.classList.toggle('open');
-    const nowClosed = !isOpen;
-    banner.classList.toggle('closed', nowClosed);
-    setAria(isOpen);
-    // zapamti preferenciju
-    localStorage.setItem(STORAGE_KEY, String(nowClosed));
+    banner.classList.toggle('closed', !isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.title = isOpen ? 'Sakrij banner' : 'Prikaži banner';
+  });
+
+  // (Opcionalno) Ako se tab vrati iz backgrounda, opet prikaži
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      banner.classList.add('open');
+      banner.classList.remove('closed');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.title = 'Sakrij banner';
+    }
   });
 })();
   
