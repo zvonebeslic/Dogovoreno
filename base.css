@@ -99,7 +99,7 @@ input,textarea,select{
   align-items:center;
   justify-content:flex-end;
   padding:8px 16px;
-  min-height:56px;
+  min-height:46px;
 }
 
 /* NASLOV – fiksno u centru ekrana */
@@ -107,7 +107,7 @@ input,textarea,select{
   position:absolute;
   left:50%;
   transform:translateX(-50%);
-  font-weight:800;
+  font-weight:900;
   text-align:center;
   letter-spacing:.2px;
   pointer-events:none; /* da klikovi ne blokiraju ništa iza */
@@ -117,7 +117,7 @@ input,textarea,select{
 .profile-wrap{
   display:flex;
   justify-content:flex-end;
-  margin-right: 15px;
+  margin-right: 23px;
 }
 
 .profile-btn{
