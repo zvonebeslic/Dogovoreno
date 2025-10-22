@@ -121,17 +121,13 @@
     <!-- TOP PROMO BANNER -->
 <div id="top-banner" class="promo-banner" role="region" aria-label="Promo poruka">
   <div class="promo-inner container">
-    <div id="top-banner-content" class="promo-content">
-      <strong>Akcija:</strong> Istakni svoj profil za 9.99 KM/mj – prvi mjesec GRATIS.
-    </div>
+    <div id="top-banner-content" class="promo-content"></div>
 
-    <button id="top-banner-toggle"
+    <button id="top-banner-close"
             class="promo-toggle"
-            aria-expanded="true"
-            aria-controls="top-banner-content"
-            title="Sakrij banner">
-      <span class="chev" aria-hidden="true">^</span>
-      <span class="sr-only">X</span>
+            title="Zatvori reklamu">
+      <span aria-hidden="true">✕</span>
+      <span class="sr-only">Zatvori</span>
     </button>
   </div>
 </div>
@@ -199,11 +195,17 @@
     document.getElementById('btn-nudim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='nudimuslugu.html'; });
 
 (function(){
-  const header = document.querySelector('.site-header');
-  const banner = document.getElementById('top-banner');
-  const toggle = document.getElementById('top-banner-toggle');
+  // Tajming
+  const OPEN_DELAY_MS = 5000;   // prva pojava nakon 5 s
+  const ROTATE_MS     = 10000;  // rotacija svakih 10 s
 
-  // postavi visinu headera u css varijablu
+  // Elementi
+  const header    = document.querySelector('.site-header');
+  const banner    = document.getElementById('top-banner');
+  const contentEl = document.getElementById('top-banner-content');
+  const btnClose  = document.getElementById('top-banner-close');
+
+  // Poravnaj banner ispod headera
   function syncHeaderHeight(){
     const h = header ? header.offsetHeight : 56;
     document.documentElement.style.setProperty('--header-h', h + 'px');
@@ -211,19 +213,81 @@
   syncHeaderHeight();
   window.addEventListener('resize', syncHeaderHeight);
 
-  // pojavi se TEK nakon 5 sekundi
-  setTimeout(() => {
-    banner.classList.add('open');
-    toggle.setAttribute('aria-expanded', 'true');
-    toggle.title = 'Sakrij banner';
-  }, 5000);  // 5000ms = 5 sekundi
+  // 3 reklame (HTML sadržaj)
+  const ADS = [
+    `<div class="ad ad-1">
+       <strong>💡 Istakni svoj profil</strong><br>
+       Budi prvi na listi majstora u svojoj kategoriji. Više poziva = više poslova!<br>
+       <a href="#" class="ad-cta">Saznaj više →</a>
+     </div>`,
+    `<div class="ad ad-2">
+       <strong>📢 Promoviraj svoje usluge</strong><br>
+       Tvoj oglas vidljiv na vrhu rezultata u tvom gradu i okolici.<br>
+       <a href="#" class="ad-cta">Pokreni promociju →</a>
+     </div>`,
+    `<div class="ad ad-3">
+       <strong>🔥 Objavi akcijsku ponudu</strong><br>
+       Najavi sezonski popust ili vikend akciju i privuci nove klijente.<br>
+       <a href="#" class="ad-cta">Objavi ponudu →</a>
+     </div>`
+  ];
 
-  // sakrij / ponovno prikaži
-  toggle.addEventListener('click', () => {
-    const isOpen = banner.classList.toggle('open');
-    banner.classList.toggle('closed', !isOpen);
-    toggle.setAttribute('aria-expanded', String(isOpen));
-    toggle.title = isOpen ? 'Sakrij banner' : 'Prikaži banner';
+  // Fisher-Yates shuffle
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  let order = shuffle([0,1,2]); // nasumičan redoslijed
+  let pos = 0;
+  let rotateTimer = null;
+  let reopenTimer = null;
+
+  function setAd(){
+    const adIdx = order[pos];
+    contentEl.innerHTML = ADS[adIdx];
+  }
+
+  function nextAd(){
+    pos = (pos + 1) % order.length;
+    if (pos === 0) order = shuffle([0,1,2]); // svaki krug novi shuffle
+  }
+
+  function startRotation(){
+    stopRotation();
+    rotateTimer = setInterval(() => {
+      nextAd();
+      setAd();
+    }, ROTATE_MS);
+  }
+
+  function stopRotation(){
+    if (rotateTimer) clearInterval(rotateTimer);
+  }
+
+  // start nakon 5 s
+  setTimeout(() => {
+    setAd();
+    banner.classList.add('open');
+    startRotation();
+  }, OPEN_DELAY_MS);
+
+  // X klik
+  btnClose.addEventListener('click', () => {
+    banner.classList.remove('open');
+    stopRotation();
+    clearTimeout(reopenTimer);
+
+    reopenTimer = setTimeout(() => {
+      nextAd();
+      setAd();
+      banner.classList.add('open');
+      startRotation();
+    }, ROTATE_MS);
   });
 })();
 
