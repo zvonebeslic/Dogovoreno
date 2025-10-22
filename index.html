@@ -43,28 +43,37 @@
 
     @media (min-width:768px){ .duo{max-width:820px} .slogan p{font-size:15px} }
 
-    /* ===== TOP PROMO (gura sadržaj) ===== */
+/* ===== TOP PROMO (OVERLAY – NE GURA) ===== */
 :root{
-  --promo-max: 140px; /* visina otvorenog bannera (C verzija) */
+  --header-h: 56px;   /* visina tvog headera; po potrebi promijeni */
+  --promo-h: 120px;   /* visina bannera (C verzija ~100–140px) */
 }
 
 .promo-banner{
-  overflow:hidden;
-  background:var(--field, #0e1014);
-  border-bottom:1px solid rgba(255,255,255,.08);
-  max-height:0;                 /* zatvoren */
-  opacity:0;
-  transition:max-height .35s ease, opacity .35s ease;
+  position: fixed;
+  z-index: 40;                 /* ispod sticky headera (koji je z-index:50) */
+  top: var(--header-h);
+  left: 0; right: 0;
+
+  height: var(--promo-h);
+  background: var(--field, #0e1014);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+
+  transform: translateY(-100%);  /* skriven iznad */
+  opacity: 0;
+  transition: transform .35s ease, opacity .35s ease;
+  pointer-events: none;           /* dok je skriven, ne hvata klikove */
 }
 
 .promo-banner.open{
-  max-height:var(--promo-max);  /* otvoren (gura sadržaj) */
-  opacity:1;
+  transform: translateY(0);       /* klizne dolje */
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .promo-inner{
   display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 16px;
+  gap:12px; padding:12px 16px; height:100%;
 }
 
 .promo-content{
@@ -73,7 +82,6 @@
   font-size:clamp(14px, 1.9vw, 16px);
 }
 
-/* gumb (strelica) */
 .promo-toggle{
   display:inline-flex; align-items:center; justify-content:center;
   width:36px; height:36px;
@@ -87,26 +95,19 @@
 .promo-toggle:hover{ filter:brightness(1.08); }
 .promo-toggle:active{ transform:translateY(1px); }
 
-/* strelica rotira kad je zatvoren */
+/* strelica kad je zatvoren */
 .promo-banner.closed .promo-toggle .chev{ transform:rotate(180deg); }
 .chev{ display:inline-block; font-size:16px; line-height:1; }
 
-/* helper za čitače ekrana */
-.sr-only{
-  position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
-  clip:rect(0,0,0,0); white-space:nowrap; border:0;
-}
-
-/* smanji padding na jako uskim ekranima */
 @media (max-width:420px){
   .promo-inner{ padding:10px; }
   .promo-toggle{ width:34px; height:34px; }
 }
 
-/* poštuj prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce){
   .promo-banner{ transition:none; }
 }
+    
   </style>
 </head>
 <body>
@@ -194,37 +195,36 @@
     document.getElementById('btn-trazim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='trazimuslugu.html'; });
     document.getElementById('btn-nudim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='nudimuslugu.html'; });
 
-
 (function(){
+  const header = document.querySelector('.site-header');
   const banner = document.getElementById('top-banner');
   const toggle = document.getElementById('top-banner-toggle');
 
-  // Uvijek otvori na učitavanju stranice
-  requestAnimationFrame(()=> {
+  // postavi visinu headera u css varijablu
+  function syncHeaderHeight(){
+    const h = header ? header.offsetHeight : 56;
+    document.documentElement.style.setProperty('--header-h', h + 'px');
+  }
+  syncHeaderHeight();
+  window.addEventListener('resize', syncHeaderHeight);
+
+  // pojavi se TEK nakon 5 sekundi
+  setTimeout(() => {
     banner.classList.add('open');
     toggle.setAttribute('aria-expanded', 'true');
     toggle.title = 'Sakrij banner';
-  });
+  }, 5000);  // 5000ms = 5 sekundi
 
-  // Klik na strelicu: sakrij do idućeg refresh-a
+  // sakrij / ponovno prikaži
   toggle.addEventListener('click', () => {
     const isOpen = banner.classList.toggle('open');
     banner.classList.toggle('closed', !isOpen);
     toggle.setAttribute('aria-expanded', String(isOpen));
     toggle.title = isOpen ? 'Sakrij banner' : 'Prikaži banner';
   });
-
-  // (Opcionalno) Ako se tab vrati iz backgrounda, opet prikaži
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      banner.classList.add('open');
-      banner.classList.remove('closed');
-      toggle.setAttribute('aria-expanded', 'true');
-      toggle.title = 'Sakrij banner';
-    }
-  });
 })();
-  
+
+
   </script>
 </body>
 </html>
