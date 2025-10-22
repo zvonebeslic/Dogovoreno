@@ -99,7 +99,7 @@ input,textarea,select{
   align-items:center;
   justify-content:flex-end;
   padding:8px 16px;
-  min-height:46px;
+  min-height:40px;
 }
 
 /* NASLOV – fiksno u centru ekrana */
@@ -109,7 +109,7 @@ input,textarea,select{
   transform:translateX(-50%);
   font-family:'Montserrat', sans-serif;
   font-weight:800;
-  font-size:clamp(22px, 3.8vw, 26px);
+  font-size:clamp(22px, 3.8vw, 21px);
   letter-spacing:0.3px;
   color:var(--ink, #ffffff);
   text-align:center;
