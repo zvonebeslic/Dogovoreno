@@ -5,37 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Registracija — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
+  <style>
+    .row{ display:grid; gap:6px }
+    .muted{ color:var(--muted,#c7cbd4); font-size:13px }
+    .error{ color:#ffb4b4; font-size:13px; margin-top:6px }
+  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
-  <main class="container">
+
+  <main class="container" style="max-width:560px">
     <div class="card" style="padding:16px">
       <h2 style="margin:0 0 8px">Registracija</h2>
-      <p class="help">Na e-mail šaljemo potvrdu.</p>
-      <form id="regForm" class="grid">
-        <label>Ime / obrt* <input id="name" required></label>
-        <label>Telefon* <input id="phone" required placeholder="+387 6X XXX XXX"></label>
-        <label>E-mail* <input id="email" type="email" required placeholder="ime@primjer.com"></label>
-        <label>Lozinka* <input id="password" type="password" required placeholder="Min. 8 znakova"></label>
-        <button class="btn btn-primary" type="submit">Registriraj se</button>
+      <p class="muted">Na e-mail šaljemo link za potvrdu. Nakon klika bit ćete automatski preusmjereni na izradu profila.</p>
+
+      <form id="regForm" class="grid" autocomplete="on">
+        <label class="row">Ime / obrt* 
+          <input id="name" name="name" required autocomplete="name" />
+        </label>
+        <label class="row">Telefon* 
+          <input id="phone" name="phone" required placeholder="+387 6X XXX XXX" inputmode="tel" />
+        </label>
+        <label class="row">E-mail* 
+          <input id="email" name="email" type="email" required placeholder="ime@primjer.com" autocomplete="email" autocapitalize="off" />
+        </label>
+        <label class="row">Lozinka* 
+          <input id="password" name="password" type="password" required placeholder="Min. 8 znakova" autocomplete="new-password" />
+        </label>
+
+        <div id="err" class="error" hidden></div>
+
+        <button id="btnReg" class="btn btn-primary" type="submit">Registriraj se</button>
+        <div class="muted" style="margin-top:8px">
+          Već imate račun? <a href="login.html">Prijavite se</a>
+        </div>
       </form>
     </div>
   </main>
+
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
   <script>
-  regForm.addEventListener('submit', async (e)=>{
+  const form = document.getElementById('regForm');
+  const btn  = document.getElementById('btnReg');
+  const err  = document.getElementById('err');
+
+  form.addEventListener('submit', async (e)=>{
     e.preventDefault();
+    err.hidden = true; err.textContent = '';
+    btn.disabled = true; btn.textContent = 'Slanje…';
+
     const body = {
       name: name.value.trim(),
       phone: phone.value.trim(),
       email: email.value.trim(),
       password: password.value
     };
-    const r = await fetch('api/auth.php?route=register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-    const j = await r.json(); if(!r.ok){ alert(j.error||'Greška'); return; }
-    alert('Uspješno! Provjerite e-mail i potvrdite registraciju, pa se prijavite.');
-    location.href='login.html';
+
+    try{
+      const r = await fetch('api/auth.php?route=register', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const j = await r.json().catch(()=> ({}));
+      if(!r.ok) throw new Error(j.error || 'Greška');
+
+      // Uspjeh
+      alert('Uspješno! Provjerite e-mail i kliknite na link za potvrdu. Nakon potvrde vodimo vas izravno na izradu profila.');
+      // po želji: ostani na stranici ili preusmjeri na login/home
+      location.href = 'login.html';
+    }catch(e){
+      err.textContent = e.message || 'Neuspjela registracija.';
+      err.hidden = false;
+      btn.disabled = false; btn.textContent = 'Registriraj se';
+    }
   });
   </script>
 </body>
