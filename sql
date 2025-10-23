@@ -1,6 +1,6 @@
 /* =========================================================
    BAZA ZA DOGOVORENO.COM — NADOGRADNJA TVOG STARTA
-   (kompatibilno s MySQL 8.0+, utf8mb4)
+   (MySQL 8.0+, utf8mb4)
    ========================================================= */
 
 -- Siguran charset/collation
@@ -8,7 +8,7 @@ SET NAMES utf8mb4;
 SET time_zone = '+00:00';
 
 -- =========================
--- 1) OSNOVNE TABLICE (TVOJE)
+-- 1) OSNOVNE TABLICE
 -- =========================
 
 CREATE TABLE IF NOT EXISTS users(
@@ -37,9 +37,10 @@ CREATE TABLE IF NOT EXISTS providers(
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_users_name       ON users (name);
-CREATE INDEX IF NOT EXISTS idx_users_phone      ON users (phone);
-CREATE INDEX IF NOT EXISTS idx_providers_latlng ON providers (lat, lng);
+CREATE INDEX IF NOT EXISTS idx_users_name        ON users (name);
+CREATE INDEX IF NOT EXISTS idx_users_phone       ON users (phone);
+CREATE INDEX IF NOT EXISTS idx_providers_latlng  ON providers (lat, lng);
+CREATE INDEX IF NOT EXISTS idx_providers_updated_at ON providers (updated_at);
 
 -- ==========================================
 -- 2) GEO NADOGRADNJA ZA PROVIDERS (SPATIAL)
@@ -61,7 +62,15 @@ CREATE TABLE IF NOT EXISTS skills (
   slug VARCHAR(140) GENERATED ALWAYS AS (
     REPLACE(LOWER(
       TRIM(
-        REPLACE(REPLACE(REPLACE(REPLACE(name,'č','c'),'ć','c'),'đ','d'),'š','s')
+        REPLACE(
+          REPLACE(
+            REPLACE(
+              REPLACE(
+                REPLACE(name,'č','c')
+              ,'ć','c')
+            ,'đ','d')
+          ,'š','s')
+        ,'ž','z')
       )
     ), ' ', '-')
   ) STORED
@@ -77,9 +86,7 @@ CREATE TABLE IF NOT EXISTS provider_skills (
 
 CREATE INDEX IF NOT EXISTS idx_provider_skills_skill ON provider_skills (skill_id);
 
--- (opcija) inicijalno punjenje skills iz front JSON-a možeš odraditi iz aplikacije;
--- ako želiš, kasnije ću ti dati INSERT skriptu za sve iz /data/skills.json
-
+-- (opcija) inicijalno punjenje skills iz front JSON-a možeš odraditi iz aplikacije
 
 -- ==========================================
 -- 4) POSLOVI (ZAHTJEVI KLIJENATA)
@@ -99,7 +106,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);
+CREATE INDEX IF NOT EXISTS idx_jobs_status     ON jobs (status);
+CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs (created_at);
 CREATE SPATIAL INDEX IF NOT EXISTS sidx_jobs_geo ON jobs (geo);
 
 -- Slike povezane s poslom (svaka kao jedan red)
@@ -123,28 +131,21 @@ CREATE TABLE IF NOT EXISTS job_notifications (
   status ENUM('sent','interested','not_interested') DEFAULT 'sent',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   responded_at TIMESTAMP NULL DEFAULT NULL,
-  FOREIGN KEY (job_id)     REFERENCES jobs(id)      ON DELETE CASCADE,
-  FOREIGN KEY (provider_id)REFERENCES providers(id) ON DELETE CASCADE
+  FOREIGN KEY (job_id)      REFERENCES jobs(id)      ON DELETE CASCADE,
+  FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE INDEX IF NOT EXISTS idx_jn_job            ON job_notifications (job_id);
 CREATE INDEX IF NOT EXISTS idx_jn_provider       ON job_notifications (provider_id);
 CREATE INDEX IF NOT EXISTS idx_jn_status_created ON job_notifications (status, created_at);
 
--- (opcija) jedinstveno slanje po job+provider, da ne spamamo istoga više puta:
+-- Jedinstveno slanje po job+provider (anti-spam)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_jn_job_provider ON job_notifications (job_id, provider_id);
 
-
 -- ==========================================
--- 6) POMOĆNE POGLEDE / PRIMJER UPITA
+-- 6) POMOĆNI PRIMJER UPITA (ad-hoc, nije VIEW)
 -- ==========================================
-
-/* Primjer: kandidati za job prema zajedničkim skillovima i udaljenosti
-   - PARSIRANJE skills_json → join na tablicu skills
-   - koristimo ST_Distance_Sphere (MySQL 8.0.12+) za km
-   - ograniči na, recimo, 30 najbližih
-   (Ovo je primjer SELECT-a; ne kreira view jer uključuje parametre)
-   
+/*
    SET @jobId = 123;
    SELECT
      p.id AS provider_id,
@@ -153,24 +154,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_jn_job_provider ON job_notifications (job_i
      ROUND(ST_Distance_Sphere(p.geo, j.geo)/1000, 2) AS distance_km,
      GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', ') AS matched_skills
    FROM jobs j
-   JOIN JSON_TABLE(j.skills_json, '$[*]' COLUMNS(skill VARCHAR(120) PATH '$')) js  -- skills iz posla
-   JOIN skills s ON s.name = js.skill
+   JOIN JSON_TABLE(j.skills_json, '$[*]' COLUMNS(skill VARCHAR(120) PATH '$')) js
+   JOIN skills s           ON s.name = js.skill
    JOIN provider_skills ps ON ps.skill_id = s.id
-   JOIN providers p ON p.id = ps.provider_id
-   JOIN users u ON u.id = p.user_id
-   WHERE j.id = @jobId
-     AND p.geo IS NOT NULL
+   JOIN providers p        ON p.id = ps.provider_id
+   JOIN users u            ON u.id = p.user_id
+   WHERE j.id = @jobId AND p.geo IS NOT NULL
    GROUP BY p.id
    ORDER BY distance_km ASC
    LIMIT 30;
 */
 
-
 -- ==========================================
--- 7) KORISNE OGRANIČENE POGLEDE (OPCIJA)
+-- 7) “JAVNI” VIEW PROVIDERA
 -- ==========================================
 
--- (opcija) View koji nudi “javne” podatke providera (bez precizne lokacije)
 DROP VIEW IF EXISTS v_public_providers;
 CREATE VIEW v_public_providers AS
 SELECT
@@ -184,15 +182,13 @@ SELECT
 FROM providers p
 JOIN users u ON u.id = p.user_id;
 
-/* =========================================================
-   DOGOVORENO.COM — MATCHES PATCH (MySQL 8.0+)
-   ---------------------------------------------------------
-   Dodaje:
-     1) job_matches — stanje razgovora po jobu i provideru
-     2) kolone na jobs za konačni izbor / status matcha
-   ========================================================= */
+-- =========================================================
+-- 8) MATCHES PATCH (MySQL 8.0+)
+--     - job_matches dnevnik stanja po jobu i provideru
+--     - dodatne kolone na jobs za konačni izbor
+-- =========================================================
 
--- 1) KONAČNI IZBOR NA POSLU (opcionalno ali praktično)
+-- 8.1) Konačni izbor na poslu (opcija)
 ALTER TABLE jobs
   ADD COLUMN IF NOT EXISTS hired_provider_id INT NULL,
   ADD COLUMN IF NOT EXISTS matched_at TIMESTAMP NULL DEFAULT NULL,
@@ -201,62 +197,55 @@ ALTER TABLE jobs
 
 CREATE INDEX IF NOT EXISTS idx_jobs_matched_at ON jobs (matched_at);
 
--- 2) JOB_MATCHES — dnevnik matcha između posla i majstora
+-- 8.2) Dnevnik matcha
 CREATE TABLE IF NOT EXISTS job_matches (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   job_id BIGINT NOT NULL,
   provider_id INT NOT NULL,
-  -- Ako kreirano iz notifikacije, vežemo (nije obavezno)
-  notification_id BIGINT NULL,
+  notification_id BIGINT NULL,  -- (ako postoji)
 
-  /* stanje toka:
-     interested   — provider kliknuo "zainteresiran"
-     contacted    — klijent kontaktirao providera (ili provider kontaktiran od sustava)
-     hired        — klijent odabrao ovog providera (jobs.hired_provider_id = provider_id)
-     declined     — klijent odbio ovog providera
-     no_response  — provider nije reagirao u roku
-     completed    — posao zaključen
-     cancelled    — klijent otkazao posao
-  */
   status ENUM(
     'interested','contacted','hired','declined','no_response','completed','cancelled'
   ) NOT NULL DEFAULT 'interested',
 
-  -- korisno za listanje / sort
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
-  -- snapshot korisnih podataka u trenutku matcha (nije obavezno, ali pomaže u analitici)
+  -- snapshot polja (opcija)
   distance_km DECIMAL(7,2) NULL,
-  price_offer DECIMAL(10,2) NULL,     -- ako ikad uvedeš ponude/cijene
-  currency CHAR(3) NULL,              -- npr. 'BAM', 'EUR'
-  message_excerpt VARCHAR(280) NULL,  -- kratki sažetak poruke/zahtjeva
+  price_offer DECIMAL(10,2) NULL,
+  currency CHAR(3) NULL,
+  message_excerpt VARCHAR(280) NULL,
 
-  -- integritet veza
-  CONSTRAINT fk_jm_job      FOREIGN KEY (job_id)      REFERENCES jobs(id)       ON DELETE CASCADE,
-  CONSTRAINT fk_jm_provider FOREIGN KEY (provider_id) REFERENCES providers(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_jm_job      FOREIGN KEY (job_id)      REFERENCES jobs(id)              ON DELETE CASCADE,
+  CONSTRAINT fk_jm_provider FOREIGN KEY (provider_id) REFERENCES providers(id)         ON DELETE CASCADE,
   CONSTRAINT fk_jm_notif    FOREIGN KEY (notification_id) REFERENCES job_notifications(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Jedan red po par (job, provider) – bez duplikata:
+-- jedan red po paru (job, provider)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_jm_job_provider ON job_matches (job_id, provider_id);
-
--- Pretraživanje po statusu i svježini:
 CREATE INDEX IF NOT EXISTS idx_jm_status_updated ON job_matches (status, updated_at);
-CREATE INDEX IF NOT EXISTS idx_jm_job ON job_matches (job_id);
+CREATE INDEX IF NOT EXISTS idx_jm_job     ON job_matches (job_id);
 CREATE INDEX IF NOT EXISTS idx_jm_provider ON job_matches (provider_id);
 
--- 3) (OPCIJA) POGLED: zadnje stanje po (job, provider)
+-- 8.3) View: zadnje stanje po (job, provider)
 DROP VIEW IF EXISTS v_job_match_latest;
 CREATE VIEW v_job_match_latest AS
-SELECT
-  jm.*
+SELECT jm.*
 FROM job_matches jm
 JOIN (
   SELECT job_id, provider_id, MAX(updated_at) AS max_upd
   FROM job_matches
   GROUP BY job_id, provider_id
-) last ON last.job_id = jm.job_id AND last.provider_id = jm.provider_id AND (jm.updated_at = last.max_upd OR (jm.updated_at IS NULL AND jm.created_at = (
-    SELECT MAX(jm2.created_at) FROM job_matches jm2 WHERE jm2.job_id = jm.job_id AND jm2.provider_id = jm.provider_id
-)))
-;
+) last
+  ON last.job_id = jm.job_id
+ AND last.provider_id = jm.provider_id
+ AND (
+   jm.updated_at = last.max_upd
+   OR (jm.updated_at IS NULL AND jm.created_at = (
+       SELECT MAX(jm2.created_at)
+       FROM job_matches jm2
+       WHERE jm2.job_id = jm.job_id AND jm2.provider_id = jm.provider_id
+   ))
+);
+```0
