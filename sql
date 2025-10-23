@@ -183,3 +183,80 @@ SELECT
   p.updated_at
 FROM providers p
 JOIN users u ON u.id = p.user_id;
+
+/* =========================================================
+   DOGOVORENO.COM — MATCHES PATCH (MySQL 8.0+)
+   ---------------------------------------------------------
+   Dodaje:
+     1) job_matches — stanje razgovora po jobu i provideru
+     2) kolone na jobs za konačni izbor / status matcha
+   ========================================================= */
+
+-- 1) KONAČNI IZBOR NA POSLU (opcionalno ali praktično)
+ALTER TABLE jobs
+  ADD COLUMN IF NOT EXISTS hired_provider_id INT NULL,
+  ADD COLUMN IF NOT EXISTS matched_at TIMESTAMP NULL DEFAULT NULL,
+  ADD CONSTRAINT fk_jobs_hired_provider
+    FOREIGN KEY (hired_provider_id) REFERENCES providers(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_jobs_matched_at ON jobs (matched_at);
+
+-- 2) JOB_MATCHES — dnevnik matcha između posla i majstora
+CREATE TABLE IF NOT EXISTS job_matches (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  job_id BIGINT NOT NULL,
+  provider_id INT NOT NULL,
+  -- Ako kreirano iz notifikacije, vežemo (nije obavezno)
+  notification_id BIGINT NULL,
+
+  /* stanje toka:
+     interested   — provider kliknuo "zainteresiran"
+     contacted    — klijent kontaktirao providera (ili provider kontaktiran od sustava)
+     hired        — klijent odabrao ovog providera (jobs.hired_provider_id = provider_id)
+     declined     — klijent odbio ovog providera
+     no_response  — provider nije reagirao u roku
+     completed    — posao zaključen
+     cancelled    — klijent otkazao posao
+  */
+  status ENUM(
+    'interested','contacted','hired','declined','no_response','completed','cancelled'
+  ) NOT NULL DEFAULT 'interested',
+
+  -- korisno za listanje / sort
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+  -- snapshot korisnih podataka u trenutku matcha (nije obavezno, ali pomaže u analitici)
+  distance_km DECIMAL(7,2) NULL,
+  price_offer DECIMAL(10,2) NULL,     -- ako ikad uvedeš ponude/cijene
+  currency CHAR(3) NULL,              -- npr. 'BAM', 'EUR'
+  message_excerpt VARCHAR(280) NULL,  -- kratki sažetak poruke/zahtjeva
+
+  -- integritet veza
+  CONSTRAINT fk_jm_job      FOREIGN KEY (job_id)      REFERENCES jobs(id)       ON DELETE CASCADE,
+  CONSTRAINT fk_jm_provider FOREIGN KEY (provider_id) REFERENCES providers(id)  ON DELETE CASCADE,
+  CONSTRAINT fk_jm_notif    FOREIGN KEY (notification_id) REFERENCES job_notifications(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Jedan red po par (job, provider) – bez duplikata:
+CREATE UNIQUE INDEX IF NOT EXISTS uq_jm_job_provider ON job_matches (job_id, provider_id);
+
+-- Pretraživanje po statusu i svježini:
+CREATE INDEX IF NOT EXISTS idx_jm_status_updated ON job_matches (status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_jm_job ON job_matches (job_id);
+CREATE INDEX IF NOT EXISTS idx_jm_provider ON job_matches (provider_id);
+
+-- 3) (OPCIJA) POGLED: zadnje stanje po (job, provider)
+DROP VIEW IF EXISTS v_job_match_latest;
+CREATE VIEW v_job_match_latest AS
+SELECT
+  jm.*
+FROM job_matches jm
+JOIN (
+  SELECT job_id, provider_id, MAX(updated_at) AS max_upd
+  FROM job_matches
+  GROUP BY job_id, provider_id
+) last ON last.job_id = jm.job_id AND last.provider_id = jm.provider_id AND (jm.updated_at = last.max_upd OR (jm.updated_at IS NULL AND jm.created_at = (
+    SELECT MAX(jm2.created_at) FROM job_matches jm2 WHERE jm2.job_id = jm.job_id AND jm2.provider_id = jm.provider_id
+)))
+;
