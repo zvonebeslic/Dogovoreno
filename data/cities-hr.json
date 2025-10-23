@@ -1,0 +1,9 @@
+[
+  {"name":"Zagreb","lat":45.8150,"lng":15.9819,"pop":790000},
+  {"name":"Split","lat":43.5081,"lng":16.4402,"pop":178000},
+  {"name":"Rijeka","lat":45.3271,"lng":14.4422,"pop":108000},
+  {"name":"Osijek","lat":45.5511,"lng":18.6939,"pop":96000},
+  {"name":"Zadar","lat":44.1194,"lng":15.2314,"pop":75000},
+  {"name":"Pula","lat":44.8666,"lng":13.8496,"pop":57000},
+  {"name":"Slavonski Brod","lat":45.1603,"lng":18.0156,"pop":59000}
+]
