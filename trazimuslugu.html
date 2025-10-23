@@ -7,59 +7,95 @@
   <link rel="stylesheet" href="base.css">
   <style>
     :root{
-      --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4;
-      --cta:#2563eb; /* plava (primarna) */
-      --accent:#10b981; /* ZELENA za 'Odaberi zanimanje' */
-      --glass:rgba(255,255,255,.08); --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+      --bg:#0f1115; --ink:#0b1220; --muted:#334155; /* ink/muted tamniji radi svijetlih kartica */
+      --cta:#2563eb;            /* plava (primarna) */
+      --accent:#16a34a;         /* bazna za ‘metalik’ zelenu */
+      --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
     }
-    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
+    body{ background:#0f1115; color:#f7f8fa; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
     .page{ min-height:100svh; display:grid; grid-template-rows:auto 1fr auto; }
     .wrap{ max-width:980px; margin:18px auto 64px; padding:0 16px; }
-    .h1{ font-weight:600; font-size:clamp(18px,3vw,26px); margin:10px 0 6px; }
-    .lead{ margin:0 0 16px; color:var(--muted); font-size:clamp(13px,2.5vw,16px); }
+    .h1{ font-weight:600; font-size:clamp(18px,3vw,26px); margin:10px 0 6px; color:#f7f8fa }
+    .lead{ margin:0 0 16px; color:#c7cbd4; font-size:clamp(13px,2.5vw,16px); }
 
-    .cloud{ background:var(--glass); border:1px solid rgba(255,255,255,.10); border-radius:var(--radius); padding:16px; margin:12px 0 }
-    .cloud h3{ margin:0 0 10px; font-size:18px }
-
+    /* MAT metalik svijetli kontejneri */
+    .cloud{
+      background: linear-gradient(180deg, rgba(255,255,255,.78) 0%, rgba(246,247,249,.72) 100%);
+      backdrop-filter: blur(4px);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:var(--radius);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.6),
+        0 8px 22px rgba(0,0,0,.22);
+      padding:16px; margin:12px 0;
+      color:var(--ink);
+    }
+    .cloud h3{ margin:0 0 10px; font-size:18px; color:#0b1220 }
     .note{ margin-top:8px; color:var(--muted); font-size:12px }
     .help{ color:var(--muted) }
 
     .row{ display:grid; gap:10px }
     .field{ display:grid; gap:6px }
-    input[type="text"], input[type="url"], textarea{
-      width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
-      background:#0e1014; color:var(--ink); outline:none;
+
+    /* Inputi u svijetlim karticama */
+    .cloud input[type="text"], .cloud input[type="url"], .cloud textarea{
+      width:100%; padding:12px; border-radius:12px;
+      border:1px solid rgba(0,0,0,.12);
+      background:#ffffff; color:#0b1220; outline:none;
     }
-    textarea{ min-height:140px; resize:vertical }
+    .cloud textarea{ min-height:140px; resize:vertical }
+    .cloud input[type="text"]:focus, .cloud input[type="url"]:focus, .cloud textarea:focus{
+      outline:2px solid rgba(37,99,235,.25);
+      border-color:rgba(37,99,235,.45);
+    }
 
     .chips{ display:flex; flex-wrap:wrap; gap:8px; }
-    .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); font-weight:600; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; border:1px solid rgba(0,0,0,.10); background:rgba(255,255,255,.6); font-weight:600; color:#0b1220 }
     .chip button{ all:unset; cursor:pointer; opacity:.85 } .chip button:hover{ opacity:1 }
 
     .btn{ appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer }
-    .btn-primary{ background:var(--cta); color:#fff }
-    .btn-ghost{ background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.14) }
+    /* Moderniji plavi CTA na svijetlom */
+    .btn-primary{
+      background:linear-gradient(180deg, #2b6ee9 0%, #245ed0 100%);
+      color:#fff; border:1px solid rgba(0,0,0,.2);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 6px 16px rgba(37,99,235,.28);
+      transition: transform .08s ease;
+    }
+    .btn-primary:active{ transform: translateY(1px); }
+    .btn-ghost{ background:transparent; color:#0b1220; border:1px solid rgba(0,0,0,.14) }
     .btn-inline{ padding:10px 12px; border-radius:10px }
-    .btn-accent{ background:var(--accent); color:#062a21; } /* zeleno samo za 'Odaberi zanimanje' */
+
+    /* ‘Metalik’ zelena */
+    .btn-accent{
+      background: linear-gradient(180deg, #16a34a 0%, #0f8a3a 55%, #0b6f30 100%);
+      color:#e6fff4; border:1px solid rgba(0,0,0,.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 6px 16px rgba(16,163,74,.25);
+      transition: transform .08s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn-accent:hover{ filter:brightness(1.03); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 8px 20px rgba(16,163,74,.32); }
+    .btn-accent:active{ transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0,0,0,.25), 0 3px 10px rgba(16,163,74,.22); }
+    .btn-accent:focus{ outline:2px solid rgba(22,163,74,.65); outline-offset:2px; }
+
     .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
 
     .subgrid{ display:grid; gap:10px } @media(min-width:700px){ .subgrid-2{ grid-template-columns:1fr 1fr } }
 
     /* dialog */
-    dialog{ border:0; border-radius:16px; background:#0e1014; color:var(--ink); width:min(720px, 96vw) }
+    dialog{ border:0; border-radius:16px; background:#0e1014; color:#f7f8fa; width:min(720px, 96vw) }
     dialog::backdrop{ background:rgba(0,0,0,.4) }
     .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
-    /* sticky pretraga na vrhu, lista skrola ispod */
-    .dlg-body{ padding:0; max-height:70vh; overflow:auto }
+
+    /* Sticky pretraga + stabilno tijelo */
+    .dlg-body{ padding:0; max-height:70vh; overflow:auto; overscroll-behavior:contain; }
     .dlg-search{ position:sticky; top:0; z-index:2; background:#0e1014; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
     #skillSearch{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b0d11; color:#fff }
     .dlg-actions{ padding:14px 16px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.08) }
-    .list{ display:grid; gap:8px; padding:14px 16px }
+    .list{ display:grid; gap:8px; padding:14px 16px; min-height:35vh; }
     .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03); }
     .item input{ transform:scale(1.2) }
 
     .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px }
-    .linklike{ color:#9ab; text-decoration:underline; cursor:pointer }
+    .linklike{ color:#1f3b7c; text-decoration:underline; cursor:pointer }
     .muted{ color:var(--muted) }
     .toast{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#0b7; color:#fff; padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); display:none; z-index:60; }
     .toast.show{ display:block }
@@ -68,7 +104,7 @@
     .uploader-minimal{ margin:8px 0 0; }
     .upload-link{
       appearance:none; background:transparent; border:0; text-decoration:underline; cursor:pointer;
-      padding:4px 0; font-weight:600; color:var(--ink);
+      padding:4px 0; font-weight:600; color:#f7f8fa;
     }
     .upload-link:focus{ outline:2px solid rgba(37,99,235,.6); border-radius:6px; }
     .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:8px; }
@@ -150,7 +186,7 @@
         <button class="btn btn-primary" id="btnBrowse">Zatraži uslugu ručno</button>
       </div>
 
-      <div class="note" style="margin-top:12px">
+      <div class="note" style="margin-top:12px; color:#c7cbd4">
         Nakon slanja, majstori dobivaju obavijest i mogu odgovoriti “Zainteresiran sam”.
         Ako jest — dobit ćete ime i broj telefona za dogovor.
       </div>
@@ -249,6 +285,7 @@
           skillList.appendChild(row);
         });
     }
+
     $('#btnPickSkills').addEventListener('click', ()=>{
       renderSkillList();
       skillSearch.value='';
@@ -258,9 +295,15 @@
       setTimeout(()=>skillSearch.focus(),50);
     });
     $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
-    skillSearch.addEventListener('input', ()=> renderSkillList(skillSearch.value));
+
+    /* Reset skrola NA SVAKI unos – da input uvijek ostane pri vrhu */
+    skillSearch.addEventListener('input', ()=>{
+      renderSkillList(skillSearch.value);
+      const body = dlgSkills.querySelector('.dlg-body');
+      if (body) body.scrollTop = 0;
+    });
     /* ESC briše upit */
-    skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); } });
+    skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); const body=dlgSkills.querySelector('.dlg-body'); if(body) body.scrollTop=0; } });
 
     /* ========= UPLOADER (minimal) ========= */
     const upload={ files:[], MAX_FILES:6, MAX_MB:5, types:['image/jpeg','image/png','image/webp'] };
@@ -294,7 +337,8 @@
     async function uploadAllImages(){
       if(upload.files.length===0) return [];
       const fd=new FormData(); upload.files.forEach(it=> fd.append('images[]', it.file, it.file.name));
-      const r=await fetch('/api/upload.php',{method:'POST',body:fd}); const j=await r.json();
+      const r=await fetch('api/jobs/upload.php',{method:'POST',body:fd}); /* prilagodi ako koristiš /api/upload.php */
+      const j=await r.json();
       if(!r.ok) throw new Error(j.error||'Greška pri uploadu slika');
       (j.urls||[]).forEach((url,i)=> upload.files[i].url=url);
       return j.urls||[];
@@ -375,10 +419,7 @@
       if (label) params.set('location', label);
       return 'majstori.html'+(params.toString()?('?'+params.toString()):'');
     }
-    $('#btnBrowse').addEventListener('click', ()=>{
-      const url = buildBrowseUrl();
-      window.location.href = url;
-    });
+    $('#btnBrowse').addEventListener('click', ()=>{ window.location.href = buildBrowseUrl(); });
 
     // init
     renderChips(); updateSkillCount();
