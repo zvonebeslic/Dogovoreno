@@ -90,24 +90,42 @@
 
     // Helper API
     async function api(route, method='GET', body=null){
-      const res = await fetch('api/auth.php?route='+route, {
-        method, headers:{'Content-Type':'application/json'},
-        body: body?JSON.stringify(body):null,
-        credentials: 'same-origin'
-      });
-      let j = {};
-      try { j = await res.json(); } catch(_){}
-      if(!res.ok) throw new Error(j.error||'Greška');
-      return j;
-    }
+  const res = await fetch('api/auth.php?route='+route, {
+    method,
+    headers: {'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : null,
+    credentials: 'same-origin'
+  });
+
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error('Neispravan odgovor poslužitelja'); // BLOKIRA lažnu prijavu
+  }
+
+  if (!res.ok) {
+    throw new Error((data && data.error) || 'Greška');
+  }
+  return data;
+}
 
     // Ako je već prijavljen, odmah na uređivanje profila
-    (async function checkAuth(){
-      try{
-        await api('profile','GET');
-        location.href = 'nudimuslugu.html';
-      }catch(_){ /* not authed → ostani ovdje */ }
-    })();
+(async function checkAuth(){
+  try {
+    const me = await api('profile','GET');
+
+    // redirect SAMO ako backend potvrđuje da korisnik stvarno postoji
+    if (me && (me.authenticated === true || (me.user && me.user.id))) {
+      location.href = 'nudimuslugu.html';
+    }
+
+    // ako nije verificiran ili backend vrati prazan objekt → ostani na login/registraciji
+  } catch(_) {
+    // nije prijavljen → ostani na profile.html
+  }
+})();
 
     // UX: ako u identifier upiše e-mail, prebacimo ga i u resend
     lg_identifier?.addEventListener('input', ()=>{
