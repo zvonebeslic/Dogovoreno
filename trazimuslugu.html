@@ -185,7 +185,7 @@
 
     /* ========= SKILLS (JSON) ========= */
     const ALL_SKILLS = [];
-    fetch('/data/skills.json').then(r=>r.json()).then(list=>{
+    fetch('data/skills.json').then(r=>r.json()).then(list=>{
       ALL_SKILLS.push(...list.sort((a,b)=>a.localeCompare(b,'hr')));
       renderSkillList();
     }).catch(()=>{ /* fallback ako JSON nedostupan */ });
