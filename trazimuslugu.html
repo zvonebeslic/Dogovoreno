@@ -5,144 +5,312 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tražim uslugu — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
+  <style>
+    :root{ --bg:#0f1115; --ink:#f7f8fa; --muted:#c7cbd4; --cta:#2563eb; --cta2:#ea580c; --glass:rgba(255,255,255,.08); --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35); }
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
+    .page{ min-height:100svh; display:grid; grid-template-rows:auto 1fr auto; }
+    .wrap{ max-width:980px; margin:18px auto 64px; padding:0 16px; }
+    .h1{ font-weight:800; font-size:clamp(22px,3.8vw,30px); margin:10px 0 6px }
+    .lead{ margin:0 0 16px; color:var(--muted) }
+
+    .cloud{ background:var(--glass); border:1px solid rgba(255,255,255,.10); border-radius:var(--radius); padding:16px; margin:12px 0 }
+    .cloud h3{ margin:0 0 10px; font-size:18px }
+    .note{ margin-top:8px; color:var(--muted); font-size:12px }
+    .help{ color:var(--muted) }
+
+    .row{ display:grid; gap:10px }
+    .field{ display:grid; gap:6px }
+    input[type="text"], input[type="url"], textarea{
+      width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background:#0e1014; color:var(--ink); outline:none;
+    }
+    textarea{ min-height:140px; resize:vertical }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); font-weight:600; }
+    .chip button{ all:unset; cursor:pointer; opacity:.85 } .chip button:hover{ opacity:1 }
+
+    .btn{ appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer }
+    .btn-primary{ background:var(--cta); color:#fff }
+    .btn-ghost{ background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.14) }
+    .btn-inline{ padding:10px 12px; border-radius:10px }
+    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+    .subgrid{ display:grid; gap:10px } @media(min-width:700px){ .subgrid-2{ grid-template-columns:1fr 1fr } }
+
+    /* dialog */
+    dialog{ border:0; border-radius:16px; background:#0e1014; color:var(--ink); width:min(720px, 96vw) }
+    dialog::backdrop{ background:rgba(0,0,0,.4) }
+    .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
+    .dlg-body{ padding:14px 16px; max-height:70vh; overflow:auto }
+    .dlg-actions{ padding:14px 16px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.08) }
+    .list{ display:grid; gap:8px }
+    .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03); }
+    .item input{ transform:scale(1.2) }
+
+    .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px }
+    .linklike{ color:#9ab; text-decoration:underline; cursor:pointer }
+    .muted{ color:var(--muted) }
+    .toast{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#0b7; color:#fff; padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); display:none; z-index:60; }
+    .toast.show{ display:block }
+
+    /* Uploader */
+    .uploader{ margin-top:10px }
+    .upload-drop{ border:1px dashed rgba(255,255,255,.25); border-radius:12px; padding:14px; text-align:center; background:rgba(255,255,255,.04); cursor:pointer; }
+    .upload-drop:focus{ outline:2px solid rgba(37,99,235,.6) }
+    .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:10px; }
+    .thumb{ position:relative; border-radius:10px; overflow:hidden; background:#0b0d11; border:1px solid rgba(255,255,255,.12); }
+    .thumb img{ width:100%; height:90px; object-fit:cover; display:block }
+    .thumb button{ position:absolute; top:6px; right:6px; border:0; border-radius:8px; padding:4px 6px; background:rgba(0,0,0,.5); color:#fff; cursor:pointer; }
+  </style>
 </head>
 <body>
-  <div data-include="header.html"></div>
+  <main class="page">
+    <div data-include="header.html"></div>
 
-  <main class="container grid">
-    <div class="card" style="padding:16px">
-      <h2 style="margin:0 0 8px">Pronađi majstora</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <input id="filterSkill" placeholder="Vještina (npr. Keramičar)">
-        <input id="filterLocation" placeholder="Lokacija (npr. Sarajevo)">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
-        <select id="radiusKm">
-          <option value="">Bez radijusa</option>
-          <option value="5">↔ do 5 km</option>
-          <option value="10">↔ do 10 km</option>
-          <option value="25">↔ do 25 km</option>
-          <option value="50">↔ do 50 km</option>
-          <option value="100">↔ do 100 km</option>
-        </select>
-        <input id="qlat" placeholder="Moja lat (opcija)">
-        <input id="qlng" placeholder="Moja lng (opcija)">
-      </div>
-      <div style="display:flex;gap:10px;margin-top:10px">
-        <button class="btn btn-ghost" type="button" id="btnUseGps">Koristi moju lokaciju</button>
-        <button class="btn btn-primary" id="btnSearch">Pretraži</button>
-        <button class="btn btn-ghost" id="btnClear">Očisti</button>
-      </div>
+    <div class="wrap">
+      <h1 class="h1">Tražite uslugu?</h1>
+      <p class="lead">U par klikova ćemo vam pomoći da pronađete odgovarajuću osobu/majstora.</p>
+
+      <!-- 1) ZANIMANJE -->
+      <section class="cloud" aria-labelledby="lab-skill">
+        <h3 id="lab-skill">Tko Vam Treba?</h3>
+        <div class="row">
+          <div class="chips" id="skillChips" aria-live="polite"></div>
+          <div>
+            <button class="btn btn-ghost btn-inline" type="button" id="btnPickSkills">Odaberi zanimanje</button>
+            <span class="muted" id="skillCountInfo">(max 3)</span>
+          </div>
+        </div>
+        <div class="note">* Odaberite zanimanje za koje mislite da će najbolje odraditi ono što vam treba.</div>
+      </section>
+
+      <!-- 2) OPIS + UPLOAD -->
+      <section class="cloud" aria-labelledby="lab-desc">
+        <h3 id="lab-desc">Što Vam Treba?</h3>
+        <div class="field">
+          <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
+        </div>
+        <div class="uploader" id="uploader">
+          <input id="fileInput" type="file" accept="image/*" multiple hidden>
+          <div class="upload-drop" id="uploadDrop" role="button" tabindex="0">📎 Dodaj fotografije (do 6) — povuci i pusti ili klikni ovdje</div>
+          <div class="upload-note help">Podržano: JPG, PNG, WEBP. Maks. 5 MB po slici.</div>
+          <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
+        </div>
+        <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
+      </section>
+
+      <!-- 3) LOKACIJA -->
+      <section class="cloud" aria-labelledby="lab-loc">
+        <h3 id="lab-loc">Gdje Vam Treba?</h3>
+        <div class="subgrid subgrid-2">
+          <div class="field">
+            <label for="mapsUrl" class="help">Zalijepite link s Google karata (preporučeno)</label>
+            <input id="mapsUrl" type="url" placeholder="https://maps.google.com/…">
+            <div class="help"><span class="linklike" id="openMaps">Otvori Google karte</span> · <span class="linklike" id="pasteFromClipboard">Zalijepi iz međuspremnika</span></div>
+          </div>
+          <div class="field">
+            <label class="help">Ili odaberite ručno (za starije korisnike)</label>
+            <button class="btn btn-ghost btn-inline" type="button" id="btnManualPlace">Ručni odabir mjesta</button>
+            <div class="help">Prvo država (EX-YU), zatim grad (≥1k), a potom kratko pojasnite gdje točno.</div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:10px">
+          * Unesite lokaciju gdje vam treba odraditi uslugu/posao.<br>
+          * Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo kako bismo najbrže moguće pronašli najbliže radnike/majstore koji vam trebaju.<br>
+          * Preciznije je koristiti Google karte. Ako ne znate kako, zamolite nekoga da vam pomogne.
+        </div>
+        <!-- Hidden lat/lng -->
+        <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
+      </section>
+
+      <div class="actions"><button class="btn btn-primary" id="btnSubmit">Zatraži uslugu</button></div>
+      <div class="note" style="margin-top:12px">Nakon slanja, naš sustav automatski pronalazi najbliže majstore koji odgovaraju traženim zanimanjima. Majstori dobivaju obavijest i mogu odgovoriti “Zainteresiran sam”. Ako jest — dobit ćete ime i broj telefona za dogovor.</div>
     </div>
 
-    <section id="results" class="grid"></section>
+    <div data-include="promos.html"></div>
+    <div data-include="footer.html"></div>
   </main>
 
-  <!-- Contact modal -->
-  <dialog id="contactDlg" class="card" style="border:1px solid var(--fieldBorder);border-radius:16px;padding:0;max-width:560px">
-    <form method="dialog" id="contactForm" style="padding:16px" onsubmit="return false;">
-      <h3 style="margin:0 0 8px">Pošalji upit majstoru</h3>
-      <p id="cProv" class="help" style="margin:0 0 10px"></p>
-      <div class="grid">
-        <input id="cName" placeholder="Vaše ime *" required>
-        <input id="cPhone" placeholder="Vaš telefon *" required>
-        <input id="cEmail" type="email" placeholder="Vaš e-mail (opcija)">
-        <textarea id="cMsg" placeholder="Kratko opišite posao *" required></textarea>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" type="button" id="cCancel">Odustani</button>
-        <button class="btn btn-primary" type="button" id="cSend">Pošalji</button>
-      </div>
-    </form>
+  <!-- DIALOG: Zanimanja -->
+  <dialog id="dlgSkills">
+    <div class="dlg-head"><strong>Odaberi zanimanja (max 3)</strong><button class="btn btn-ghost btn-inline" onclick="dlgSkills.close()">✕</button></div>
+    <div class="dlg-body">
+      <input id="skillSearch" placeholder="Pretraži…" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0b0d11;color:#fff;margin-bottom:10px">
+      <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
+    </div>
+    <div class="dlg-actions"><button class="btn btn-ghost" onclick="dlgSkills.close()">Odustani</button><button class="btn btn-primary" id="skillsSave">Spremi</button></div>
   </dialog>
 
-  <div data-include="promos.html"></div>
-  <div data-include="footer.html"></div>
+  <!-- DIALOG: Ručni odabir mjesta -->
+  <dialog id="dlgPlace">
+    <div class="dlg-head"><strong>Ručni odabir mjesta</strong><button class="btn btn-ghost btn-inline" onclick="dlgPlace.close()">✕</button></div>
+    <div class="dlg-body">
+      <div class="grid-3">
+        <div class="field"><label class="help">Država (EX-YU)</label><select id="selCountry"></select></div>
+        <div class="field"><label class="help">Grad / mjesto (≥1k)</label><select id="selCity"></select></div>
+        <div class="field"><label class="help">Dodatni opis (ulica, kvart…) — opcija</label><input id="placeNote" placeholder="npr. kod općine, centar…"></div>
+      </div>
+      <div class="note" style="margin-top:8px">Sustav će uzeti geografski centroid odabranog mjesta za izračun udaljenosti (privatno, nevidljivo).</div>
+    </div>
+    <div class="dlg-actions"><button class="btn btn-ghost" onclick="dlgPlace.close()">Odustani</button><button class="btn btn-primary" id="placeSave">Spremi lokaciju</button></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">✓ Poslano! Uskoro dobivate odgovore.</div>
+
   <script src="include.js"></script>
-  <script src="majstori.js"></script>
   <script>
-    const results = document.getElementById('results');
-    let lastList = [];
-    let activeProvider = null;
+    /* ========= UTIL ========= */
+    const $ = s => document.querySelector(s);
+    const toast = (m)=>{ const t=$('#toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); };
 
-    btnUseGps.addEventListener('click', ()=>{
-      if(!navigator.geolocation){ alert('Vaš preglednik ne podržava GPS.'); return; }
-      navigator.geolocation.getCurrentPosition(pos=>{
-        qlat.value = pos.coords.latitude.toFixed(6);
-        qlng.value = pos.coords.longitude.toFixed(6);
-      }, err=> alert('GPS greška: '+err.message), {enableHighAccuracy:true, timeout:10000});
-    });
+    /* ========= SKILLS (JSON) ========= */
+    // koristi /data/skills.json – isti file i za nudimuslugu.html
+    const ALL_SKILLS = [];
+    fetch('/data/skills.json').then(r=>r.json()).then(list=>{
+      ALL_SKILLS.push(...list.sort((a,b)=>a.localeCompare(b,'hr')));
+      renderSkillList();
+    }).catch(()=>{ /* fallback: možeš ubaciti default listu ako JSON nedostupan */ });
 
-    async function search(){
-      const skill = filterSkill.value.trim();
-      const loc   = filterLocation.value.trim();
-      const radius = radiusKm.value ? parseFloat(radiusKm.value) : null;
-      const qLat  = qlat.value ? parseFloat(qlat.value) : null;
-      const qLng  = qlng.value ? parseFloat(qlng.value) : null;
+    const pickedSkills = new Set();
+    const skillChips  = $('#skillChips');
+    const dlgSkills   = $('#dlgSkills');
+    const skillList   = $('#skillList');
+    const skillSearch = $('#skillSearch');
 
-      lastList = await Majstori.fetchProviders({skill, location: loc, qlat: qLat, qlng: qLng, radius_km: radius});
-      render();
-    }
-
-    function render(){
-      results.innerHTML = '';
-      if(!lastList.length){
-        results.innerHTML = '<div class="card" style="padding:16px">Nema rezultata za zadane filtere.</div>';
-        return;
-      }
-      lastList.forEach(p=>{
-        const el = document.createElement('div');
-        el.className = 'card'; el.style.padding = '16px';
-        const dist = (p.distance_km!=null) ? `<div class="help">📏 ${p.distance_km} km</div>` : '';
-        el.innerHTML = `
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-weight:700">${p.name || 'Majstor'}</div>
-              <div class="help">${(p.skills||[]).join(', ') || '—'}</div>
-              <div class="help">📍 ${p.location || '—'}</div>
-              ${dist}
-            </div>
-            <div style="display:flex;gap:10px">
-              <a class="btn btn-ghost" href="majstor.html?id=${p.id}">Pregled profila</a>
-              <button class="btn btn-primary" data-id="${p.id}">Pošalji upit</button>
-            </div>
-          </div>
-          <div class="help" style="margin-top:8px">${p.bio ? p.bio : ''}</div>
-        `;
-        el.querySelector('button.btn-primary').addEventListener('click', ()=>{
-          activeProvider = p;
-          cProv.textContent = `${p.name} — ${(p.skills||[]).join(', ')}`;
-          cName.value=''; cPhone.value=''; cEmail.value=''; cMsg.value='';
-          contactDlg.showModal();
-        });
-        results.appendChild(el);
+    function renderChips(){
+      skillChips.innerHTML='';
+      pickedSkills.forEach(s=>{
+        const chip=document.createElement('span'); chip.className='chip';
+        chip.innerHTML=`<span>${s}</span> <button title="Ukloni" aria-label="Ukloni">✕</button>`;
+        chip.querySelector('button').addEventListener('click', ()=>{ pickedSkills.delete(s); renderChips(); updateSkillCount(); });
+        skillChips.appendChild(chip);
       });
     }
+    function updateSkillCount(){ $('#skillCountInfo').textContent=`(odabrano ${pickedSkills.size}/3)`; }
+    function renderSkillList(filter=''){
+      skillList.innerHTML=''; const f=filter.trim().toLowerCase();
+      ALL_SKILLS.filter(s=>!f || s.toLowerCase().includes(f)).forEach(s=>{
+        const row=document.createElement('label'); row.className='item';
+        row.innerHTML=`<span>${s}</span><input type="checkbox" ${pickedSkills.has(s)?'checked':''}>`;
+        const cb=row.querySelector('input');
+        cb.addEventListener('change', ()=>{
+          if(cb.checked){ if(pickedSkills.size>=3){ cb.checked=false; toast('Možete odabrati najviše 3 zanimanja.'); return; } pickedSkills.add(s); }
+          else pickedSkills.delete(s);
+          renderChips(); updateSkillCount();
+        });
+        skillList.appendChild(row);
+      });
+    }
+    $('#btnPickSkills').addEventListener('click', ()=>{ renderSkillList(); skillSearch.value=''; dlgSkills.showModal(); setTimeout(()=>skillSearch.focus(),50); });
+    $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
+    skillSearch.addEventListener('input', ()=> renderSkillList(skillSearch.value));
 
-    btnSearch.addEventListener('click', search);
-    btnClear.addEventListener('click', ()=>{ filterSkill.value=''; filterLocation.value=''; radiusKm.value=''; qlat.value=''; qlng.value=''; search(); });
-    document.addEventListener('DOMContentLoaded', search);
-
-    cCancel.addEventListener('click', ()=> contactDlg.close());
-    cSend.addEventListener('click', async ()=>{
-      if(!activeProvider) return;
-      const payload = {
-        provider_id: activeProvider.id,
-        from_name: cName.value.trim(),
-        from_phone: cPhone.value.trim(),
-        from_email: cEmail.value.trim(),
-        message: cMsg.value.trim()
-      };
-      if(!payload.from_name || !payload.from_phone || !payload.message){
-        alert('Ime, telefon i poruka su obavezni.'); return;
+    /* ========= UPLOADER ========= */
+    const upload={ files:[], MAX_FILES:6, MAX_MB:5, types:['image/jpeg','image/png','image/webp'] };
+    const fileInput=$('#fileInput'), uploadDrop=$('#uploadDrop'), uploadGrid=$('#uploadGrid');
+    const bytesToMB=b=>b/(1024*1024);
+    function renderThumbs(){
+      uploadGrid.innerHTML='';
+      upload.files.forEach((it,idx)=>{
+        const d=document.createElement('div'); d.className='thumb';
+        d.innerHTML=`<img alt="Fotografija #${idx+1}" src="${it.localPreview}"><button type="button" title="Ukloni">✕</button>`;
+        d.querySelector('button').addEventListener('click',()=>{ upload.files.splice(idx,1); renderThumbs(); });
+        uploadGrid.appendChild(d);
+      });
+    }
+    async function addFiles(list){
+      for(const f of Array.from(list)){
+        if(upload.files.length>=upload.MAX_FILES){ toast('Maksimalno 6 fotografija.'); break; }
+        if(!upload.types.includes(f.type)){ toast('Nepodržan format: '+f.type); continue; }
+        if(bytesToMB(f.size)>upload.MAX_MB){ toast('Datoteka je prevelika (>5MB): '+f.name); continue; }
+        const dataURL = await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+        upload.files.push({file:f, localPreview:dataURL, url:null});
       }
-      try{
-        const r = await fetch('api/auth.php?route=contact', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-        const j = await r.json(); if(!r.ok) throw new Error(j.error||'Greška slanja');
-        alert('Upit poslan majstoru. Hvala!');
-        contactDlg.close();
-      }catch(e){ alert(e.message); }
+      renderThumbs();
+    }
+    uploadDrop.addEventListener('click', ()=> fileInput.click());
+    uploadDrop.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') fileInput.click(); });
+    fileInput.addEventListener('change', ()=> addFiles(fileInput.files));
+    ['dragenter','dragover'].forEach(evt=>{ uploadDrop.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploadDrop.style.background='rgba(255,255,255,.07)'; }); });
+    ['dragleave','drop'].forEach(evt=>{ uploadDrop.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploadDrop.style.background='rgba(255,255,255,.04)'; }); });
+    uploadDrop.addEventListener('drop', e=> addFiles(e.dataTransfer.files));
+
+    async function uploadAllImages(){
+      if(upload.files.length===0) return [];
+      const fd=new FormData(); upload.files.forEach(it=> fd.append('images[]', it.file, it.file.name));
+      const r=await fetch('/api/upload.php',{method:'POST',body:fd}); const j=await r.json();
+      if(!r.ok) throw new Error(j.error||'Greška pri uploadu slika');
+      (j.urls||[]).forEach((url,i)=> upload.files[i].url=url);
+      return j.urls||[];
+    }
+
+    /* ========= LOKACIJA ========= */
+    const mapsUrl=$('#mapsUrl'), latEl=$('#lat'), lngEl=$('#lng'), placeLabel=$('#placeLabel');
+    const tryParseGoogleMaps=(url)=>{
+      const at=/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/.exec(url); if(at) return {lat:parseFloat(at[1]), lng:parseFloat(at[2])};
+      const d3d=/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/.exec(url); if(d3d) return {lat:parseFloat(d3d[1]), lng:parseFloat(d3d[2])};
+      return null;
+    };
+    mapsUrl.addEventListener('change', ()=>{
+      const val=mapsUrl.value.trim(); const p=tryParseGoogleMaps(val);
+      if(p){ latEl.value=p.lat; lngEl.value=p.lng; placeLabel.value=val; toast('Lokacija prepoznata.'); }
+      else{ toast('Nije prepoznata lokacija iz linka. Pokušajte drugi oblik ili ručni odabir.'); }
     });
+    $('#openMaps').addEventListener('click', ()=> window.open('https://maps.google.com','_blank'));
+    $('#pasteFromClipboard').addEventListener('click', async ()=>{
+      try{ const t=await navigator.clipboard.readText(); mapsUrl.value=t||''; mapsUrl.dispatchEvent(new Event('change')); }
+      catch{ toast('Clipboard nije dostupan u ovom pregledniku.'); }
+    });
+
+    // Ručni odabir — lazy load JSON po državi
+    const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity'), placeNote=$('#placeNote');
+    const COUNTRY_FILES={
+      "BiH": "/data/cities-bih.json",
+      "Hrvatska": "/data/cities-hr.json",
+      "Srbija": "/data/cities-rs.json",
+      "Slovenija": "/data/cities-si.json",
+      "Crna Gora": "/data/cities-me.json",
+      "S. Makedonija": "/data/cities-mk.json"
+    };
+    function fillCountries(){ selCountry.innerHTML=Object.keys(COUNTRY_FILES).map(c=>`<option>${c}</option>`).join(''); selCountry.dispatchEvent(new Event('change')); }
+    selCountry.addEventListener('change', async ()=>{
+      const c=selCountry.value, url=COUNTRY_FILES[c]; selCity.innerHTML='<option>Učitavam…</option>';
+      try{ const list=await (await fetch(url)).json(); list.sort((a,b)=> a.name.localeCompare(b.name,'hr')); selCity.innerHTML=list.map(ci=>`<option data-lat="${ci.lat}" data-lng="${ci.lng}">${ci.name}</option>`).join(''); }
+      catch{ selCity.innerHTML='<option>Greška pri učitavanju</option>'; }
+    });
+    $('#btnManualPlace').addEventListener('click', ()=>{ fillCountries(); dlgPlace.showModal(); });
+    $('#placeSave').addEventListener('click', ()=>{
+      const opt=selCity.selectedOptions[0]; if(!opt){ toast('Odaberite grad.'); return; }
+      latEl.value=parseFloat(opt.dataset.lat); lngEl.value=parseFloat(opt.dataset.lng);
+      placeLabel.value=selCountry.value+' / '+selCity.value+(placeNote.value?(' — '+placeNote.value):'');
+      dlgPlace.close(); toast('Lokacija postavljena.');
+    });
+
+    /* ========= SUBMIT ========= */
+    function validPayload(){
+      if(pickedSkills.size===0){ toast('Odaberite barem jedno zanimanje.'); return false; }
+      if(!($('#jobDesc').value||'').trim()){ toast('Napišite ukratko što vam treba.'); return false; }
+      if(!latEl.value || !lngEl.value){ toast('Postavite lokaciju (Google karte ili ručno).'); return false; }
+      return true;
+    }
+    $('#btnSubmit').addEventListener('click', async ()=>{
+      if(!validPayload()) return;
+      try{
+        const imageUrls=await uploadAllImages();
+        const payload={
+          skills:Array.from(pickedSkills),
+          description:($('#jobDesc').value||'').trim(),
+          images:imageUrls,
+          location:{ lat:parseFloat(latEl.value), lng:parseFloat(lngEl.value), label:placeLabel.value||'' }
+        };
+        const r=await fetch('/api/jobs/request.php',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+        const j=await r.json(); if(!r.ok) throw new Error(j.error||'Greška pri slanju');
+        toast('✓ Poslano! Uskoro dobivate odgovore.'); console.log('JOB_ID', j.id);
+      }catch(e){ toast('⚠ '+(e.message||e)); }
+    });
+
+    // init
+    renderChips(); updateSkillCount();
   </script>
 </body>
 </html>
