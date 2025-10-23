@@ -1,0 +1,10 @@
+[
+  {"name":"Sarajevo","lat":43.8563,"lng":18.4131,"pop":275000},
+  {"name":"Banja Luka","lat":44.7722,"lng":17.1910,"pop":185000},
+  {"name":"Mostar","lat":43.3438,"lng":17.8078,"pop":105000},
+  {"name":"Tuzla","lat":44.5384,"lng":18.6671,"pop":110000},
+  {"name":"Zenica","lat":44.2017,"lng":17.9039,"pop":115000},
+  {"name":"Bihać","lat":44.8169,"lng":15.8700,"pop":56000},
+  {"name":"Prijedor","lat":44.9799,"lng":16.7140,"pop":97000},
+  {"name":"Doboj","lat":44.7320,"lng":18.0860,"pop":71000}
+]
