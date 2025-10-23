@@ -317,12 +317,12 @@
     // Ručni odabir — lazy load JSON po državi
     const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity'), placeNote=$('#placeNote');
     const COUNTRY_FILES={
-      "BiH": "/data/cities-bih.json",
-      "Hrvatska": "/data/cities-hr.json",
-      "Srbija": "/data/cities-rs.json",
-      "Slovenija": "/data/cities-si.json",
-      "Crna Gora": "/data/cities-me.json",
-      "S. Makedonija": "/data/cities-mk.json"
+      "BiH": "data/cities-bih.json",
+      "Hrvatska": "data/cities-hr.json",
+      "Srbija": "data/cities-rs.json",
+      "Slovenija": "data/cities-si.json",
+      "Crna Gora": "data/cities-me.json",
+      "S. Makedonija": "data/cities-mk.json"
     };
     function fillCountries(){ selCountry.innerHTML=Object.keys(COUNTRY_FILES).map(c=>`<option>${c}</option>`).join(''); selCountry.dispatchEvent(new Event('change')); }
     selCountry.addEventListener('change', async ()=>{
@@ -357,7 +357,7 @@
           images:imageUrls,
           location:{ lat:parseFloat(latEl.value), lng:parseFloat(lngEl.value), label:placeLabel.value||'' }
         };
-        const r=await fetch('/api/jobs/request.php',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+        const r=await fetch('api/jobs/request.php',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
         const j=await r.json(); if(!r.ok) throw new Error(j.error||'Greška pri slanju');
         toast('✓ Poslano! Uskoro dobivate odgovore.'); console.log('JOB_ID', j.id);
       }catch(e){ toast('⚠ '+(e.message||e)); }
