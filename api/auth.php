@@ -42,9 +42,34 @@ if ($route==='register' && $method==='POST'){
       ->execute([$email,$hash,$name,$phone,$tok]);
 
   $link = base_url().'/api/auth.php?route=verify&token='.$tok;
-  send_verification_email($email, $link);
+  @send_verification_email($email, $link);
 
   json_out(['ok'=>true,'message'=>'Provjerite e-mail za potvrdu.']);
+}
+
+/* ---------- RESEND VERIFICATION ---------- */
+if ($route==='resend' && $method==='POST'){
+  global $pdo, $input;
+  $email = strtolower(trim($input['email'] ?? ''));
+  // Uvijek neutralna poruka (da ne otkrivamo postoji li korisnik)
+  $neutral = ['ok'=>true,'message'=>'Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.'];
+  if(!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) json_out($neutral);
+
+  try{
+    $st=$pdo->prepare('SELECT id, verified FROM users WHERE email=?');
+    $st->execute([$email]);
+    $u=$st->fetch(PDO::FETCH_ASSOC);
+
+    if($u && (int)$u['verified']===0){
+      $tok=token64();
+      $pdo->prepare('UPDATE users SET verify_token=? WHERE id=?')->execute([$tok,(int)$u['id']]);
+      $link = base_url().'/api/auth.php?route=verify&token='.$tok;
+      @send_verification_email($email, $link);
+    }
+  }catch(Throwable $e){
+    // i u slučaju greške vraćamo neutralnu poruku
+  }
+  json_out($neutral);
 }
 
 /* ---------- VERIFY EMAIL (GET) ---------- */
@@ -53,16 +78,14 @@ if ($route==='verify' && $method==='GET'){
   $tok = $_GET['token'] ?? '';
   if(!$tok){ echo 'Nevažeći token.'; exit; }
 
-  // pronađi korisnika po tokenu
   $st = $pdo->prepare('SELECT id FROM users WHERE verify_token=?');
   $st->execute([$tok]);
   $u = $st->fetch(PDO::FETCH_ASSOC);
   if(!$u){ echo 'Nevažeći ili iskorišten token.'; exit; }
 
-  // označi kao verificiran i ukloni token
   $pdo->prepare('UPDATE users SET verified=1, verify_token=NULL WHERE id=?')->execute([(int)$u['id']]);
 
-  // auto-login + redirect na izradu profila
+  // auto-login + redirect na uređivanje profila
   $_SESSION['uid'] = (int)$u['id'];
   header('Location: /nudimuslugu.html');
   exit;
@@ -75,7 +98,7 @@ if ($route==='login' && $method==='POST'){
   $pass       = $input['password'] ?? '';
   if(!$identifier || !$pass) json_out(['error'=>'Nedostaju polja'],422);
 
-  // redoslijed: email -> phone -> name
+  // redoslijed: email -> telefon -> ime
   $st=$pdo->prepare('SELECT id,pass_hash,verified,email,name,phone FROM users WHERE LOWER(email)=LOWER(?)');
   $st->execute([$identifier]);
   $u=$st->fetch(PDO::FETCH_ASSOC);
@@ -135,7 +158,7 @@ if ($route==='profile'){
     // 1) update users
     $pdo->prepare('UPDATE users SET name=?, phone=? WHERE id=?')->execute([$name,$phone,$uid]);
 
-    // 2) providers: SELECT pa INSERT/UPDATE (bez ON DUPLICATE KEY)
+    // 2) providers: upsert
     $st=$pdo->prepare('SELECT id FROM providers WHERE user_id=?'); $st->execute([$uid]);
     $provId = $st->fetchColumn();
 
@@ -151,17 +174,14 @@ if ($route==='profile'){
       $provId = (int)$pdo->lastInsertId();
     }
 
-    // 3) (opcija) sinkronizacija u normalizirane tablice skills/provider_skills ako postoje
+    // 3) sinkronizacija na skills/provider_skills (ako tablice postoje)
     try{
       if (is_array($skills) && count($skills)){
-        // osiguraj da postoje skilovi
-        $sel = $pdo->query("SHOW TABLES LIKE 'skills'"); $hasSkills = (bool)$sel->fetchColumn();
-        $sel = $pdo->query("SHOW TABLES LIKE 'provider_skills'"); $hasPS = (bool)$sel->fetchColumn();
+        $sel = $pdo->query("SHOW TABLES LIKE 'skills'");           $hasSkills = (bool)$sel->fetchColumn();
+        $sel = $pdo->query("SHOW TABLES LIKE 'provider_skills'");  $hasPS     = (bool)$sel->fetchColumn();
         if ($hasSkills && $hasPS){
-          // upiši nove skillove u katalog (ako ne postoje)
           $insS = $pdo->prepare("INSERT IGNORE INTO skills(name) VALUES (?)");
           foreach ($skills as $s){ $s = trim((string)$s); if($s!==''){ $insS->execute([$s]); } }
-          // zbriši stare mape pa upiši nove
           $pdo->prepare("DELETE FROM provider_skills WHERE provider_id=?")->execute([$provId]);
           $inQ = implode(',', array_fill(0, count($skills), '?'));
           $q = $pdo->prepare("SELECT id,name FROM skills WHERE name IN ($inQ)");
@@ -186,25 +206,17 @@ if ($route==='providers' && $method==='GET'){
   $qlng  = isset($_GET['qlng']) ? (float)$_GET['qlng'] : null;
   $radkm = isset($_GET['radius_km']) ? (float)$_GET['radius_km'] : null;
 
-  // Bazna polja
   $fields = 'p.id, u.name, u.phone, p.skills, p.location, p.bio, p.reviews_enabled, p.updated_at';
   $where = [];
   $args  = [];
 
-  // Filtar po tekstualnoj lokaciji (opcija)
   if($loc){ $where[] = 'LOWER(p.location) LIKE ?'; $args[] = '%'.strtolower($loc).'%'; }
-
-  // Filtar po skillu (string u JSON-u -> radi i prije normalizacije)
   if($skill){ $where[] = 'LOWER(p.skills) LIKE ?'; $args[] = '%'.strtolower($skill).'%'; }
 
-  $distanceJoin = '';
   $having = '';
   if ($qlat !== null && $qlng !== null){
-    // izračun distance_km u SELECT-u (alias)
     $fields .= ', (6371 * acos( cos(radians(?)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(?)) + sin(radians(?)) * sin(radians(p.lat)) )) AS distance_km';
     array_push($args, $qlat, $qlng, $qlat);
-
-    // HAVING koristi alias (izbjegavamo duplo vezanje istih placeholdera)
     if ($radkm){ $having = ' HAVING distance_km <= ?'; $args[] = $radkm; }
   }
 
@@ -258,7 +270,7 @@ if ($route==='contact' && $method==='POST'){
   $to = $row['email'];
   $subj = 'Novi upit — Dogovoreno';
   $body = "Imate novi upit od klijenta:\n\nIme: $from_name\nTelefon: $from_phone\nEmail: $from_email\n\nPoruka:\n$message\n\n— Dogovoreno.com";
-  $ok = send_contact_email($to, $subj, $body);
+  $ok = @send_contact_email($to, $subj, $body);
 
   // kopija administratoru (opcija)
   @send_contact_email('info@'.$_SERVER['HTTP_HOST'], 'Kopija upita — '.$row['prov_name'], $body);
