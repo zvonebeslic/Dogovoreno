@@ -193,11 +193,35 @@ button[disabled]{
 .profile-btn:hover{ filter:brightness(1.06); }
 .profile-btn:active{ transform:translateY(1px); }
 
+/* Back strelica – skroz lijevo, velika tap zona */
+.back-btn{
+  position:absolute;
+  left:8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:44px; height:44px;           /* mobile-friendly tap area */
+  display:none;                      /* skriveno na indexu */
+  align-items:center; justify-content:center;
+  background:transparent;
+  border:0;
+  color:#fff;
+  cursor:pointer;
+  z-index:51;                        /* iznad sadržaja headera (header je z-index:50) */
+}
+.back-btn svg{ pointer-events:none; }
+.back-btn:active{ transform:translateY(-50%) scale(0.98); }
+
+/* Kad je strelica aktivna, rezerviraj prostor lijevo SAMO u containeru */
+.site-header.has-back .container{
+  padding-left:52px; /* 44px tap + 8px razmak */
+}
+
 /* Fine-tuning za male mobitele */
 @media (max-width:420px){
   .site-header .container{ padding:8px 10px; }
   .profile-btn{ padding:8px 10px; font-size:14px; }
 }
+
 
 /* ========================= */
 /* FOOTER                    */
