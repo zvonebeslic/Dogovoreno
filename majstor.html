@@ -5,14 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Profil majstora — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
+  <style>
+    .page-wrap{max-width:980px;margin:0 auto}
+    .profile-card{
+      padding:18px;
+      border-radius:16px;
+      background:var(--glass,rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:var(--shadow);
+    }
+    .header-row{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:14px;
+      align-items:center;
+    }
+    .avatar{
+      width:64px;height:64px;border-radius:50%;
+      background:linear-gradient(145deg, rgba(37,99,235,.25), rgba(234,88,12,.25));
+      display:grid;place-items:center;font-weight:800;font-size:22px;
+      color:#fff; user-select:none;
+      border:1px solid rgba(255,255,255,.15);
+    }
+    .title{margin:0;font-size:20px;letter-spacing:.2px}
+    .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+    .meta .item{font-size:13px;color:var(--muted,#c7cbd4);display:inline-flex;gap:6px;align-items:center}
+    .skills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+    .chip{padding:7px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:13px;background:rgba(255,255,255,.06)}
+    .bio{margin-top:12px;line-height:1.5}
+    .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    @media (max-width:720px){ .info-grid{grid-template-columns:1fr} }
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12)}
+    .dim{color:var(--muted,#c7cbd4)}
+  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
 
-  <main class="container">
-    <div id="wrap" class="card" style="padding:16px"></div>
+  <main class="container page-wrap">
+    <section id="wrap" class="profile-card"></section>
   </main>
 
+  <!-- Kontakt modal -->
   <dialog id="contactDlg" class="card" style="border:1px solid var(--fieldBorder);border-radius:16px;padding:0;max-width:560px">
     <form method="dialog" id="contactForm" style="padding:16px" onsubmit="return false;">
       <h3 style="margin:0 0 8px">Pošalji upit majstoru</h3>
@@ -33,27 +68,85 @@
   <div data-include="promos.html"></div>
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
+
   <script>
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
+    // ------- helpers
+    const qs = new URLSearchParams(location.search);
+    const id = qs.get('id');
+    const userLat = qs.get('qlat') ? parseFloat(qs.get('qlat')) : null;
+    const userLng = qs.get('qlng') ? parseFloat(qs.get('qlng')) : null;
+
+    function haversineKm(lat1, lon1, lat2, lon2){
+      const R = 6371;
+      const toRad = d => d*Math.PI/180;
+      const dLat = toRad(lat2-lat1);
+      const dLon = toRad(lon2-lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      const c = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      return R*c;
+    }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
     let current = null;
 
     async function load(){
+      const wrap = document.getElementById('wrap');
+      if(!id){ wrap.innerHTML = '<div>Profil nije pronađen.</div>'; return; }
+
       const r = await fetch('api/auth.php?route=provider&id='+encodeURIComponent(id));
-      const j = await r.json(); 
-      if(!r.ok || !j.data){ document.getElementById('wrap').innerHTML = 'Nema podataka.'; return; }
+      const j = await r.json().catch(()=>null);
+      if(!r.ok || !j || !j.data){
+        wrap.innerHTML = '<div>Nema podataka.</div>'; return;
+      }
       current = j.data;
-      const dist = ''; // ovdje po želji možeš prikazati udaljenost ako prosljeđuješ i qlat/qlng
-      document.getElementById('wrap').innerHTML = `
-        <h2 style="margin:0 0 8px">${current.name||'Majstor'}</h2>
-        <div class="help">📍 ${current.location || '—'}</div>
-        <div class="help">🧩 ${(current.skills||[]).join(', ') || '—'}</div>
-        <p style="margin-top:10px">${current.bio||''}</p>
-        <div style="display:flex;gap:10px">
+
+      // Izračunaj udaljenost ako imamo user qlat/qlng i provider lat/lng (ne prikazujemo koordinate!)
+      let distanceStr = '';
+      if(userLat!=null && userLng!=null && current.lat!=null && current.lng!=null){
+        const km = haversineKm(userLat,userLng, parseFloat(current.lat), parseFloat(current.lng));
+        distanceStr = (Math.round(km*10)/10).toFixed(1) + ' km';
+      }
+
+      const name = escapeHtml(current.name || 'Majstor');
+      const loc  = escapeHtml(current.location || '—');
+      const skills = Array.isArray(current.skills) ? current.skills : [];
+      const bio  = escapeHtml(current.bio || '');
+
+      // telefon (u detalju API vraća phone — svjesno ga prikazujemo kao kontakt)
+      const phone = (current.phone||'').trim();
+      const phoneHtml = phone ? `<a class="btn btn-ghost" href="tel:${phone.replace(/\s+/g,'')}">📞 Nazovi</a>` : '';
+
+      wrap.innerHTML = `
+        <div class="header-row">
+          <div class="avatar" aria-hidden="true">${name.charAt(0).toUpperCase()}</div>
+          <div>
+            <h1 class="title">${name}</h1>
+            <div class="meta">
+              <span class="item">📍 ${loc}</span>
+              ${distanceStr ? `<span class="item">📏 ${distanceStr} od vas</span>` : ''}
+              ${current.reviews_enabled ? `<span class="badge">⭐ Recenzije dopuštene</span>` : `<span class="badge dim">🚫 Recenzije isključene</span>`}
+            </div>
+            <div class="skills">
+              ${skills.length ? skills.map(s=>`<span class="chip">${escapeHtml(s)}</span>`).join('') : `<span class="dim">Nema navedenih vještina</span>`}
+            </div>
+          </div>
+        </div>
+
+        ${bio ? `<p class="bio">${bio}</p>` : ''}
+
+        <div class="info-grid">
+          <div class="dim">⛔ Ne uznemiravaj: ${escapeHtml(current.quiet_from||'18:00')} → ${escapeHtml(current.quiet_to||'07:00')}</div>
+          <div class="dim">Zadnja izmjena profila: ${escapeHtml((current.updated_at||'').toString().replace('T',' ').slice(0,19))}</div>
+        </div>
+
+        <div class="cta-row">
           <button class="btn btn-primary" id="btnMsg">Pošalji upit</button>
-          <a class="btn btn-ghost" href="trazimuslugu.html">← Natrag na rezultate</a>
+          ${phoneHtml}
+          <a class="btn btn-ghost" href="trazimuslugu.html">← Natrag</a>
         </div>
       `;
+
+      // otvori modal za poruku
       document.getElementById('btnMsg').addEventListener('click', ()=>{
         cProv.textContent = `${current.name} — ${(current.skills||[]).join(', ')}`;
         cName.value=''; cPhone.value=''; cEmail.value=''; cMsg.value='';
@@ -62,6 +155,7 @@
     }
     load();
 
+    // Kontakt modal handlers
     cCancel.addEventListener('click', ()=> contactDlg.close());
     cSend.addEventListener('click', async ()=>{
       if(!current) return;
@@ -76,8 +170,13 @@
         alert('Ime, telefon i poruka su obavezni.'); return;
       }
       try{
-        const r = await fetch('api/auth.php?route=contact', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-        const j = await r.json(); if(!r.ok) throw new Error(j.error||'Greška slanja');
+        const r = await fetch('api/auth.php?route=contact', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json(); 
+        if(!r.ok) throw new Error(j.error||'Greška slanja');
         alert('Upit poslan majstoru. Hvala!');
         contactDlg.close();
       }catch(e){ alert(e.message); }
