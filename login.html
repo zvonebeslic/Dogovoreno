@@ -5,28 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prijava — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
+  <style>
+    .error{ color:#ffb4b4; font-size:13px; margin-top:6px }
+    .row{ display:grid; gap:8px }
+  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
-  <main class="container">
+
+  <main class="container" style="max-width:560px">
     <div class="card" style="padding:16px">
       <h2 style="margin:0 0 8px">Prijava</h2>
-      <form id="loginForm" class="grid">
-        <label>Email ili ime ili telefon* <input id="identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…"></label>
-        <label>Lozinka* <input id="password" type="password" required></label>
-        <button class="btn btn-primary" type="submit">Prijavi se</button>
+      <form id="loginForm" class="grid" autocomplete="on">
+        <label class="row">
+          <span>Email ili ime ili telefon *</span>
+          <input id="identifier" name="identifier" required
+                 placeholder="npr. ime@primjer.com ili Marko ili +3876…"
+                 autocomplete="username" autocapitalize="off" autocorrect="off" />
+        </label>
+
+        <label class="row">
+          <span>Lozinka *</span>
+          <div style="display:grid; grid-template-columns:1fr auto; gap:8px">
+            <input id="password" name="password" type="password" required autocomplete="current-password" />
+            <button id="togglePwd" type="button" class="btn btn-ghost" aria-label="Prikaži lozinku">👁️</button>
+          </div>
+        </label>
+
+        <div id="err" class="error" role="alert" aria-live="polite" hidden></div>
+
+        <button id="btnLogin" class="btn btn-primary" type="submit">Prijavi se</button>
+        <div class="help" style="margin-top:8px">
+          Nemaš račun? <a href="register.html">Registriraj se</a>
+        </div>
       </form>
     </div>
   </main>
+
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
   <script>
-  loginForm.addEventListener('submit', async (e)=>{
+  const form = document.getElementById('loginForm');
+  const btn  = document.getElementById('btnLogin');
+  const err  = document.getElementById('err');
+  const qs   = new URLSearchParams(location.search);
+  const next = qs.get('next') || 'nudimuslugu.html';
+
+  // show/hide password
+  togglePwd.addEventListener('click', ()=>{
+    const t = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', t);
+    togglePwd.textContent = t === 'password' ? '👁️' : '🙈';
+  });
+
+  form.addEventListener('submit', async (e)=>{
     e.preventDefault();
+    err.hidden = true; err.textContent = '';
+    btn.disabled = true; btn.textContent = 'Prijava…';
+
     const body = { identifier: identifier.value.trim(), password: password.value };
-    const r = await fetch('api/auth.php?route=login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-    const j = await r.json(); if(!r.ok){ alert(j.error||'Greška'); return; }
-    location.href='nudimuslugu.html';
+    try{
+      const r = await fetch('api/auth.php?route=login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const j = await r.json().catch(()=> ({}));
+      if(!r.ok) throw new Error(j.error || 'Greška');
+
+      // uspjeh → redirekcija (poštuj ?next= ako postoji)
+      location.href = next;
+    }catch(e){
+      err.textContent = e.message || 'Neuspjela prijava.';
+      err.hidden = false;
+      btn.disabled = false; btn.textContent = 'Prijavi se';
+    }
   });
   </script>
 </body>
