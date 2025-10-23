@@ -5,82 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prijava — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
-  <style>
-    .error{ color:#ffb4b4; font-size:13px; margin-top:6px }
-    .row{ display:grid; gap:8px }
-  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
 
-  <main class="container" style="max-width:560px">
-    <div class="card" style="padding:16px">
+  <main class="container">
+    <div class="card" style="padding:16px;max-width:420px;margin:24px auto">
       <h2 style="margin:0 0 8px">Prijava</h2>
-      <form id="loginForm" class="grid" autocomplete="on">
-        <label class="row">
-          <span>Email ili ime ili telefon *</span>
-          <input id="identifier" name="identifier" required
-                 placeholder="npr. ime@primjer.com ili Marko ili +3876…"
-                 autocomplete="username" autocapitalize="off" autocorrect="off" />
+      <p class="help" style="margin:0 0 12px">Prijavite se vašim e-mailom, imenom ili telefonom i lozinkom.</p>
+
+      <form id="loginForm" class="grid" novalidate>
+        <label>Email ili ime ili telefon* 
+          <input id="identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…">
         </label>
-
-        <label class="row">
-          <span>Lozinka *</span>
-          <div style="display:grid; grid-template-columns:1fr auto; gap:8px">
-            <input id="password" name="password" type="password" required autocomplete="current-password" />
-            <button id="togglePwd" type="button" class="btn btn-ghost" aria-label="Prikaži lozinku">👁️</button>
-          </div>
+        <label>Lozinka* 
+          <input id="password" type="password" required placeholder="••••••••">
         </label>
-
-        <div id="err" class="error" role="alert" aria-live="polite" hidden></div>
-
-        <button id="btnLogin" class="btn btn-primary" type="submit">Prijavi se</button>
-        <div class="help" style="margin-top:8px">
-          Nemaš račun? <a href="register.html">Registriraj se</a>
-        </div>
+        <button class="btn btn-primary" type="submit">Prijavi se</button>
       </form>
+
+      <p class="help" style="margin-top:12px;text-align:center">
+        Nemaš profil? <a href="register.html" style="color:var(--cta)">Registriraj se</a>
+      </p>
     </div>
   </main>
 
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
   <script>
-  const form = document.getElementById('loginForm');
-  const btn  = document.getElementById('btnLogin');
-  const err  = document.getElementById('err');
-  const qs   = new URLSearchParams(location.search);
-  const next = qs.get('next') || 'nudimuslugu.html';
-
-  // show/hide password
-  togglePwd.addEventListener('click', ()=>{
-    const t = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', t);
-    togglePwd.textContent = t === 'password' ? '👁️' : '🙈';
-  });
-
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    err.hidden = true; err.textContent = '';
-    btn.disabled = true; btn.textContent = 'Prijava…';
-
-    const body = { identifier: identifier.value.trim(), password: password.value };
-    try{
-      const r = await fetch('api/auth.php?route=login', {
-        method:'POST',
+    async function api(route, method='GET', body=null){
+      const res = await fetch('api/auth.php?route='+route, {
+        method,
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
+        body: body ? JSON.stringify(body) : null
       });
-      const j = await r.json().catch(()=> ({}));
-      if(!r.ok) throw new Error(j.error || 'Greška');
-
-      // uspjeh → redirekcija (poštuj ?next= ako postoji)
-      location.href = next;
-    }catch(e){
-      err.textContent = e.message || 'Neuspjela prijava.';
-      err.hidden = false;
-      btn.disabled = false; btn.textContent = 'Prijavi se';
+      const j = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(j.error||'Greška');
+      return j;
     }
-  });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const identifier = document.getElementById('identifier').value.trim();
+      const password   = document.getElementById('password').value;
+      if(!identifier || !password){ alert('Unesite identifikator i lozinku.'); return; }
+      try{
+        await api('login','POST',{ identifier, password });
+        // Nakon uspješne prijave vodi na uređivanje profila
+        location.href = 'nudimuslugu.html';
+      }catch(e){
+        alert(e.message);
+      }
+    });
   </script>
 </body>
 </html>
+```0
