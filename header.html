@@ -1,7 +1,7 @@
 <header class="site-header" aria-label="Zaglavlje">
   <div class="container">
 
-    <!-- Strelica za nazad (prikazuje se samo na podstranicama) -->
+    <!-- Strelica za nazad (automatski na svim stranicama osim index.html) -->
     <button class="back-btn" aria-label="Natrag">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
         <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2"
@@ -28,11 +28,7 @@
       font-size: 20px;
       cursor: pointer;
       margin-right: 10px;
-      display: none; /* default sakriveno */
-    }
-    body.subpage .back-btn {
-      display: inline-flex;
-      align-items: center;
+      display: none; /* sakriveno po defaultu */
     }
   </style>
 
@@ -40,8 +36,18 @@
     (function(){
       const btn = document.querySelector('.back-btn');
       if (!btn) return;
-      // ako nije subpage, ne prikazuj
-      if (!document.body.classList.contains('subpage')) return;
+
+      const path = window.location.pathname;
+      const isIndex =
+        path.endsWith('index.html') ||
+        path.endsWith('/') ||
+        path === '' ||
+        path === '/';
+
+      if (!isIndex) {
+        btn.style.display = 'inline-flex';
+      }
+
       btn.addEventListener('click', function(){
         if (history.length > 1) history.back();
         else window.location.href = 'index.html';
