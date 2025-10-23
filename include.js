@@ -1,4 +1,3 @@
-<script>
 (() => {
   const bust = () => 'v=' + Date.now();
 
@@ -49,4 +48,3 @@
     });
   });
 })();
-</script>
