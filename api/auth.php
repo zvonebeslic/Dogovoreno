@@ -1,6 +1,8 @@
 <?php
+declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
 session_start();
+
 require __DIR__.'/db.php';
 require __DIR__.'/mailer.php';
 
@@ -8,7 +10,11 @@ $route  = $_GET['route'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 $input  = json_decode(file_get_contents('php://input'), true) ?? [];
 
-function json_out($x,$code=200){ http_response_code($code); echo json_encode($x); exit; }
+function json_out($x, int $code=200){
+  http_response_code($code);
+  echo json_encode($x, JSON_UNESCAPED_UNICODE);
+  exit;
+}
 function token64(){ return bin2hex(random_bytes(32)); }
 function base_url(){
   $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') ? 'https' : 'http';
@@ -30,7 +36,7 @@ if ($route==='register' && $method==='POST'){
   $st=$pdo->prepare('SELECT id FROM users WHERE email=?'); $st->execute([$email]);
   if($st->fetch()) json_out(['error'=>'E-mail već postoji'],409);
 
-  $hash = password_hash($pass, PASSWORD_BCRYPT);
+  $hash = password_hash($pass, PASSWORD_DEFAULT);
   $tok  = token64();
   $pdo->prepare('INSERT INTO users(email,pass_hash,name,phone,verify_token) VALUES(?,?,?,?,?)')
       ->execute([$email,$hash,$name,$phone,$tok]);
@@ -60,6 +66,7 @@ if ($route==='login' && $method==='POST'){
   $pass       = $input['password'] ?? '';
   if(!$identifier || !$pass) json_out(['error'=>'Nedostaju polja'],422);
 
+  // redoslijed: email -> phone -> name
   $st=$pdo->prepare('SELECT id,pass_hash,verified,email,name,phone FROM users WHERE LOWER(email)=LOWER(?)');
   $st->execute([$identifier]);
   $u=$st->fetch(PDO::FETCH_ASSOC);
@@ -116,15 +123,46 @@ if ($route==='profile'){
 
     if(!$name || !$phone) json_out(['error'=>'Ime i telefon su obavezni'],422);
 
+    // 1) update users
     $pdo->prepare('UPDATE users SET name=?, phone=? WHERE id=?')->execute([$name,$phone,$uid]);
 
-    $skillsJson = json_encode(array_values(array_unique($skills)), JSON_UNESCAPED_UNICODE);
-    $pdo->prepare('INSERT INTO providers(user_id,skills,location,bio,reviews_enabled,quiet_from,quiet_to,lat,lng)
-                   VALUES(?,?,?,?,?,?,?,?,?)
-                   ON DUPLICATE KEY UPDATE skills=VALUES(skills),location=VALUES(location),bio=VALUES(bio),
-                     reviews_enabled=VALUES(reviews_enabled),quiet_from=VALUES(quiet_from),quiet_to=VALUES(quiet_to),
-                     lat=VALUES(lat), lng=VALUES(lng)')
-        ->execute([$uid,$skillsJson,$location,$bio,$reviews,$qf,$qt,$lat,$lng]);
+    // 2) providers: SELECT pa INSERT/UPDATE (bez ON DUPLICATE KEY)
+    $st=$pdo->prepare('SELECT id FROM providers WHERE user_id=?'); $st->execute([$uid]);
+    $provId = $st->fetchColumn();
+
+    $skillsJson = json_encode(array_values(array_unique(is_array($skills)?$skills:[])), JSON_UNESCAPED_UNICODE);
+
+    if ($provId){
+      $pdo->prepare('UPDATE providers SET skills=?, location=?, bio=?, reviews_enabled=?, quiet_from=?, quiet_to=?, lat=?, lng=? WHERE id=?')
+          ->execute([$skillsJson,$location,$bio,$reviews,$qf,$qt,$lat,$lng,$provId]);
+    }else{
+      $pdo->prepare('INSERT INTO providers(user_id,skills,location,bio,reviews_enabled,quiet_from,quiet_to,lat,lng)
+                     VALUES(?,?,?,?,?,?,?,?,?)')
+          ->execute([$uid,$skillsJson,$location,$bio,$reviews,$qf,$qt,$lat,$lng]);
+      $provId = (int)$pdo->lastInsertId();
+    }
+
+    // 3) (opcija) sinkronizacija u normalizirane tablice skills/provider_skills ako postoje
+    try{
+      if (is_array($skills) && count($skills)){
+        // osiguraj da postoje skilovi
+        $sel = $pdo->query("SHOW TABLES LIKE 'skills'"); $hasSkills = (bool)$sel->fetchColumn();
+        $sel = $pdo->query("SHOW TABLES LIKE 'provider_skills'"); $hasPS = (bool)$sel->fetchColumn();
+        if ($hasSkills && $hasPS){
+          // upiši nove skillove u katalog (ako ne postoje)
+          $insS = $pdo->prepare("INSERT IGNORE INTO skills(name) VALUES (?)");
+          foreach ($skills as $s){ $s = trim((string)$s); if($s!==''){ $insS->execute([$s]); } }
+          // zbriši stare mape pa upiši nove
+          $pdo->prepare("DELETE FROM provider_skills WHERE provider_id=?")->execute([$provId]);
+          $inQ = implode(',', array_fill(0, count($skills), '?'));
+          $q = $pdo->prepare("SELECT id,name FROM skills WHERE name IN ($inQ)");
+          $q->execute(array_values($skills));
+          $rows = $q->fetchAll(PDO::FETCH_ASSOC);
+          $insPS = $pdo->prepare("INSERT IGNORE INTO provider_skills(provider_id, skill_id) VALUES (?,?)");
+          foreach ($rows as $r){ $insPS->execute([$provId, (int)$r['id']]); }
+        }
+      }
+    }catch(Throwable $e){ /* tihi fallback */ }
 
     json_out(['ok'=>true]);
   }
@@ -139,28 +177,32 @@ if ($route==='providers' && $method==='GET'){
   $qlng  = isset($_GET['qlng']) ? (float)$_GET['qlng'] : null;
   $radkm = isset($_GET['radius_km']) ? (float)$_GET['radius_km'] : null;
 
+  // Bazna polja
   $fields = 'p.id, u.name, u.phone, p.skills, p.location, p.bio, p.reviews_enabled, p.updated_at';
-  $distExpr = null;
   $where = [];
-  $args = [];
+  $args  = [];
 
+  // Filtar po tekstualnoj lokaciji (opcija)
+  if($loc){ $where[] = 'LOWER(p.location) LIKE ?'; $args[] = '%'.strtolower($loc).'%'; }
+
+  // Filtar po skillu (string u JSON-u -> radi i prije normalizacije)
   if($skill){ $where[] = 'LOWER(p.skills) LIKE ?'; $args[] = '%'.strtolower($skill).'%'; }
-  if($loc){   $where[] = 'LOWER(p.location) LIKE ?'; $args[] = '%'.strtolower($loc).'%'; }
 
-  if($qlat !== null && $qlng !== null){
-    $distExpr = '(6371 * acos( cos(radians(?)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(?)) + sin(radians(?)) * sin(radians(p.lat)) ))';
-    $fields .= ', '.$distExpr.' AS distance_km';
-    // parametri za expr (lat, lng, lat)
-    array_unshift($args, $qlat, $qlng);
-    array_splice($args, 2, 0, [$qlat]);
+  $distanceJoin = '';
+  $having = '';
+  if ($qlat !== null && $qlng !== null){
+    // izračun distance_km u SELECT-u (alias)
+    $fields .= ', (6371 * acos( cos(radians(?)) * cos(radians(p.lat)) * cos(radians(p.lng) - radians(?)) + sin(radians(?)) * sin(radians(p.lat)) )) AS distance_km';
+    array_push($args, $qlat, $qlng, $qlat);
 
-    $where[] = 'p.lat IS NOT NULL AND p.lng IS NOT NULL';
-    if($radkm){ $where[] = $distExpr.' <= ?'; $args[] = $radkm; }
+    // HAVING koristi alias (izbjegavamo duplo vezanje istih placeholdera)
+    if ($radkm){ $having = ' HAVING distance_km <= ?'; $args[] = $radkm; }
   }
 
   $sql = 'SELECT '.$fields.' FROM providers p JOIN users u ON u.id=p.user_id';
   if($where){ $sql .= ' WHERE '.implode(' AND ', $where); }
-  $sql .= $distExpr ? ' ORDER BY distance_km ASC, p.updated_at DESC' : ' ORDER BY p.updated_at DESC';
+  if($having){ $sql .= $having; }
+  $sql .= ($qlat!==null && $qlng!==null) ? ' ORDER BY distance_km ASC, p.updated_at DESC' : ' ORDER BY p.updated_at DESC';
   $sql .= ' LIMIT 200';
 
   $st=$pdo->prepare($sql); $st->execute($args);
