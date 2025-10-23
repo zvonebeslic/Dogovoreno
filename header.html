@@ -1,8 +1,51 @@
 <header class="site-header" aria-label="Zaglavlje">
   <div class="container">
+
+    <!-- Strelica za nazad (prikazuje se samo na podstranicama) -->
+    <button class="back-btn" aria-label="Natrag">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2"
+          fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
     <div class="site-title">🤝 Dogovoreno.com</div>
+
     <div class="profile-wrap">
       <a class="profile-btn" href="profile.html">Moj profil</a>
     </div>
   </div>
+
+  <style>
+    .site-header .container {
+      display: flex;
+      align-items: center;
+    }
+    .back-btn {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 10px;
+      display: none; /* default sakriveno */
+    }
+    body.subpage .back-btn {
+      display: inline-flex;
+      align-items: center;
+    }
+  </style>
+
+  <script>
+    (function(){
+      const btn = document.querySelector('.back-btn');
+      if (!btn) return;
+      // ako nije subpage, ne prikazuj
+      if (!document.body.classList.contains('subpage')) return;
+      btn.addEventListener('click', function(){
+        if (history.length > 1) history.back();
+        else window.location.href = 'index.html';
+      });
+    })();
+  </script>
 </header>
