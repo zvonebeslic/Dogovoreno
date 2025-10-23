@@ -52,11 +52,20 @@ if ($route==='verify' && $method==='GET'){
   global $pdo;
   $tok = $_GET['token'] ?? '';
   if(!$tok){ echo 'Nevažeći token.'; exit; }
-  $st=$pdo->prepare('SELECT id FROM users WHERE verify_token=?'); $st->execute([$tok]);
-  $u=$st->fetch(PDO::FETCH_ASSOC);
+
+  // pronađi korisnika po tokenu
+  $st = $pdo->prepare('SELECT id FROM users WHERE verify_token=?');
+  $st->execute([$tok]);
+  $u = $st->fetch(PDO::FETCH_ASSOC);
   if(!$u){ echo 'Nevažeći ili iskorišten token.'; exit; }
-  $pdo->prepare('UPDATE users SET verified=1, verify_token=NULL WHERE id=?')->execute([$u['id']]);
-  echo 'E-mail potvrđen. Sada se možete prijaviti.'; exit;
+
+  // označi kao verificiran i ukloni token
+  $pdo->prepare('UPDATE users SET verified=1, verify_token=NULL WHERE id=?')->execute([(int)$u['id']]);
+
+  // auto-login + redirect na izradu profila
+  $_SESSION['uid'] = (int)$u['id'];
+  header('Location: /nudimuslugu.html');
+  exit;
 }
 
 /* ---------- LOGIN (email ILI ime ILI telefon) ---------- */
