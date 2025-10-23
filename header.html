@@ -1,5 +1,5 @@
 <header class="site-header" aria-label="Zaglavlje">
-  <!-- Strelica skroz lijevo (po defaultu skrivena) -->
+  <!-- strelica – izvan .container, skroz lijevo -->
   <button class="back-btn" aria-label="Natrag">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
       <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none"
@@ -14,55 +14,19 @@
     </div>
   </div>
 
-  <style>
-    .site-header{
-      position: relative; /* zbog absolute strelice */
-      z-index: 1000;
-      /* kad se pojavi strelica, dodamo klasu .has-back i rezerviramo prostor lijevo */
-    }
-    .site-header.has-back{ padding-left: 52px; } /* 44px tap area + 8px margin */
-
-    .site-header .container{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    /* Strelica: skroz lijevo, velika “tap zona” */
-    .back-btn{
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 44px; height: 44px;       /* mobile-friendly tap area */
-      display: none;                    /* skrivena na indexu */
-      align-items: center; justify-content: center;
-      background: transparent;
-      border: 0;
-      color: inherit;
-      cursor: pointer;
-      z-index: 1001;                    /* iznad sadržaja headera */
-    }
-    .back-btn:active{ transform: translateY(-50%) scale(0.98); } /* mali “tap” efekt */
-  </style>
-
   <script>
     (function(){
       const hdr = document.querySelector('.site-header');
       const btn = hdr.querySelector('.back-btn');
-
-      // Index detekcija (root ili index.html)
       const p = window.location.pathname;
+
       const isIndex =
-        p === '/' || p === '' ||
-        p.endsWith('/') ||              // npr. domena.com/
-        p.endsWith('/index.html') ||    // npr. /podfolder/index.html
-        p.endsWith('index.html');       // npr. index.html
+        p === '/' || p === '' || p.endsWith('/') ||
+        p.endsWith('/index.html') || p.endsWith('index.html');
 
       if (!isIndex) {
-        // Pokaži strelicu i rezerviraj prostor za nju
-        btn.style.display = 'flex';
-        hdr.classList.add('has-back');
+        btn.style.display = 'flex';         // pokaži strelicu
+        hdr.classList.add('has-back');      // dodaj padding lijevo u .container
       }
 
       btn.addEventListener('click', function(){
