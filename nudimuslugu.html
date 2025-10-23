@@ -12,6 +12,7 @@
     .cloud .hint{color:var(--muted,#c7cbd4);font-size:12px;margin-top:6px}
     .row{display:grid;gap:10px}
     .row.two{grid-template-columns:1fr 1fr}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
     .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:13px}
     .pill .x{cursor:pointer;opacity:.9}
     .btn-small{padding:8px 10px;border-radius:10px}
@@ -19,7 +20,6 @@
     dialog .list{max-height:min(60vh,520px);overflow:auto;border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px}
     .skill-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px}
     .skill-row:hover{background:rgba(255,255,255,.06)}
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
     .img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
     .img-grid img{width:100%;border-radius:10px;object-fit:cover;height:90px}
     .muted{color:var(--muted,#c7cbd4)}
@@ -46,10 +46,11 @@
         <input id="phone" required placeholder="+387 6X XXX XXX">
       </div>
 
-      <!-- E-mail -->
+      <!-- E-mail (kontaktni) -->
       <div class="cloud" style="margin-top:10px">
         <h4>E-mail</h4>
-        <input id="email" placeholder="vaš@primjer.com (opcija)">
+        <input id="email" placeholder="vaš@primjer.com (kontaktni e-mail)">
+        <div class="hint">E-mail koristimo za obavijesti. (Ako je onemogućen izmjenom, promjena ide kroz postavke računa.)</div>
       </div>
 
       <!-- Zanimanja -->
@@ -65,35 +66,36 @@
         </div>
       </div>
 
-      <!-- Lokacija (privatno) -->
+      <!-- Lokacija (privatno za match) -->
       <div class="cloud" style="margin-top:10px">
         <h4>Gdje želite da vas pronađu? (privatno)</h4>
         <div class="row">
-          <!-- Google Maps link -->
           <label>Google Maps link (preporučeno)
-            <input id="mapLink" placeholder="Zalijepite link s Google karte (npr. podijeli lokaciju)">
+            <input id="mapLink" placeholder="Zalijepite link s Google karte (npr. Podijeli lokaciju)">
           </label>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button id="btnParseMap" type="button" class="btn btn-ghost btn-small">Učitaj iz linka</button>
             <button id="btnUseGps" type="button" class="btn btn-ghost btn-small">Koristi moju GPS lokaciju</button>
           </div>
 
-          <!-- Ručni odabir -->
+          <!-- Ručni odabir (iz JSON-a) - opisno -->
           <div class="row two">
             <label>Država
               <select id="country">
                 <option value="">— odaberite —</option>
-                <option value="Bosna i Hercegovina">Bosna i Hercegovina</option>
-                <option value="Hrvatska">Hrvatska</option>
-                <option value="Srbija">Srbija</option>
-                <option value="Slovenija">Slovenija</option>
-                <option value="Crna Gora">Crna Gora</option>
-                <option value="Sjeverna Makedonija">Sjeverna Makedonija</option>
-                <option value="Kosovo">Kosovo</option>
               </select>
             </label>
-            <label>Mjesto / naselje
-              <input id="place" placeholder="npr. Sarajevo — Grbavica">
+            <label>Grad / mjesto
+              <select id="city" disabled>
+                <option value="">— prvo odaberite državu —</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Naselje / kvart (opcija)
+              <select id="area" disabled>
+                <option value="">— nije obavezno —</option>
+              </select>
             </label>
           </div>
 
@@ -108,6 +110,34 @@
           </div>
 
           <div class="hint">Vaša će lokacija ovdje ostati uvijek tajna i nitko je neće vidjeti. Koristimo je samo kako bismo vas spojili s najbližim klijentima. Preporučujemo Google karte. Ako ne znate kako — zatražite pomoć bližnje osobe.</div>
+        </div>
+      </div>
+
+      <!-- Područje djelovanja (JAVNO) -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Područje djelovanja (javna informacija na profilu)</h4>
+        <div class="row two">
+          <label>Država
+            <select id="svcCountry">
+              <option value="">— odaberite —</option>
+            </select>
+          </label>
+          <label>Grad / mjesto
+            <select id="svcCity" disabled>
+              <option value="">— prvo odaberite državu —</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label>Naselje / kvart (opcija)
+            <select id="svcArea" disabled>
+              <option value="">— nije obavezno —</option>
+            </select>
+          </label>
+        </div>
+        <div class="hint">
+          Ovo je <strong>javna</strong> informacija na vašem profilu i u pretragama (npr. “Majstori u Sarajevu”).
+          Za precizno spajanje s klijentima i dalje koristimo vašu <strong>privatnu</strong> lokaciju (lat/lng).
         </div>
       </div>
 
@@ -156,7 +186,6 @@
     </div>
   </main>
 
-  <!-- FOOTER & partials -->
   <div data-include="promos.html"></div>
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
@@ -193,8 +222,9 @@
     // --- state
     let allSkills = [];
     let pickedSkills = [];
+    let LOCS = {}; // lokacije po državama
 
-    // --- load skills json (shared s Tražim uslugu)
+    // --- SKILLS: load from /data/skills.json
     async function loadSkills(){
       try{
         const r = await fetch('data/skills.json', {cache:'no-cache'});
@@ -203,7 +233,6 @@
         if(Array.isArray(j)) allSkills = j.slice().sort((a,b)=>a.localeCompare(b,'hr'));
         else if(Array.isArray(j.skills)) allSkills = j.skills.slice().sort((a,b)=>a.localeCompare(b,'hr'));
       }catch(_){
-        // fallback
         allSkills = ['Keramičar','Vodoinstalater','Električar','Moler','Stolar','Automehaničar','Fasader','Knauf majstor','Parketar','Građevinar'].sort((a,b)=>a.localeCompare(b,'hr'));
       }
     }
@@ -254,6 +283,71 @@
       document.getElementById('skillsDone').onclick = ()=> skillsDlg.close();
     }
 
+    // --- CITIES: load your files
+    // Map države -> kod fajla
+    const COUNTRY_FILE = {
+      'Bosna i Hercegovina': 'bih',
+      'Hrvatska': 'hr',
+      'Srbija': 'rs',
+      'Crna Gora': 'mn',             // prema tvojoj datoteci
+      'Slovenija': 'si',
+      'Sjeverna Makedonija': 'mk'
+    };
+
+    async function loadCitiesFor(country){
+      const code = COUNTRY_FILE[country];
+      if(!code) return [];
+      try{
+        const r = await fetch(`data/cities-${code}.json`, {cache:'no-cache'});
+        if(!r.ok) throw new Error();
+        const list = await r.json();            // očekujemo [ "Sarajevo", "Mostar", ... ]
+        return Array.isArray(list) ? list : [];
+      }catch(_){
+        return [];
+      }
+    }
+
+    function fillSelect(sel, items, placeholder){
+      sel.innerHTML = '';
+      if (placeholder) sel.appendChild(new Option(placeholder,''));
+      items.forEach(v => sel.appendChild(new Option(v, v)));
+      sel.disabled = items.length === 0;
+    }
+
+    // lanac selecta: država -> grad -> (naselje opcionalno: ako nema, ostaje disabled)
+    function wireLocationChain(ids){
+      const countrySel = document.getElementById(ids.country);
+      const citySel    = document.getElementById(ids.city);
+      const areaSel    = document.getElementById(ids.area);
+
+      // punimo države iz mape COUNTRY_FILE (ključ je labela za prikaz)
+      const countries = Object.keys(COUNTRY_FILE);
+      fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
+      citySel.innerHTML = '<option value="">— prvo odaberite državu —</option>'; citySel.disabled = true;
+      areaSel.innerHTML = '<option value="">— nije obavezno —</option>'; areaSel.disabled = true;
+
+      countrySel.addEventListener('change', async ()=>{
+        const ctry = countrySel.value;
+        const cities = await loadCitiesFor(ctry);
+        fillSelect(citySel, cities.sort((a,b)=>a.localeCompare(b,'hr')), cities.length?'— odaberite grad —':'— nema gradova —');
+        // tvoja city datoteka nema naselja → ostaje disabled (placeholder)
+        areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+        areaSel.disabled = true;
+      });
+      citySel.addEventListener('change', ()=>{
+        // Ako jednog dana dodaš naselja, ovdje bi ih punili. Za sada nema (ostaje disabled).
+        areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+        areaSel.disabled = true;
+      });
+
+      return { countrySel, citySel, areaSel };
+    }
+
+    // Sastavi labelu "Država / Grad / Naselje" (bez praznih)
+    function buildLabel(country, city, area){
+      return [country, city, area].filter(Boolean).join(' / ');
+    }
+
     // --- map link parser (@lat,lng ili ?q=lat,lng)
     function parseMapLink(url){
       try{
@@ -286,25 +380,58 @@
       });
     });
 
-    // --- load profile (if logged)
+    // --- INIT: load skills, wire selects, prefill from profile
     (async ()=>{
       try{
         await loadSkills();
+        renderChips();
+
+        // Poveži oba seta selecta (privatni i javni)
+        const privChain = wireLocationChain({ country:'country',    city:'city',    area:'area' });
+        const pubChain  = wireLocationChain({ country:'svcCountry', city:'svcCity', area:'svcArea' });
+
+        // Učitaj profil
         const { data } = await api('profile','GET');
         if(data){
+          // kontakt
           email.value     = data.email||'';
           name.value      = data.name||'';
           phone.value     = data.phone||'';
+
+          // skills
           pickedSkills    = Array.isArray(data.skills)? data.skills.slice(0,3):[];
           renderChips();
-          // lokacija
+
+          // geo (privatno)
           lat.value       = data.lat!=null ? String(data.lat) : '';
           lng.value       = data.lng!=null ? String(data.lng) : '';
-          // opis
+
+          // opis i ostalo
           bio.value       = data.bio||'';
           reviews.checked = !!data.reviews_enabled;
           quiet_from.value= data.quiet_from||'18:00';
           quiet_to.value  = data.quiet_to  ||'07:00';
+
+          // Područje djelovanja (javna lokacija u providers.location)
+          const locLabel = (data.location || '').trim(); // npr. "Bosna i Hercegovina / Sarajevo"
+          if(locLabel){
+            const parts = locLabel.split('/').map(s=>s.trim());
+            const cc   = parts[0]||'';
+            const city = parts[1]||'';
+            const area = parts[2]||'';
+            if(cc && COUNTRY_FILE[cc]){
+              pubChain.countrySel.value = cc;
+              pubChain.countrySel.dispatchEvent(new Event('change'));
+              // pričekaj da se gradovi napune (malo odgoda)
+              setTimeout(()=>{
+                if(city){
+                  pubChain.citySel.value = city;
+                  pubChain.citySel.dispatchEvent(new Event('change'));
+                }
+                if(area){ pubChain.areaSel.value = area; }
+              }, 50);
+            }
+          }
         }
       }catch(e){ alert('Niste prijavljeni.'); location.href='login.html'; }
     })();
@@ -332,12 +459,20 @@
     // --- save
     document.getElementById('btnSave').addEventListener('click', async (e)=>{
       e.preventDefault();
+
       const payload = {
         name: name.value.trim(),
         phone: phone.value.trim(),
-        // email ne mijenjamo ovdje (drži se u users.email preko auth flowa)
+        // e-mail se u ovom API-ju ne mijenja; prikazujemo ga informativno
         skills: pickedSkills.slice(0,3),
-        location: [country.value||'', place.value||''].filter(Boolean).join(' / '),
+        // JAVNO područje djelovanja:
+        location: (function(){
+          const c = (document.getElementById('svcCountry').value||'').trim();
+          const g = (document.getElementById('svcCity').value||'').trim();
+          const a = (document.getElementById('svcArea').value||'').trim();
+          return [c,g,a].filter(Boolean).join(' / ');
+        })(),
+        // PRIVATNO za matchiranje:
         lat: lat.value ? parseFloat(lat.value) : null,
         lng: lng.value ? parseFloat(lng.value) : null,
         bio: bio.value.trim(),
@@ -345,6 +480,7 @@
         quiet_from: quiet_from.value || '18:00',
         quiet_to: quiet_to.value   || '07:00'
       };
+
       if(!payload.name || !payload.phone){ alert('Ime i telefon su obavezni.'); return; }
       if(payload.skills.length===0){ alert('Odaberite barem jedno zanimanje.'); return; }
 
