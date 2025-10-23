@@ -5,7 +5,7 @@ if (!headers_sent()) header('Content-Type: application/json; charset=utf-8');
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
-require_once __DIR__ . '/../dp.php';
+require_once __DIR__ . '/../db.php'; // was dp.php → db.php radi konzistentnosti
 if (file_exists(__DIR__ . '/../mailer.php')) require_once __DIR__ . '/../mailer.php';
 
 function json_out($ok, $data=[], $code=null){
@@ -30,10 +30,14 @@ if (!$skills || !$desc || !$loc || !isset($loc['lat'],$loc['lng'])) {
   json_out(false,'Nedostaju obavezna polja',400);
 }
 
-// (opcija) minimalno čišćenje vještina
+// Čišćenje vještina
 $skills = array_values(array_unique(array_filter(array_map(static function($s){
   return trim((string)$s);
 }, is_array($skills)?$skills:[]))));
+
+// Label ograničimo na 255 (kolona jobs.location_label)
+$locLabel = (string)($loc['label'] ?? '');
+if (mb_strlen($locLabel) > 255) $locLabel = mb_substr($locLabel, 0, 255);
 
 try{
   $pdo->beginTransaction();
@@ -47,14 +51,14 @@ try{
     }
   }catch(Throwable $e){ /* tihi fallback */ }
 
-  // JOB (snimamo i user_id ako postoji)
+  // JOB
   $stmt = $pdo->prepare("INSERT INTO jobs (user_id, description, skills_json, location_label, lat, lng, status)
                          VALUES (:uid, :d, :sj, :lbl, :lat, :lng, 'open')");
   $stmt->execute([
     ':uid'=>$uid,
     ':d'=>$desc,
     ':sj'=>json_encode($skills, JSON_UNESCAPED_UNICODE),
-    ':lbl'=>(string)($loc['label']??''),
+    ':lbl'=>$locLabel,
     ':lat'=>(float)$loc['lat'],
     ':lng'=>(float)$loc['lng']
   ]);
@@ -69,38 +73,74 @@ try{
     }
   }
 
-  // Pronađi kandidate — prema skillu i udaljenosti
-  // (Ako skills nema u provider_skills, ovaj dio i dalje radi po geo-u ako maknemo filter)
-  $skillIds = [];
-  if ($skills) {
-    $qMarks = implode(',', array_fill(0, count($skills), '?'));
-    $s = $pdo->prepare("SELECT id,name FROM skills WHERE name IN ($qMarks)");
-    $s->execute($skills);
-    while($r=$s->fetch(PDO::FETCH_ASSOC)) $skillIds[]=(int)$r['id'];
-  }
+  // Provjeri postoji li provider_skills; ako ne postoji, radimo geo-only fallback
+  $hasPS = false;
+  try{
+    $chk = $pdo->query("SHOW TABLES LIKE 'provider_skills'");
+    $hasPS = (bool)($chk && $chk->fetchColumn());
+  }catch(Throwable $e){ $hasPS = false; }
 
-  if ($skillIds) {
-    $inQ = implode(',', array_fill(0, count($skillIds), '?'));
-    $sql = "SELECT p.id provider_id, u.email prov_email, u.name prov_name, u.phone prov_phone,
-                   ROUND(ST_Distance_Sphere(p.geo, ST_SRID(POINT(?, ?), 4326))/1000,2) AS distance_km
+  // Pronađi kandidate — prema skillu i udaljenosti (ako imamo provider_skills), inače samo geo
+  $params = [ (float)$loc['lng'], (float)$loc['lat'] ];
+  if ($hasPS && $skills) {
+    // map skill imena → id-evi
+    $skillIds = [];
+    try {
+      $qMarks = implode(',', array_fill(0, count($skills), '?'));
+      $s = $pdo->prepare("SELECT id,name FROM skills WHERE name IN ($qMarks)");
+      $s->execute($skills);
+      while($r=$s->fetch(PDO::FETCH_ASSOC)) $skillIds[]=(int)$r['id'];
+    }catch(Throwable $e){ $skillIds = []; }
+
+    if ($skillIds) {
+      $inQ = implode(',', array_fill(0, count($skillIds), '?'));
+      $sql = "SELECT 
+                p.id AS provider_id,
+                ANY_VALUE(u.email) AS prov_email,
+                ANY_VALUE(u.name)  AS prov_name,
+                ANY_VALUE(u.phone) AS prov_phone,
+                ROUND(ST_Distance_Sphere(p.geo, ST_SRID(POINT(?, ?), 4326))/1000,2) AS distance_km
+              FROM providers p
+              JOIN users u ON u.id=p.user_id
+              JOIN provider_skills ps ON ps.provider_id=p.id
+              WHERE ps.skill_id IN ($inQ)
+                AND p.geo IS NOT NULL
+                AND u.email IS NOT NULL
+              GROUP BY p.id
+              ORDER BY distance_km ASC
+              LIMIT 60";
+      $params = array_merge($params, $skillIds);
+    } else {
+      // nema mapiranih skill_id-a → fallback: geo-only
+      $sql = "SELECT 
+                p.id AS provider_id,
+                ANY_VALUE(u.email) AS prov_email,
+                ANY_VALUE(u.name)  AS prov_name,
+                ANY_VALUE(u.phone) AS prov_phone,
+                ROUND(ST_Distance_Sphere(p.geo, ST_SRID(POINT(?, ?), 4326))/1000,2) AS distance_km
+              FROM providers p
+              JOIN users u ON u.id=p.user_id
+              WHERE p.geo IS NOT NULL
+                AND u.email IS NOT NULL
+              GROUP BY p.id
+              ORDER BY distance_km ASC
+              LIMIT 60";
+    }
+  } else {
+    // fallback: bez skill filtera, samo po geo (i mailu)
+    $sql = "SELECT 
+              p.id AS provider_id,
+              ANY_VALUE(u.email) AS prov_email,
+              ANY_VALUE(u.name)  AS prov_name,
+              ANY_VALUE(u.phone) AS prov_phone,
+              ROUND(ST_Distance_Sphere(p.geo, ST_SRID(POINT(?, ?), 4326))/1000,2) AS distance_km
             FROM providers p
             JOIN users u ON u.id=p.user_id
-            JOIN provider_skills ps ON ps.provider_id=p.id
-            WHERE ps.skill_id IN ($inQ) AND p.geo IS NOT NULL AND u.email IS NOT NULL
+            WHERE p.geo IS NOT NULL
+              AND u.email IS NOT NULL
             GROUP BY p.id
             ORDER BY distance_km ASC
             LIMIT 60";
-    $params = [ (float)$loc['lng'], (float)$loc['lat'], ...$skillIds ];
-  } else {
-    // fallback: bez skill filtera, samo po geo (i mailu)
-    $sql = "SELECT p.id provider_id, u.email prov_email, u.name prov_name, u.phone prov_phone,
-                   ROUND(ST_Distance_Sphere(p.geo, ST_SRID(POINT(?, ?), 4326))/1000,2) AS distance_km
-            FROM providers p
-            JOIN users u ON u.id=p.user_id
-            WHERE p.geo IS NOT NULL AND u.email IS NOT NULL
-            ORDER BY distance_km ASC
-            LIMIT 60";
-    $params = [ (float)$loc['lng'], (float)$loc['lat'] ];
   }
 
   $st=$pdo->prepare($sql);
@@ -121,7 +161,7 @@ try{
     // HTML obavijest majstoru (ako mailer postoji i imamo e-mail)
     if (function_exists('send_new_job_to_provider') && !empty($c['prov_email']) && $idx < $mailCap){
       // Grad/oznaka lokacije samo kao label (bez točne adrese)
-      $city = (string)($loc['label'] ?? '');
+      $city = $locLabel;
       $cta  = (function_exists('mailer_base_url') ? mailer_base_url() : '/') . '/moj-profil';
       @send_new_job_to_provider($c['prov_email'], [
         'desc'        => $desc,
