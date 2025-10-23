@@ -5,53 +5,181 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Moj profil — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
+  <style>
+    .page-wrap{max-width:860px;margin:0 auto}
+    .cloud{background:var(--glass,rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px}
+    .cloud h4{margin:0 0 6px;font-size:15px}
+    .cloud .hint{color:var(--muted,#c7cbd4);font-size:12px;margin-top:6px}
+    .row{display:grid;gap:10px}
+    .row.two{grid-template-columns:1fr 1fr}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:13px}
+    .pill .x{cursor:pointer;opacity:.9}
+    .btn-small{padding:8px 10px;border-radius:10px}
+    dialog .hdr{display:flex;align-items:center;justify-content:space-between}
+    dialog .list{max-height:min(60vh,520px);overflow:auto;border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px}
+    .skill-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px}
+    .skill-row:hover{background:rgba(255,255,255,.06)}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .img-grid img{width:100%;border-radius:10px;object-fit:cover;height:90px}
+    .muted{color:var(--muted,#c7cbd4)}
+  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
 
-  <main class="container">
+  <main class="container page-wrap">
     <div class="card" style="padding:16px">
-      <h2 style="margin:0 0 8px">Moj profil</h2>
-      <form id="profForm" class="grid">
-        <label>Ime / obrt* <input id="name" required></label>
-        <label>Telefon* <input id="phone" required placeholder="+387 6X XXX XXX"></label>
-        <label>E-mail <input id="email" disabled></label>
+      <h2 style="margin:0">Moj profil</h2>
+      <div class="muted" style="font-size:13px;margin-bottom:8px">(profil za one koji nude usluge)</div>
 
-        <label>Vještine (zarezom)* <input id="skills" placeholder="npr. Keramičar, Vodoinstalater" required></label>
-        <label>Lokacija (opisno) <input id="location" placeholder="npr. Sarajevo, Grbavica"></label>
+      <!-- Ime / obrt / firma -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Ime / Obrt / Firma *</h4>
+        <input id="name" required placeholder="npr. Marko Marković / Obrt MarkoGradnja / XYZ d.o.o.">
+        <div class="hint">* unesite svoje ime, ili ime obrta, ili ime firme</div>
+      </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <label>Lat <input id="lat" placeholder="npr. 43.8563"></label>
-          <label>Lng <input id="lng" placeholder="npr. 18.4131"></label>
+      <!-- Telefon -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Broj mob/tel *</h4>
+        <input id="phone" required placeholder="+387 6X XXX XXX">
+      </div>
+
+      <!-- E-mail -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>E-mail</h4>
+        <input id="email" placeholder="vaš@primjer.com (opcija)">
+      </div>
+
+      <!-- Zanimanja -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Tko ste po zanimanju? (max 3)</h4>
+        <div class="row">
+          <div id="skillsChips" class="chips"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="btnPickSkills" type="button" class="btn btn-ghost btn-small">Odaberi zanimanja</button>
+            <button id="btnClearSkills" type="button" class="btn btn-ghost btn-small">Očisti</button>
+          </div>
+          <div class="hint">* odaberite zanimanje(a) iz popisa (isti katalog kao kod “Tražim uslugu”).</div>
         </div>
-        <button class="btn btn-ghost" type="button" id="btnMyGps">Postavi moju GPS lokaciju</button>
-        <div class="help">Lat/Lng koristimo za pretragu najbližih majstora.</div>
+      </div>
 
-        <label>Kratak opis <textarea id="bio" placeholder="Tko ste, što radite, iskustvo…"></textarea></label>
-        <label><input type="checkbox" id="reviews" checked> Želim recenzije</label>
+      <!-- Lokacija (privatno) -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Gdje želite da vas pronađu? (privatno)</h4>
+        <div class="row">
+          <!-- Google Maps link -->
+          <label>Google Maps link (preporučeno)
+            <input id="mapLink" placeholder="Zalijepite link s Google karte (npr. podijeli lokaciju)">
+          </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="btnParseMap" type="button" class="btn btn-ghost btn-small">Učitaj iz linka</button>
+            <button id="btnUseGps" type="button" class="btn btn-ghost btn-small">Koristi moju GPS lokaciju</button>
+          </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <label>Ne uznemiravaj od <input type="time" id="quiet_from" value="18:00"></label>
-          <label>do <input type="time" id="quiet_to" value="07:00"></label>
+          <!-- Ručni odabir -->
+          <div class="row two">
+            <label>Država
+              <select id="country">
+                <option value="">— odaberite —</option>
+                <option value="Bosna i Hercegovina">Bosna i Hercegovina</option>
+                <option value="Hrvatska">Hrvatska</option>
+                <option value="Srbija">Srbija</option>
+                <option value="Slovenija">Slovenija</option>
+                <option value="Crna Gora">Crna Gora</option>
+                <option value="Sjeverna Makedonija">Sjeverna Makedonija</option>
+                <option value="Kosovo">Kosovo</option>
+              </select>
+            </label>
+            <label>Mjesto / naselje
+              <input id="place" placeholder="npr. Sarajevo — Grbavica">
+            </label>
+          </div>
+
+          <!-- Skrivena polja za geo (popunjava parser/GPS) -->
+          <div class="row two">
+            <label>Lat (privatno)
+              <input id="lat" placeholder="43.8563">
+            </label>
+            <label>Lng (privatno)
+              <input id="lng" placeholder="18.4131">
+            </label>
+          </div>
+
+          <div class="hint">Vaša će lokacija ovdje ostati uvijek tajna i nitko je neće vidjeti. Koristimo je samo kako bismo vas spojili s najbližim klijentima. Preporučujemo Google karte. Ako ne znate kako — zatražite pomoć bližnje osobe.</div>
         </div>
+      </div>
 
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-primary" type="submit">Spremi profil</button>
-          <button class="btn btn-ghost" type="button" id="logout">Odjava</button>
+      <!-- Opis + slike -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Opis profila</h4>
+        <textarea id="bio" placeholder="Tko ste, u čemu ste najbolji, koliko dugo radite, izdvojeni projekti…"></textarea>
+        <div class="hint">Savjet: fokusirajte se na ono što klijentu daje povjerenje (iskustvo, certifikati, reference).</div>
+        <div style="margin-top:8px">
+          <label class="pill" style="cursor:pointer">
+            📸 Upload slika (opcija)
+            <input id="photos" type="file" accept="image/*" multiple hidden>
+          </label>
         </div>
-      </form>
+        <div id="photoPreview" class="img-grid" style="margin-top:8px"></div>
+      </div>
+
+      <!-- Recenzije -->
+      <div class="cloud" style="margin-top:10px">
+        <label class="pill" style="gap:10px">
+          <input type="checkbox" id="reviews" checked>
+          Dozvoli ostavljanje recenzija
+        </label>
+      </div>
+
+      <!-- Ne uznemiravaj -->
+      <div class="cloud" style="margin-top:10px">
+        <h4>Ne uznemiravaj</h4>
+        <div class="row two">
+          <label>Od <input type="time" id="quiet_from" value="18:00"></label>
+          <label>Do <input type="time" id="quiet_to" value="07:00"></label>
+        </div>
+      </div>
+
+      <!-- Akcije -->
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button id="btnSave" class="btn btn-primary">Kreiraj / Spremi profil</button>
+        <button id="btnLogout" class="btn btn-ghost" type="button">Odjava</button>
+      </div>
     </div>
 
-    <div class="card" style="padding:16px" id="preview" hidden>
+    <!-- PREVIEW -->
+    <div class="card" style="padding:16px;margin-top:10px" id="preview" hidden>
       <h3 style="margin:0 0 8px">Pregled</h3>
-      <pre id="pv" style="white-space:pre-wrap"></pre>
+      <div id="pv" class="muted"></div>
     </div>
   </main>
 
+  <!-- FOOTER & partials -->
   <div data-include="promos.html"></div>
   <div data-include="footer.html"></div>
   <script src="include.js"></script>
+
+  <!-- DIALOG: odabir zanimanja -->
+  <dialog id="skillsDlg" class="card" style="border:1px solid var(--fieldBorder);border-radius:16px;padding:0;max-width:620px">
+    <form method="dialog" style="padding:16px" onsubmit="return false;">
+      <div class="hdr">
+        <h3 style="margin:0">Odaberi zanimanja (max 3)</h3>
+        <button class="btn btn-ghost" onclick="skillsDlg.close()">Zatvori</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="skillsSearch" placeholder="Pretraži…">
+      </div>
+      <div id="skillsList" class="list"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+        <button class="btn btn-primary" id="skillsDone" type="button">Gotovo</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
+    // --- helper API wrapper
     async function api(route, method='GET', body=null){
       const res = await fetch('api/auth.php?route='+route, {
         method, headers:{'Content-Type':'application/json'},
@@ -61,19 +189,118 @@
       if(!res.ok) throw new Error(j.error||'Greška');
       return j;
     }
-    const toArr = s => s.split(',').map(x=>x.trim()).filter(Boolean);
 
+    // --- state
+    let allSkills = [];
+    let pickedSkills = [];
+
+    // --- load skills json (shared s Tražim uslugu)
+    async function loadSkills(){
+      try{
+        const r = await fetch('data/skills.json', {cache:'no-cache'});
+        if(!r.ok) throw new Error();
+        const j = await r.json();
+        if(Array.isArray(j)) allSkills = j.slice().sort((a,b)=>a.localeCompare(b,'hr'));
+        else if(Array.isArray(j.skills)) allSkills = j.skills.slice().sort((a,b)=>a.localeCompare(b,'hr'));
+      }catch(_){
+        // fallback
+        allSkills = ['Keramičar','Vodoinstalater','Električar','Moler','Stolar','Automehaničar','Fasader','Knauf majstor','Parketar','Građevinar'].sort((a,b)=>a.localeCompare(b,'hr'));
+      }
+    }
+
+    function renderChips(){
+      const wrap = document.getElementById('skillsChips');
+      wrap.innerHTML = '';
+      pickedSkills.forEach(s=>{
+        const el = document.createElement('span');
+        el.className = 'pill';
+        el.innerHTML = '<span>'+s+'</span><span class="x" title="Ukloni">✕</span>';
+        el.querySelector('.x').onclick = ()=>{ pickedSkills = pickedSkills.filter(x=>x!==s); renderChips(); };
+        wrap.appendChild(el);
+      });
+    }
+
+    function openSkillsDialog(){
+      skillsDlg.showModal();
+      const list = document.getElementById('skillsList');
+      const search = document.getElementById('skillsSearch');
+      function draw(filter=''){
+        list.innerHTML = '';
+        const f = filter.trim().toLowerCase();
+        allSkills.forEach(s=>{
+          if(f && !s.toLowerCase().includes(f)) return;
+          const row = document.createElement('div');
+          row.className = 'skill-row';
+          const checked = pickedSkills.includes(s);
+          row.innerHTML = `
+            <div>${s}</div>
+            <button type="button" class="btn btn-ghost btn-small">${checked?'Ukloni':'Dodaj'}</button>
+          `;
+          row.querySelector('button').onclick = ()=>{
+            if(checked){
+              pickedSkills = pickedSkills.filter(x=>x!==s);
+            }else{
+              if(pickedSkills.length>=3){ alert('Možete odabrati najviše 3 zanimanja.'); return; }
+              pickedSkills.push(s);
+            }
+            draw(f);
+            renderChips();
+          };
+          list.appendChild(row);
+        });
+      }
+      draw();
+      search.oninput = ()=> draw(search.value);
+      document.getElementById('skillsDone').onclick = ()=> skillsDlg.close();
+    }
+
+    // --- map link parser (@lat,lng ili ?q=lat,lng)
+    function parseMapLink(url){
+      try{
+        const u = new URL(url);
+        // @43.85,18.41
+        const at = u.href.match(/@(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)/);
+        if(at) return {lat: parseFloat(at[1]), lng: parseFloat(at[3])};
+        // q=43.85,18.41
+        const q = u.searchParams.get('q');
+        if(q){
+          const m = q.match(/(-?\d+(\.\d+)?),\s*(-?\d+(\.\d+)?)/);
+          if(m) return {lat: parseFloat(m[1]), lng: parseFloat(m[3])};
+        }
+      }catch(_){}
+      return null;
+    }
+
+    // --- photo preview (frontend)
+    photos?.addEventListener('change', ()=>{
+      const grid = document.getElementById('photoPreview');
+      grid.innerHTML = '';
+      const files = Array.from(photos.files||[]).slice(0,6);
+      files.forEach(f=>{
+        const img = document.createElement('img');
+        img.alt = f.name;
+        grid.appendChild(img);
+        const reader = new FileReader();
+        reader.onload = e=> img.src = String(e.target.result);
+        reader.readAsDataURL(f);
+      });
+    });
+
+    // --- load profile (if logged)
     (async ()=>{
       try{
+        await loadSkills();
         const { data } = await api('profile','GET');
         if(data){
           email.value     = data.email||'';
           name.value      = data.name||'';
           phone.value     = data.phone||'';
-          skills.value    = (data.skills||[]).join(', ');
-          location.value  = data.location||'';
-          lat.value       = (data.lat ?? '') + '';
-          lng.value       = (data.lng ?? '') + '';
+          pickedSkills    = Array.isArray(data.skills)? data.skills.slice(0,3):[];
+          renderChips();
+          // lokacija
+          lat.value       = data.lat!=null ? String(data.lat) : '';
+          lng.value       = data.lng!=null ? String(data.lng) : '';
+          // opis
           bio.value       = data.bio||'';
           reviews.checked = !!data.reviews_enabled;
           quiet_from.value= data.quiet_from||'18:00';
@@ -82,40 +309,70 @@
       }catch(e){ alert('Niste prijavljeni.'); location.href='login.html'; }
     })();
 
-    profForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const payload = {
-        name: name.value.trim(),
-        phone: phone.value.trim(),
-        skills: toArr(skills.value),
-        location: location.value.trim(),
-        lat: lat.value ? parseFloat(lat.value) : null,
-        lng: lng.value ? parseFloat(lng.value) : null,
-        bio: bio.value.trim(),
-        reviews_enabled: reviews.checked,
-        quiet_from: quiet_from.value,
-        quiet_to: quiet_to.value
-      };
-      try{
-        await api('profile','PUT', payload);
-        const t = `🧰 ${payload.name}\n📞 ${payload.phone}\n🧩 ${payload.skills.join(', ')}\n📍 ${payload.location}\n🌐 ${payload.lat||'-'}, ${payload.lng||'-'}\n📝 ${payload.bio}\n⭐ Recenzije: ${payload.reviews_enabled?'DA':'NE'}\n⛔ ${payload.quiet_from} → ${payload.quiet_to}`;
-        pv.textContent = t; preview.hidden = false;
-        alert('Profil spremljen.');
-      }catch(e){ alert(e.message); }
-    });
+    // --- buttons
+    document.getElementById('btnPickSkills').onclick = openSkillsDialog;
+    document.getElementById('btnClearSkills').onclick = ()=>{ pickedSkills = []; renderChips(); };
 
-    btnMyGps.addEventListener('click', ()=>{
+    document.getElementById('btnParseMap').onclick = ()=>{
+      const p = parseMapLink(mapLink.value.trim());
+      if(!p){ alert('Ne možemo pročitati koordinate iz linka. Provjerite Google Maps URL.'); return; }
+      lat.value = p.lat.toFixed(6);
+      lng.value = p.lng.toFixed(6);
+      alert('Lokacija postavljena iz karte.');
+    };
+
+    document.getElementById('btnUseGps').onclick = ()=>{
       if(!navigator.geolocation){ alert('Vaš preglednik ne podržava GPS.'); return; }
       navigator.geolocation.getCurrentPosition(pos=>{
         lat.value = pos.coords.latitude.toFixed(6);
         lng.value = pos.coords.longitude.toFixed(6);
-      }, err=> alert('Ne možemo dohvatiti lokaciju: '+err.message), {enableHighAccuracy:true, timeout:10000});
+      }, err=> alert('GPS greška: '+err.message), {enableHighAccuracy:true, timeout:10000});
+    };
+
+    // --- save
+    document.getElementById('btnSave').addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const payload = {
+        name: name.value.trim(),
+        phone: phone.value.trim(),
+        // email ne mijenjamo ovdje (drži se u users.email preko auth flowa)
+        skills: pickedSkills.slice(0,3),
+        location: [country.value||'', place.value||''].filter(Boolean).join(' / '),
+        lat: lat.value ? parseFloat(lat.value) : null,
+        lng: lng.value ? parseFloat(lng.value) : null,
+        bio: bio.value.trim(),
+        reviews_enabled: reviews.checked,
+        quiet_from: quiet_from.value || '18:00',
+        quiet_to: quiet_to.value   || '07:00'
+      };
+      if(!payload.name || !payload.phone){ alert('Ime i telefon su obavezni.'); return; }
+      if(payload.skills.length===0){ alert('Odaberite barem jedno zanimanje.'); return; }
+
+      try{
+        await api('profile','PUT', payload);
+
+        // preview
+        const pv = document.getElementById('pv');
+        const preview = document.getElementById('preview');
+        pv.innerHTML = `
+          <div><strong>${payload.name}</strong></div>
+          <div class="muted">📞 ${payload.phone}</div>
+          <div class="muted">🧩 ${payload.skills.join(', ')}</div>
+          <div class="muted">📍 ${payload.location || '-'}</div>
+          <div class="muted">🌐 ${payload.lat??'-'}, ${payload.lng??'-'}</div>
+          <div style="margin-top:6px">${payload.bio?payload.bio.replace(/</g,'&lt;'):'—'}</div>
+          <div class="muted" style="margin-top:6px">⭐ Recenzije: ${payload.reviews_enabled?'DA':'NE'}</div>
+          <div class="muted">⛔ ${payload.quiet_from} → ${payload.quiet_to}</div>
+        `;
+        preview.hidden = false;
+        alert('Profil spremljen. Vaš profil će se prikazati na popisu majstora (stranica Majstori).');
+      }catch(err){ alert(err.message||'Greška spremanja'); }
     });
 
-    logout.addEventListener('click', async ()=>{
+    document.getElementById('btnLogout').onclick = async ()=>{
       try{ await api('logout'); }catch(_){}
       location.href='login.html';
-    });
+    };
   </script>
 </body>
 </html>
