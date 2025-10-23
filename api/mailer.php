@@ -1,8 +1,8 @@
 <?php
-// mailer.php — kompletan HTML mailer za Dogovoreno.com
-// ----------------------------------------------------
+// mailer.php — HTML mailer za Dogovoreno.com
+// ------------------------------------------
 // KORISTI:  require_once __DIR__.'/mailer.php';
-// PRIMJERI POZIVA NA DNU FAJLA
+// PRIMJERI POZIVA su na dnu fajla (komentirani).
 
 /* =========================
    OSNOVNE POSTAVKE
@@ -20,61 +20,63 @@ function mailer_admin_email(): string {
   return 'info@'.mailer_domain();
 }
 function mailer_base_url(): string {
-  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off') ? 'https' : 'http';
+  $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+  $scheme = $https ? 'https' : 'http';
   return $scheme.'://'.($_SERVER['HTTP_HOST'] ?? 'localhost');
 }
 
 /* =========================
-   NISKI NIVO: SLANJE MAILA
+   SLANJE MAILA (mail())
    ========================= */
 function mailer_send(string $to, string $subject, string $html, ?string $textPlain = null, array $opts = []): bool {
-  // Subject UTF-8 safe
+  // Encodaj subject (UTF-8 sigurno)
   $encodedSubject = mb_encode_mimeheader($subject, 'UTF-8');
 
-  $boundary = 'b1_'.bin2hex(random_bytes(6));
-  $boundaryAlt = 'b2_'.bin2hex(random_bytes(6));
+  // Granice za MIME
+  $boundaryAlt = 'b_alt_'.bin2hex(random_bytes(8));
 
+  // Polja
   $fromEmail = $opts['from_email'] ?? mailer_from_email();
   $fromName  = $opts['from_name']  ?? mailer_from_name();
   $replyTo   = $opts['reply_to']   ?? $fromEmail;
   $bcc       = $opts['bcc']        ?? null;
   $returnPath= $opts['return_path']?? $fromEmail;
 
-  // Minimalni text fallback ako nije zadan
+  // Fallback za plain text (strip HTML)
   if ($textPlain === null) {
-    $textPlain = html_entity_decode(strip_tags(preg_replace('#<br\s*/?>#i', "\n", $html)), ENT_QUOTES, 'UTF-8');
+    $textPlain = html_entity_decode(
+      trim(preg_replace('#<br\s*/?>#i', "\n", strip_tags($html))),
+      ENT_QUOTES,
+      'UTF-8'
+    );
   }
 
+  // Headeri
   $headers  = '';
   $headers .= 'From: ' . mb_encode_mimeheader($fromName, 'UTF-8') . " <{$fromEmail}>\r\n";
   $headers .= "Reply-To: {$replyTo}\r\n";
   if ($bcc) $headers .= "Bcc: {$bcc}\r\n";
   $headers .= "MIME-Version: 1.0\r\n";
-  $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n";
-  // (opcija) Return-Path – neki hostinzi traže kroz 5. parametar mail(), no mnogi ignoriraju header
+  $headers .= "Content-Type: multipart/alternative; boundary=\"{$boundaryAlt}\"\r\n";
+  // (Napomena) Neki hostingi zahtijevaju return-path kroz 5. parametar:
   $params = "-f {$returnPath}";
 
-  // Tijelo: multipart/alternative -> [plain] + [html]
-  $body  = "--{$boundary}\r\n";
-  $body .= "Content-Type: multipart/related; boundary=\"{$boundaryAlt}\"\r\n\r\n";
-
-  // ALT 1: Plain text
+  // Tijelo: multipart/alternative (PLAIN + HTML)
+  $body  = '';
+  // Plain
   $body .= "--{$boundaryAlt}\r\n";
   $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
   $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
-  $body .= chunk_split(base64_encode($textPlain)) . "\r\n";
+  $body .= chunk_split(base64_encode($textPlain))."\r\n";
 
-  // ALT 2: HTML
+  // HTML
   $body .= "--{$boundaryAlt}\r\n";
   $body .= "Content-Type: text/html; charset=UTF-8\r\n";
   $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
-  $body .= chunk_split(base64_encode($html)) . "\r\n";
+  $body .= chunk_split(base64_encode($html))."\r\n";
 
-  // End inner boundary
+  // Kraj
   $body .= "--{$boundaryAlt}--\r\n";
-
-  // End outer boundary
-  $body .= "--{$boundary}--\r\n";
 
   return @mail($to, $encodedSubject, $body, $headers, $params);
 }
@@ -83,11 +85,9 @@ function mailer_send(string $to, string $subject, string $html, ?string $textPla
    HTML TEMPLATE
    ========================= */
 function mailer_wrap_html(string $title, string $contentHtml): string {
-  $brand = mailer_from_name();
-  $base  = mailer_base_url();
-  $domain= mailer_domain();
+  $brand  = mailer_from_name();
+  $domain = mailer_domain();
 
-  // Minimal, čist i “mobile-first” template
   return <<<HTML
 <!doctype html>
 <html lang="hr">
@@ -109,6 +109,7 @@ function mailer_wrap_html(string $title, string $contentHtml): string {
   .foot{padding:14px 20px;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#9aa3af}
   .brand{font-weight:800;letter-spacing:.2px}
   .hr{height:1px;background:rgba(255,255,255,.08);margin:16px 0}
+  pre{white-space:pre-wrap;background:#0b0d12;border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:10px;color:#e5e7eb}
 </style>
 </head>
 <body>
@@ -121,7 +122,7 @@ function mailer_wrap_html(string $title, string $contentHtml): string {
       <div class="body">
         {$contentHtml}
         <div class="hr"></div>
-        <p class="muted">Ako niste Vi inicirali ovu radnju, možete ignorirati ovu poruku.</p>
+        <p class="muted">Ako niste Vi inicirali ovu radnju, ignorirajte ovu poruku.</p>
       </div>
       <div class="foot">
         <span class="brand">{$brand}</span> • {$domain}
@@ -140,10 +141,11 @@ HTML;
 // 1) Verifikacija korisnika
 function send_verification_email(string $to, string $link): bool {
   $title = 'Potvrdite registraciju — Dogovoreno';
-  $html = mailer_wrap_html($title, '
-    <p>Hvala na registraciji! Potvrdite svoj e-mail klikom na gumb ispod:</p>
-    <p><a href="'.htmlspecialchars($link).'" class="btn">Potvrdi e-mail</a></p>
-    <p>Link: <a href="'.htmlspecialchars($link).'">'.htmlspecialchars($link).'</a></p>
+  $safe  = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
+  $html  = mailer_wrap_html($title, '
+    <p>Hvala na registraciji! Potvrdite svoj e-mail klikom na gumb:</p>
+    <p><a href="'.$safe.'" class="btn">Potvrdi e-mail</a></p>
+    <p>Link: <a href="'.$safe.'">'.$safe.'</a></p>
   ');
   $text = "Hvala na registraciji!\n\nOtvorite link za potvrdu:\n{$link}\n";
   return mailer_send($to, $title, $html, $text);
@@ -154,8 +156,7 @@ function send_contact_email(string $to, string $subject, string $bodyText): bool
   $title = $subject ?: 'Novi upit — Dogovoreno';
   $html  = mailer_wrap_html($title, '
     <p>Imate novi upit od klijenta:</p>
-    <pre style="white-space:pre-wrap;background:#0b0d12;border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:10px;">'
-    . htmlspecialchars($bodyText) . '</pre>
+    <pre>'.htmlspecialchars($bodyText, ENT_QUOTES, 'UTF-8').'</pre>
     <p>Molimo odgovorite direktno klijentu ili kroz svoj profil.</p>
   ');
   return mailer_send($to, $title, $html, $bodyText);
@@ -173,15 +174,15 @@ function send_new_job_to_provider(string $to, array $data, ?string $bccAdmin = n
   $meta  = [];
   if ($city !== '') $meta[] = "Lokacija: {$city}";
   if ($dist !== null) $meta[] = "Udaljenost: {$dist} km";
-  $metaHtml = $meta ? '<p class="muted">'.htmlspecialchars(implode(' • ', $meta)).'</p>' : '';
+  $metaHtml = $meta ? '<p class="muted">'.htmlspecialchars(implode(' • ', $meta), ENT_QUOTES, 'UTF-8').'</p>' : '';
 
   $html = mailer_wrap_html($title, '
-    <p><strong>Sljedeći posao vas čeka.</strong></p>
-    <p>'.nl2br(htmlspecialchars(mb_substr($desc,0,400))).'</p>'.
-    $metaHtml .
-    '<p><a href="'.htmlspecialchars($cta).'" class="btn">Otvori u Dogovoreno</a></p>
+    <p><strong>Stigao je novi posao.</strong></p>
+    <p>'.nl2br(htmlspecialchars(mb_substr($desc,0,400), ENT_QUOTES, 'UTF-8')).'</p>'.
+    $metaHtml.
+    '<p><a href="'.htmlspecialchars($cta, ENT_QUOTES, 'UTF-8').'" class="btn">Otvori u Dogovoreno</a></p>
   ');
-  $text = "Sljedeći posao vas čeka.\n\nOpis:\n{$desc}\n".
+  $text = "Stigao je novi posao.\n\nOpis:\n{$desc}\n".
           ($city ? "Lokacija: {$city}\n" : '').
           ($dist!==null ? "Udaljenost: {$dist} km\n" : '').
           "Otvori: {$cta}\n";
@@ -200,16 +201,15 @@ function send_good_news_to_client(string $to, array $data, ?string $bccAdmin = n
   $desc  = trim((string)($data['job_desc'] ?? ''));
   $cta   = $data['cta_url'] ?? mailer_base_url();
 
-  $phoneHtml = $pphone ? '<p>Telefon: <strong>'.htmlspecialchars($pphone).'</strong></p>' : '';
+  $phoneHtml = $pphone ? '<p>Telefon: <strong>'.htmlspecialchars($pphone, ENT_QUOTES, 'UTF-8').'</strong></p>' : '';
   $html = mailer_wrap_html($title, '
     <p><strong>Imamo dobre vijesti!</strong></p>
     <p>Pronašli smo vam majstora koji je spreman odraditi uslugu.</p>
-    <p><strong>'.htmlspecialchars($pname).'</strong></p>'.
+    <p><strong>'.htmlspecialchars($pname, ENT_QUOTES, 'UTF-8').'</strong></p>'.
     $phoneHtml.
     '<p class="muted">Opis vašeg zahtjeva:</p>
-    <pre style="white-space:pre-wrap;background:#0b0d12;border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:10px;">'
-    . htmlspecialchars(mb_substr($desc,0,400)) . '</pre>
-    <p><a href="'.htmlspecialchars($cta).'" class="btn">Otvori detalje</a></p>
+    <pre>'.htmlspecialchars(mb_substr($desc,0,400), ENT_QUOTES, 'UTF-8').'</pre>
+    <p><a href="'.htmlspecialchars($cta, ENT_QUOTES, 'UTF-8').'" class="btn">Otvori detalje</a></p>
   ');
 
   $text = "Imamo dobre vijesti!\n".
@@ -227,20 +227,20 @@ function send_good_news_to_client(string $to, array $data, ?string $bccAdmin = n
 /* =========================
    PRIMJERI POZIVA (komentirano)
    =========================
-   // 1) Verifikacija
+   // 1) Verifikacija:
    // send_verification_email('user@example.com', mailer_base_url().'/api/auth.php?route=verify&token=XYZ');
 
-   // 2) Kontakt majstoru
-   // send_contact_email('majstor@example.com', 'Novi upit — Dogovoreno', "Ime: Ana\nTelefon: 061 111 222\n...\n");
+   // 2) Kontakt majstoru:
+   // send_contact_email('majstor@example.com','Novi upit — Dogovoreno',"Ime: Ana\nTelefon: 061 111 222\n...");
 
-   // 3) Novi posao majstoru
+   // 3) Novi posao majstoru:
    // send_new_job_to_provider(
    //   'majstor@example.com',
-   //   ['desc'=>'Postavljanje 15m² keramike u kupatilu', 'distance_km'=>3.2, 'city'=>'Mostar', 'cta_url'=>mailer_base_url().'/moj-profil'],
+   //   ['desc'=>'Postavljanje 15m² keramike u kupatilu','distance_km'=>3.2,'city'=>'Mostar','cta_url'=>mailer_base_url().'/moj-profil'],
    //   mailer_admin_email()
    // );
 
-   // 4) Dobre vijesti klijentu
+   // 4) Dobre vijesti klijentu:
    // send_good_news_to_client(
    //   'klijent@example.com',
    //   ['provider_name'=>'Marko Marković','provider_phone'=>'+387 61 123 456','job_desc'=>'Postavljanje parketa 25m²','cta_url'=>mailer_base_url().'/moji-zahtjevi'],
