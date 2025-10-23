@@ -1,10 +1,199 @@
 <header class="site-header" aria-label="Zaglavlje">
   <div class="container">
-
     <div class="site-title">🤝 Dogovoreno.com</div>
     <div class="profile-wrap">
-      <a class="profile-btn" href="profile.html">Moj profil</a>
+      <a id="authBtn" class="profile-btn" href="#" role="button">Moj profil</a>
     </div>
-
   </div>
+
+  <!-- AUTH MODAL -->
+  <dialog id="authDialog" aria-label="Prijava ili registracija">
+    <form method="dialog" id="authCloseForm" class="p-0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--fieldBorder)">
+        <strong>Prijava / Registracija</strong>
+        <button class="btn btn-ghost" value="close" title="Zatvori" style="padding:6px 10px">✕</button>
+      </div>
+    </form>
+
+    <div style="padding:16px">
+      <!-- Tabovi -->
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button id="tabLogin" class="btn btn-ghost" type="button" aria-selected="true">Prijava</button>
+        <button id="tabRegister" class="btn btn-ghost" type="button" aria-selected="false">Registracija</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="loginForm" class="grid" style="margin:0" onsubmit="return false;">
+        <label>Email ili ime ili telefon*
+          <input id="lg_identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…">
+        </label>
+        <label>Lozinka*
+          <input id="lg_password" type="password" required>
+        </label>
+        <button id="lg_submit" class="btn btn-primary" type="submit">Prijavi se</button>
+        <p class="help mt-8" style="margin-bottom:6px">
+          Niste dobili e-mail s potvrdom nakon registracije?
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="resend_email" type="email" placeholder="upisite svoj e-mail" style="max-width:280px">
+          <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>
+          <span class="help">ili <a href="mailto:podrska@dogovoreno.com">javite nam se</a></span>
+        </div>
+      </form>
+
+      <!-- REGISTER -->
+      <form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">
+        <label>Ime / obrt*
+          <input id="rg_name" required>
+        </label>
+        <label>Telefon*
+          <input id="rg_phone" required placeholder="+387 6X XXX XXX">
+        </label>
+        <label>E-mail*
+          <input id="rg_email" type="email" required placeholder="ime@primjer.com">
+        </label>
+        <label>Lozinka* <span class="help">(min. 8 znakova)</span>
+          <input id="rg_password" type="password" required minlength="8">
+        </label>
+        <button id="rg_submit" class="btn btn-primary" type="submit">Registriraj se</button>
+        <p class="help mt-8" style="margin-bottom:0">
+          Nakon registracije poslat ćemo vam e-mail za potvrdu.
+          Ako poruka ne stigne, provjerite spam ili
+          <a href="mailto:podrska@dogovoreno.com">kontaktirajte podršku</a>.
+        </p>
+      </form>
+    </div>
+  </dialog>
+
+  <script>
+  (function(){
+    const authBtn    = document.getElementById('authBtn');
+    const dlg        = document.getElementById('authDialog');
+    const tabLogin   = document.getElementById('tabLogin');
+    const tabReg     = document.getElementById('tabRegister');
+    const loginForm  = document.getElementById('loginForm');
+    const regForm    = document.getElementById('regForm');
+
+    // polja
+    const lg_identifier = document.getElementById('lg_identifier');
+    const lg_password   = document.getElementById('lg_password');
+    const rg_name       = document.getElementById('rg_name');
+    const rg_phone      = document.getElementById('rg_phone');
+    const rg_email      = document.getElementById('rg_email');
+    const rg_password   = document.getElementById('rg_password');
+
+    // resend elementi
+    const resendEmail = document.getElementById('resend_email');
+    const resendBtn   = document.getElementById('resend_btn');
+
+    let isAuthed = false;
+
+    // Helper API
+    async function api(route, method='GET', body=null){
+      const res = await fetch('/api/auth.php?route='+route, {
+        method, headers:{'Content-Type':'application/json'},
+        body: body?JSON.stringify(body):null
+      });
+      let j = {};
+      try { j = await res.json(); } catch(_){}
+      if(!res.ok) throw new Error(j.error||'Greška');
+      return j;
+    }
+
+    // Prefill resend email ako u login identifieru postoji e-mail
+    lg_identifier.addEventListener('input', ()=>{
+      if (lg_identifier.value.includes('@') && lg_identifier.value.includes('.')) {
+        resendEmail.value = lg_identifier.value.trim();
+      }
+    });
+
+    // Provjera je li user prijavljen — ako da, promijeni gumb
+    (async function checkAuth(){
+      try{
+        await api('profile','GET');
+        isAuthed = true;
+        authBtn.textContent = 'Uredi profil';
+        authBtn.setAttribute('href','/nudimuslugu.html');
+      }catch(_){
+        isAuthed = false;
+        authBtn.textContent = 'Moj profil';
+        authBtn.setAttribute('href','#');
+      }
+    })();
+
+    // Klik na gumb u headeru
+    authBtn.addEventListener('click', (e)=>{
+      if (isAuthed) {
+        return; // link već vodi na /nudimuslugu.html
+      }
+      e.preventDefault();
+      openLogin();
+      dlg.showModal();
+    });
+
+    // Tabovi
+    function openLogin(){
+      tabLogin.setAttribute('aria-selected','true');
+      tabReg.setAttribute('aria-selected','false');
+      loginForm.style.display='grid';
+      regForm.style.display='none';
+    }
+    function openRegister(){
+      tabLogin.setAttribute('aria-selected','false');
+      tabReg.setAttribute('aria-selected','true');
+      loginForm.style.display='none';
+      regForm.style.display='grid';
+    }
+    tabLogin.addEventListener('click', openLogin);
+    tabReg.addEventListener('click', openRegister);
+
+    // Submit: PRIJAVA
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const payload = {
+        identifier: lg_identifier.value.trim(),
+        password: lg_password.value
+      };
+      try{
+        await api('login','POST', payload);
+        location.href = '/nudimuslugu.html';
+      }catch(err){
+        alert(err.message||'Greška prijave');
+      }
+    });
+
+    // Submit: REGISTRACIJA
+    regForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const body = {
+        name: rg_name.value.trim(),
+        phone: rg_phone.value.trim(),
+        email: rg_email.value.trim(),
+        password: rg_password.value
+      };
+      try{
+        await api('register','POST', body);
+        alert('Uspješno! Poslali smo e-mail za potvrdu. Nakon potvrde, prijavite se.');
+        openLogin();
+        if (!resendEmail.value) resendEmail.value = body.email;
+      }catch(err){
+        alert(err.message||'Greška registracije');
+      }
+    });
+
+    // RESEND VERIFICATION
+    resendBtn.addEventListener('click', async ()=>{
+      const email = (resendEmail.value || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) { alert('Unesite ispravan e-mail.'); return; }
+      try{
+        await api('resend','POST', { email });
+        alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');
+      }catch(err){
+        // I dalje pokaži “neutralnu” poruku (da ne otkrijemo postoji li korisnik)
+        alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');
+      }
+    });
+
+  })();
+  </script>
 </header>
