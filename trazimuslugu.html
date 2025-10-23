@@ -35,6 +35,14 @@
     .btn-ghost{ background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.14) }
     .btn-inline{ padding:10px 12px; border-radius:10px }
     .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+
+    .sub-actions{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; margin-top:12px; flex-wrap:wrap;
+    }
+    .sub-actions .left{ color:var(--muted); font-size:14px }
+    .sub-actions .right{ display:flex; gap:10px; flex-wrap:wrap }
+
     .subgrid{ display:grid; gap:10px } @media(min-width:700px){ .subgrid-2{ grid-template-columns:1fr 1fr } }
 
     /* dialog */
@@ -123,7 +131,19 @@
         <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
       </section>
 
-      <div class="actions"><button class="btn btn-primary" id="btnSubmit">Zatraži uslugu</button></div>
+      <!-- Primarno: automatsko slanje upita -->
+      <div class="actions">
+        <button class="btn btn-primary" id="btnSubmit">Zatraži uslugu</button>
+      </div>
+
+      <!-- Sekundarno: ručno pretraživanje profila -->
+      <div class="sub-actions">
+        <div class="left">Želite prvo pregledati profile majstora?</div>
+        <div class="right">
+          <button class="btn btn-ghost" id="btnBrowse">Pregledaj majstore ručno</button>
+        </div>
+      </div>
+
       <div class="note" style="margin-top:12px">Nakon slanja, naš sustav automatski pronalazi najbliže majstore koji odgovaraju traženim zanimanjima. Majstori dobivaju obavijest i mogu odgovoriti “Zainteresiran sam”. Ako jest — dobit ćete ime i broj telefona za dogovor.</div>
     </div>
 
@@ -164,12 +184,11 @@
     const toast = (m)=>{ const t=$('#toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); };
 
     /* ========= SKILLS (JSON) ========= */
-    // koristi /data/skills.json – isti file i za nudimuslugu.html
     const ALL_SKILLS = [];
     fetch('/data/skills.json').then(r=>r.json()).then(list=>{
       ALL_SKILLS.push(...list.sort((a,b)=>a.localeCompare(b,'hr')));
       renderSkillList();
-    }).catch(()=>{ /* fallback: možeš ubaciti default listu ako JSON nedostupan */ });
+    }).catch(()=>{ /* fallback ako JSON nedostupan */ });
 
     const pickedSkills = new Set();
     const skillChips  = $('#skillChips');
@@ -286,7 +305,7 @@
       dlgPlace.close(); toast('Lokacija postavljena.');
     });
 
-    /* ========= SUBMIT ========= */
+    /* ========= SUBMIT (automatsko slanje) ========= */
     function validPayload(){
       if(pickedSkills.size===0){ toast('Odaberite barem jedno zanimanje.'); return false; }
       if(!($('#jobDesc').value||'').trim()){ toast('Napišite ukratko što vam treba.'); return false; }
@@ -307,6 +326,25 @@
         const j=await r.json(); if(!r.ok) throw new Error(j.error||'Greška pri slanju');
         toast('✓ Poslano! Uskoro dobivate odgovore.'); console.log('JOB_ID', j.id);
       }catch(e){ toast('⚠ '+(e.message||e)); }
+    });
+
+    /* ========= RUČNO PREGLEDAVANJE (link na majstori.html) ========= */
+    function buildBrowseUrl(){
+      // koristimo PRVI odabrani skill jer API /providers prihvaća 1 skill (ostale ignoriramo)
+      const firstSkill = pickedSkills.size ? Array.from(pickedSkills)[0] : '';
+      const lat = latEl.value ? parseFloat(latEl.value) : '';
+      const lng = lngEl.value ? parseFloat(lngEl.value) : '';
+      const label = (placeLabel.value||'').trim();
+      const params = new URLSearchParams();
+      if (firstSkill) params.set('skill', firstSkill);
+      if (lat!=='' && lng!==''){ params.set('qlat', lat); params.set('qlng', lng); params.set('radius_km','25'); }
+      if (label) params.set('location', label);
+      return 'majstori.html'+(params.toString()?('?'+params.toString()):'');
+    }
+    $('#btnBrowse').addEventListener('click', ()=>{
+      // Može se i bez unosa: otvori listu pa korisnik filtrira ručno
+      const url = buildBrowseUrl();
+      window.location.href = url;
     });
 
     // init
