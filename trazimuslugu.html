@@ -40,7 +40,7 @@
     .btn-primary{ background:var(--cta); color:#fff }
     .btn-ghost{ background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.14) }
     .btn-inline{ padding:10px 12px; border-radius:10px }
-    .btn-accent{ background:var(--accent); color:#052; color:#062a21; } /* blago tamniji tekst na zelenoj */
+    .btn-accent{ background:var(--accent); color:#062a21; } /* zeleno samo za 'Odaberi zanimanje' */
     .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
 
     .subgrid{ display:grid; gap:10px } @media(min-width:700px){ .subgrid-2{ grid-template-columns:1fr 1fr } }
@@ -49,9 +49,12 @@
     dialog{ border:0; border-radius:16px; background:#0e1014; color:var(--ink); width:min(720px, 96vw) }
     dialog::backdrop{ background:rgba(0,0,0,.4) }
     .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
-    .dlg-body{ padding:14px 16px; max-height:70vh; overflow:auto }
+    /* sticky pretraga na vrhu, lista skrola ispod */
+    .dlg-body{ padding:0; max-height:70vh; overflow:auto }
+    .dlg-search{ position:sticky; top:0; z-index:2; background:#0e1014; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
+    #skillSearch{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b0d11; color:#fff }
     .dlg-actions{ padding:14px 16px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid rgba(255,255,255,.08) }
-    .list{ display:grid; gap:8px }
+    .list{ display:grid; gap:8px; padding:14px 16px }
     .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03); }
     .item input{ transform:scale(1.2) }
 
@@ -61,13 +64,16 @@
     .toast{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:#0b7; color:#fff; padding:10px 14px; border-radius:12px; box-shadow:var(--shadow); display:none; z-index:60; }
     .toast.show{ display:block }
 
-    /* Uploader */
-    .uploader{ margin-top:10px }
-    .upload-drop{ border:1px dashed rgba(255,255,255,.25); border-radius:12px; padding:14px; text-align:center; background:rgba(255,255,255,.04); cursor:pointer; }
-    .upload-drop:focus{ outline:2px solid rgba(37,99,235,.6) }
-    .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:10px; }
+    /* Minimal uploader */
+    .uploader-minimal{ margin:8px 0 0; }
+    .upload-link{
+      appearance:none; background:transparent; border:0; text-decoration:underline; cursor:pointer;
+      padding:4px 0; font-weight:600; color:var(--ink);
+    }
+    .upload-link:focus{ outline:2px solid rgba(37,99,235,.6); border-radius:6px; }
+    .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:8px; }
     .thumb{ position:relative; border-radius:10px; overflow:hidden; background:#0b0d11; border:1px solid rgba(255,255,255,.12); }
-    .thumb img{ width:100%; height:90px; object-fit:cover; display:block }
+    .thumb img{ width:100%; height:72px; object-fit:cover; display:block }
     .thumb button{ position:absolute; top:6px; right:6px; border:0; border-radius:8px; padding:4px 6px; background:rgba(0,0,0,.5); color:#fff; cursor:pointer; }
   </style>
 </head>
@@ -93,20 +99,21 @@
         <div class="note">* Odaberite zanimanje za koje mislite da će najbolje odraditi ono što vam treba.</div>
       </section>
 
-      <!-- 2) OPIS + UPLOAD -->
+      <!-- 2) OPIS -->
       <section class="cloud" aria-labelledby="lab-desc">
         <h3 id="lab-desc">Što Vam Treba?</h3>
         <div class="field">
           <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
         </div>
-        <div class="uploader" id="uploader">
-          <input id="fileInput" type="file" accept="image/*" multiple hidden>
-          <div class="upload-drop" id="uploadDrop" role="button" tabindex="0">📎 Dodaj fotografije (do 6) — povuci i pusti ili klikni ovdje</div>
-          <div class="upload-note help">Podržano: JPG, PNG, WEBP. Maks. 5 MB po slici.</div>
-          <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
-        </div>
         <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
       </section>
+
+      <!-- Minimal uploader: mali link lijevo, bez dodatnih tekstova -->
+      <div class="uploader-minimal">
+        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+        <button class="upload-link" id="uploadLink" type="button">📎 Dodaj fotografije</button>
+        <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
+      </div>
 
       <!-- 3) LOKACIJA -->
       <section class="cloud" aria-labelledby="lab-loc">
@@ -135,7 +142,7 @@
         <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
       </section>
 
-      <!-- AKCIJE: bez kontejnera, dva plava gumba jedan ispod drugog -->
+      <!-- AKCIJE: dva plava gumba, bez kontejnera -->
       <div class="actions" style="margin-top:18px">
         <button class="btn btn-primary" id="btnSubmit">Zatraži uslugu automatski</button>
       </div>
@@ -157,7 +164,9 @@
   <dialog id="dlgSkills">
     <div class="dlg-head"><strong>Odaberi zanimanja (max 3)</strong><button class="btn btn-ghost btn-inline" onclick="dlgSkills.close()">✕</button></div>
     <div class="dlg-body">
-      <input id="skillSearch" placeholder="Početak naziva (npr. 'ele' → električar)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0b0d11;color:#fff;margin-bottom:10px">
+      <div class="dlg-search">
+        <input id="skillSearch" placeholder="Početak naziva (npr. 'ele' → električar)">
+      </div>
       <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
     </div>
     <div class="dlg-actions"><button class="btn btn-ghost" onclick="dlgSkills.close()">Odustani</button><button class="btn btn-primary" id="skillsSave">Spremi</button></div>
@@ -166,7 +175,7 @@
   <!-- DIALOG: Ručni odabir mjesta -->
   <dialog id="dlgPlace">
     <div class="dlg-head"><strong>Ručni odabir mjesta</strong><button class="btn btn-ghost btn-inline" onclick="dlgPlace.close()">✕</button></div>
-    <div class="dlg-body">
+    <div class="dlg-body" style="padding:14px 16px; max-height:70vh; overflow:auto">
       <div class="grid-3">
         <div class="field"><label class="help">Država (EX-YU)</label><select id="selCountry"></select></div>
         <div class="field"><label class="help">Grad / mjesto (≥1k)</label><select id="selCity"></select></div>
@@ -240,16 +249,26 @@
           skillList.appendChild(row);
         });
     }
-    $('#btnPickSkills').addEventListener('click', ()=>{ renderSkillList(); skillSearch.value=''; dlgSkills.showModal(); setTimeout(()=>skillSearch.focus(),50); });
+    $('#btnPickSkills').addEventListener('click', ()=>{
+      renderSkillList();
+      skillSearch.value='';
+      dlgSkills.showModal();
+      const body = dlgSkills.querySelector('.dlg-body');
+      if (body) body.scrollTop = 0; // reset skrola
+      setTimeout(()=>skillSearch.focus(),50);
+    });
     $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
     skillSearch.addEventListener('input', ()=> renderSkillList(skillSearch.value));
     /* ESC briše upit */
     skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); } });
 
-    /* ========= UPLOADER ========= */
+    /* ========= UPLOADER (minimal) ========= */
     const upload={ files:[], MAX_FILES:6, MAX_MB:5, types:['image/jpeg','image/png','image/webp'] };
-    const fileInput=$('#fileInput'), uploadDrop=$('#uploadDrop'), uploadGrid=$('#uploadGrid');
-    const bytesToMB=b=>b/(1024*1024);
+    const fileInput = $('#fileInput');
+    const uploadLink = $('#uploadLink');
+    const uploadGrid = $('#uploadGrid');
+    const bytesToMB = b => b/(1024*1024);
+
     function renderThumbs(){
       uploadGrid.innerHTML='';
       upload.files.forEach((it,idx)=>{
@@ -269,12 +288,8 @@
       }
       renderThumbs();
     }
-    uploadDrop.addEventListener('click', ()=> fileInput.click());
-    uploadDrop.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') fileInput.click(); });
+    uploadLink.addEventListener('click', ()=> fileInput.click());
     fileInput.addEventListener('change', ()=> addFiles(fileInput.files));
-    ['dragenter','dragover'].forEach(evt=>{ uploadDrop.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploadDrop.style.background='rgba(255,255,255,.07)'; }); });
-    ['dragleave','drop'].forEach(evt=>{ uploadDrop.addEventListener(evt, e=>{ e.preventDefault(); e.stopPropagation(); uploadDrop.style.background='rgba(255,255,255,.04)'; }); });
-    uploadDrop.addEventListener('drop', e=> addFiles(e.dataTransfer.files));
 
     async function uploadAllImages(){
       if(upload.files.length===0) return [];
