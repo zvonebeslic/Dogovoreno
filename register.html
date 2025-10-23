@@ -5,80 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Registracija — Dogovoreno.com</title>
   <link rel="stylesheet" href="base.css">
-  <style>
-    .row{ display:grid; gap:6px }
-    .muted{ color:var(--muted,#c7cbd4); font-size:13px }
-    .error{ color:#ffb4b4; font-size:13px; margin-top:6px }
-  </style>
 </head>
 <body>
   <div data-include="header.html"></div>
-
-  <main class="container" style="max-width:560px">
-    <div class="card" style="padding:16px">
+  <main class="container">
+    <div class="card" style="padding:16px;max-width:460px;margin:24px auto">
       <h2 style="margin:0 0 8px">Registracija</h2>
-      <p class="muted">Na e-mail šaljemo link za potvrdu. Nakon klika bit ćete automatski preusmjereni na izradu profila.</p>
+      <p class="help" style="margin-top:0">
+        Upisite svoj e-mail i lozinku. Poslat ćemo potvrdu na e-mail.
+      </p>
 
-      <form id="regForm" class="grid" autocomplete="on">
-        <label class="row">Ime / obrt* 
-          <input id="name" name="name" required autocomplete="name" />
-        </label>
-        <label class="row">Telefon* 
-          <input id="phone" name="phone" required placeholder="+387 6X XXX XXX" inputmode="tel" />
-        </label>
-        <label class="row">E-mail* 
-          <input id="email" name="email" type="email" required placeholder="ime@primjer.com" autocomplete="email" autocapitalize="off" />
-        </label>
-        <label class="row">Lozinka* 
-          <input id="password" name="password" type="password" required placeholder="Min. 8 znakova" autocomplete="new-password" />
-        </label>
-
-        <div id="err" class="error" hidden></div>
-
-        <button id="btnReg" class="btn btn-primary" type="submit">Registriraj se</button>
-        <div class="muted" style="margin-top:8px">
-          Već imate račun? <a href="login.html">Prijavite se</a>
+      <form id="regForm" class="grid" novalidate>
+        <label>E-mail* <input id="email" type="email" required placeholder="ime@primjer.com"></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label>Lozinka* <input id="password" type="password" required minlength="8" placeholder="Min. 8 znakova"></label>
+          <label>Ponovi lozinku* <input id="password2" type="password" required minlength="8"></label>
         </div>
+
+        <!-- (opcija) odmah upis imena i telefona, da skratimo drugi korak -->
+        <label>Ime / obrt (opcija) <input id="name" placeholder="npr. Marko Servisi"></label>
+        <label>Telefon (opcija) <input id="phone" placeholder="+387 6X XXX XXX"></label>
+
+        <button class="btn btn-primary" type="submit">Registriraj se</button>
       </form>
+
+      <div id="verifyInfo" class="card" style="padding:12px;margin-top:12px;display:none">
+        <p style="margin:0 0 10px"><strong>Poslali smo vam e-mail za potvrdu.</strong></p>
+        <p class="help" style="margin:0 0 10px">
+          Otvorite poštu i kliknite na link za potvrdu. Nakon potvrde, sustav će vas prebaciti na uređivanje profila.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="btnResend">Pošalji ponovno</button>
+          <a class="btn btn-ghost" href="login.html">Već potvrđeno? Prijavi se</a>
+        </div>
+        <p class="help" style="margin:10px 0 0">
+          Ako i dalje ne radi, obratite nam se na <a href="mailto:podrska@dogovoreno.com" style="color:var(--cta)">podrska@dogovoreno.com</a>.
+        </p>
+      </div>
+
+      <p class="help" style="margin-top:12px;text-align:center">
+        Već imaš profil? <a href="login.html" style="color:var(--cta)">Prijava</a>
+      </p>
     </div>
   </main>
-
   <div data-include="footer.html"></div>
+
   <script src="include.js"></script>
   <script>
-  const form = document.getElementById('regForm');
-  const btn  = document.getElementById('btnReg');
-  const err  = document.getElementById('err');
+  const emailEl = document.getElementById('email');
+  const passEl  = document.getElementById('password');
+  const pass2El = document.getElementById('password2');
+  const nameEl  = document.getElementById('name');
+  const phoneEl = document.getElementById('phone');
+  const verifyInfo = document.getElementById('verifyInfo');
 
-  form.addEventListener('submit', async (e)=>{
+  async function api(route, method='GET', body=null){
+    const res = await fetch('api/auth.php?route='+route, {
+      method, headers:{'Content-Type':'application/json'},
+      body: body ? JSON.stringify(body) : null
+    });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(j.error||'Greška');
+    return j;
+  }
+
+  // Submit registracije
+  document.getElementById('regForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
-    err.hidden = true; err.textContent = '';
-    btn.disabled = true; btn.textContent = 'Slanje…';
+    const email = emailEl.value.trim();
+    const p1 = passEl.value;
+    const p2 = pass2El.value;
 
-    const body = {
-      name: name.value.trim(),
-      phone: phone.value.trim(),
-      email: email.value.trim(),
-      password: password.value
-    };
+    if(!email || !p1 || !p2){ alert('Unesite e-mail i lozinku.'); return; }
+    if(p1.length < 8){ alert('Lozinka mora imati najmanje 8 znakova.'); return; }
+    if(p1 !== p2){ alert('Lozinke se ne podudaraju.'); return; }
+
+    // dodatni podaci (opcija) – ako su uneseni, šaljemo
+    const body = { email, password: p1 };
+    if (nameEl.value.trim()) body.name = nameEl.value.trim();
+    if (phoneEl.value.trim()) body.phone = phoneEl.value.trim();
 
     try{
-      const r = await fetch('api/auth.php?route=register', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-      const j = await r.json().catch(()=> ({}));
-      if(!r.ok) throw new Error(j.error || 'Greška');
-
-      // Uspjeh
-      alert('Uspješno! Provjerite e-mail i kliknite na link za potvrdu. Nakon potvrde vodimo vas izravno na izradu profila.');
-      // po želji: ostani na stranici ili preusmjeri na login/home
-      location.href = 'login.html';
+      await api('register','POST', body);
+      // prikaži info o verifikaciji + resend
+      verifyInfo.style.display = 'block';
+      // Sfokusiraj “pošalji ponovno” kao pomoć
+      document.getElementById('btnResend').focus();
     }catch(e){
-      err.textContent = e.message || 'Neuspjela registracija.';
-      err.hidden = false;
-      btn.disabled = false; btn.textContent = 'Registriraj se';
+      alert(e.message);
+    }
+  });
+
+  // Resend verify
+  document.getElementById('btnResend').addEventListener('click', async ()=>{
+    const email = (emailEl.value||'').trim();
+    if(!email){ alert('Upišite e-mail iznad pa kliknite ponovno.'); return; }
+    try{
+      await api('resend','POST', { email });
+      alert('Poslali smo novu poruku za potvrdu.');
+    }catch(e){
+      // Ako ruta još nije implementirana – korisniku daj info i fallback kontakt
+      alert('Nije moguće poslati ponovno. Javite nam se na podrska@dogovoreno.com pa ćemo potvrditi ručno.');
     }
   });
   </script>
