@@ -3,28 +3,32 @@
 declare(strict_types=1);
 if (!headers_sent()) header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../dp.php';
+require_once __DIR__ . '/../db.php'; // was dp.php → db.php
 if (file_exists(__DIR__ . '/../mailer.php')) require_once __DIR__ . '/../mailer.php';
 
-function json_out($ok, $data=[], $code=null){
-  if($code) http_response_code($code);
-  echo json_encode($ok ? $data : ['error'=>$data], JSON_UNESCAPED_UNICODE);
+function json_out($ok, $data = [], $code = null){
+  if ($code) http_response_code($code);
+  echo json_encode($ok ? $data : ['error' => $data], JSON_UNESCAPED_UNICODE);
   exit;
 }
-if ($_SERVER['REQUEST_METHOD']!=='POST') json_out(false,'Method not allowed',405);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') json_out(false, 'Method not allowed', 405);
 
 $in = json_decode(file_get_contents('php://input'), true);
 $notifId = (int)($in['notification_id'] ?? 0);
-$status  = $in['status'] ?? ''; // 'interested' | 'not_interested'
+$status  = $in['status'] ?? ''; // allowed: 'interested' | 'not_interested'
 
-if (!$notifId || !in_array($status,['interested','not_interested'],true)) {
-  json_out(false,'Pogrešan payload',400);
+// validacija payload-a
+if (!$notifId || !in_array($status, ['interested','not_interested'], true)) {
+  json_out(false, 'Pogrešan payload', 400);
 }
 
-try{
+// mapiranje statusa za job_matches (ENUM nema 'not_interested')
+$jmStatus = ($status === 'not_interested') ? 'declined' : 'interested';
+
+try {
   $pdo->beginTransaction();
 
-  // Lockaj notifikaciju i povuci kontekst (posao + provider + user)
+  // Lock + kontekst
   $q = $pdo->prepare("
     SELECT n.id, n.job_id, n.provider_id, n.distance_km,
            u.name AS prov_name, u.phone AS prov_phone, u.email AS prov_email,
@@ -38,49 +42,57 @@ try{
   ");
   $q->execute([$notifId]);
   $n = $q->fetch(PDO::FETCH_ASSOC);
-  if(!$n){
+  if (!$n) {
     $pdo->rollBack();
-    json_out(false,'Notifikacija ne postoji',404);
+    json_out(false, 'Notifikacija ne postoji', 404);
   }
 
-  // 1) Ažuriraj status notifikacije
-  $u = $pdo->prepare("UPDATE job_notifications SET status=:s, responded_at=NOW() WHERE id=:id");
-  $u->execute([':s'=>$status, ':id'=>$notifId]);
+  // (opcija) Ako je već odgovorio prije, možeš short-circuitati:
+  // $already = $pdo->prepare("SELECT status FROM job_notifications WHERE id=?");
+  // $already->execute([$notifId]);
+  // if (($s = $already->fetchColumn()) && $s !== 'sent') { ... }
 
-  // 2) Upsert u job_matches (živi tok)
-  //    - unique key: (job_id, provider_id)
-  $sel = $pdo->prepare("SELECT id FROM job_matches WHERE job_id=? AND provider_id=?");
+  // 1) Update job_notifications.status
+  $u = $pdo->prepare("UPDATE job_notifications SET status = :s, responded_at = NOW() WHERE id = :id");
+  $u->execute([':s' => $status, ':id' => $notifId]);
+
+  // 2) Upsert u job_matches (unique: job_id + provider_id)
+  $sel = $pdo->prepare("SELECT id FROM job_matches WHERE job_id = ? AND provider_id = ?");
   $sel->execute([(int)$n['job_id'], (int)$n['provider_id']]);
   $jmId = $sel->fetchColumn();
 
   if ($jmId) {
-    $upd = $pdo->prepare("UPDATE job_matches
-                          SET status=?, updated_at=NOW()
-                          WHERE id=?");
-    $upd->execute([$status, (int)$jmId]);
+    $upd = $pdo->prepare("
+      UPDATE job_matches
+         SET status = ?, updated_at = NOW()
+       WHERE id = ?
+    ");
+    $upd->execute([$jmStatus, (int)$jmId]);
   } else {
-    $ins = $pdo->prepare("INSERT INTO job_matches
-      (job_id, provider_id, notification_id, status, created_at, distance_km, message_excerpt)
-      VALUES (?,?,?,?,NOW(),?,?)");
+    $ins = $pdo->prepare("
+      INSERT INTO job_matches
+        (job_id, provider_id, notification_id, status, created_at, distance_km, message_excerpt)
+      VALUES
+        (?,?,?,?,NOW(),?,?)
+    ");
     $ins->execute([
       (int)$n['job_id'],
       (int)$n['provider_id'],
       (int)$n['id'],
-      $status,
+      $jmStatus,
       $n['distance_km'] !== null ? (float)$n['distance_km'] : null,
       mb_substr((string)$n['job_desc'], 0, 200)
     ]);
     $jmId = (int)$pdo->lastInsertId();
   }
 
-  // 3) Ako je interested → javi klijentu (ako je registriran i ima e-mail)
+  // 3) Ako provider kaže "interested" → pošalji mail klijentu (ako je registriran)
   $mailSent = false;
   if ($status === 'interested' && !empty($n['client_user_id']) && function_exists('send_good_news_to_client')) {
-    $qe = $pdo->prepare("SELECT email, name FROM users WHERE id=?");
+    $qe = $pdo->prepare("SELECT email, name FROM users WHERE id = ?");
     $qe->execute([(int)$n['client_user_id']]);
     if ($client = $qe->fetch(PDO::FETCH_ASSOC)) {
       if (!empty($client['email'])) {
-        // CTA može voditi na “moji zahtjevi”
         $cta = (function_exists('mailer_base_url') ? mailer_base_url() : '/') . '/moji-zahtjevi';
         $mailSent = @send_good_news_to_client($client['email'], [
           'provider_name'  => (string)$n['prov_name'],
@@ -94,16 +106,17 @@ try{
 
   $pdo->commit();
   json_out(true, [
-    'ok' => true,
-    'notification_id' => (int)$n['id'],
-    'job_id' => (int)$n['job_id'],
-    'provider_id' => (int)$n['provider_id'],
-    'match_id' => (int)$jmId,
-    'status' => $status,
-    'mail_sent' => (bool)$mailSent
+    'ok'            => true,
+    'notification_id'=> (int)$n['id'],
+    'job_id'        => (int)$n['job_id'],
+    'provider_id'   => (int)$n['provider_id'],
+    'match_id'      => (int)$jmId,
+    'status'        => $status,
+    'match_status'  => $jmStatus, // korisno za debug
+    'mail_sent'     => (bool)$mailSent
   ]);
 }
-catch(Throwable $e){
+catch (Throwable $e) {
   if ($pdo->inTransaction()) $pdo->rollBack();
   json_out(false, $e->getMessage(), 500);
 }
