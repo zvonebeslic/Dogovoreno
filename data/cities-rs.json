@@ -1,0 +1,7 @@
+[
+  {"name":"Beograd","lat":44.7866,"lng":20.4489,"pop":1375000},
+  {"name":"Novi Sad","lat":45.2671,"lng":19.8335,"pop":250000},
+  {"name":"Niš","lat":43.3209,"lng":21.8958,"pop":185000},
+  {"name":"Kragujevac","lat":44.0128,"lng":20.9110,"pop":150000},
+  {"name":"Subotica","lat":46.1000,"lng":19.6667,"pop":100000}
+]
