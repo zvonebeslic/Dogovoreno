@@ -1,48 +1,56 @@
 <header class="site-header" aria-label="Zaglavlje">
+
+  <!-- Strelica za natrag - skroz lijevo -->
+  <button class="back-btn" aria-label="Natrag">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
   <div class="container">
-
-    <!-- Strelica za nazad (automatski na svim stranicama osim index.html) -->
-    <button class="back-btn" aria-label="Natrag">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2"
-          fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-
     <div class="site-title">🤝 Dogovoreno.com</div>
-
     <div class="profile-wrap">
       <a class="profile-btn" href="profile.html">Moj profil</a>
     </div>
   </div>
 
   <style>
+    .site-header {
+      position: relative;
+      z-index: 1000;
+    }
+
     .site-header .container {
       display: flex;
       align-items: center;
+      justify-content: space-between;
     }
+
+    /* Strelica: pozicionirana skroz lijevo */
     .back-btn {
+      position: absolute;
+      left: 10px;          /* prilagodi po želji */
+      top: 50%;
+      transform: translateY(-50%);
       background: transparent;
       border: none;
       color: inherit;
       font-size: 20px;
       cursor: pointer;
-      margin-right: 10px;
-      display: none; /* sakriveno po defaultu */
+      display: none; /* default - sakrij na početnoj */
     }
   </style>
 
   <script>
     (function(){
       const btn = document.querySelector('.back-btn');
-      if (!btn) return;
-
       const path = window.location.pathname;
+
       const isIndex =
         path.endsWith('index.html') ||
-        path.endsWith('/') ||
-        path === '' ||
-        path === '/';
+        path === '/' ||
+        path === '';
 
       if (!isIndex) {
         btn.style.display = 'inline-flex';
