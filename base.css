@@ -274,7 +274,7 @@ button[disabled]{
 }
 
 .site-footer .copyright{
-  color:var(--muted);
+  color:#fff !important;
   font-size:12px;
 }
 
