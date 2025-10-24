@@ -29,17 +29,18 @@
     .hint{ color:var(--muted); font-size:12px; margin-top:6px }
     .row{ display:grid; gap:10px }
     .row.two{ grid-template-columns:1fr 1fr }
-    .chips{ display:flex; gap:8px; flex-wrap:wrap }
+    .chips{ display:flex; flex-wrap:wrap; gap:8px }
 
-    /* Chip/pill kao na trazimuslugu */
-    .pill{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:7px 10px; border-radius:999px;
+    /* Chip identičan tražimuslugu */
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
       border:1px solid rgba(0,0,0,.10);
       background:rgba(255,255,255,.6);
       font-weight:600; color:#0b1220;
     }
-    .pill .x{ cursor:pointer; opacity:.9 }
+    .chip button{ all:unset; cursor:pointer; opacity:.85 }
+    .chip button:hover{ opacity:1 }
 
     /* Bijeli inputi/textarea/select/time (crni tekst) – isto kao na trazimuslugu */
     .cloud input[type="text"],
@@ -62,7 +63,7 @@
     }
     .cloud input::placeholder,
     .cloud textarea::placeholder{ color:#64748b; }
-    
+
     /* Gumbi – kao na trazimuslugu */
     .btn{ appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer }
     .btn-primary{
@@ -86,12 +87,19 @@
     /* Linklike kao na trazimuslugu */
     .linklike{ color:#1f3b7c; text-decoration:underline; cursor:pointer }
 
-    /* Dialog – isti sistem */
+    /* Dialog – tamni kao na trazimuslugu */
     dialog{ border:0; border-radius:16px; background:#0e1014; color:#f7f8fa; width:min(720px, 96vw) }
     dialog::backdrop{ background:rgba(0,0,0,.4) }
     .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
     .dlg-body{ padding:0; max-height:70vh; overflow:auto; overscroll-behavior:contain; }
     .dlg-actions{ padding:14px 16px; display:flex; gap:10px; justify-content:center; border-top:1px solid rgba(255,255,255,.08) }
+    .dlg-search{ position:sticky; top:0; z-index:2; background:#0e1014; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
+    #skillSearch{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b0d11; color:#fff }
+
+    /* Lista stavki u popupu (isti vizual) */
+    .list{ display:grid; gap:8px; padding:14px 16px; min-height:35vh; }
+    .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03); }
+    .item input{ transform:scale(1.2) }
 
     /* DlgPlace – svijetli kao na trazimuslugu */
     #dlgPlace{
@@ -120,15 +128,6 @@
     }
     #dlgPlace .btn-ghost:hover{ background:rgba(0,0,0,.05); }
 
-    /* skills popup da bude crni – identično kao na trazimuslugu */
-#skillsDlg{
-  background:#0e1014 !important;
-  color:#f7f8fa !important;
-}
-#skillsDlg::backdrop{
-  background:rgba(0,0,0,.55) !important;
-}
-    
     /* Upload – identičan */
     .uploader-minimal{ margin:8px 0 0; }
     .upload-link{ appearance:none; background:transparent; border:0; text-decoration:underline; cursor:pointer; padding:4px 0; font-weight:600; color:#f7f8fa; }
@@ -138,6 +137,9 @@
     .cloud .thumb{ background:#ffffff; border:1px solid rgba(0,0,0,.12); }
     .thumb img{ width:100%; height:72px; object-fit:cover; display:block }
     .thumb button{ position:absolute; top:6px; right:6px; border:0; border-radius:8px; padding:4px 6px; background:rgba(0,0,0,.5); color:#fff; cursor:pointer; }
+
+    /* Akcije kao na tražimuslugu (desno) */
+    .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
   </style>
 </head>
 <body>
@@ -170,11 +172,11 @@
           <div class="hint">* E-mail koristimo za obavijesti. Promijeniti ga možete u postavkama računa.</div>
         </section>
 
-        <!-- Zanimanja – identičan “Tko Vam Treba” UX -->
+        <!-- Zanimanja – identičan UX kao na Tražim uslugu -->
         <section class="cloud" aria-labelledby="lab-skill">
           <h4 id="lab-skill">Što ste po zanimanju? (max 3)</h4>
           <div class="row">
-            <div id="skillsChips" class="chips"></div>
+            <div id="skillsChips" class="chips" aria-live="polite"></div>
             <div>
               <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
               <span class="muted" id="skillCountInfo">(max 3)</span>
@@ -183,7 +185,7 @@
           </div>
         </section>
 
-        <!-- Lokacija (privatno za match) – kao na trazimuslugu (bez “Učitaj iz linka” i bez GPS-a) -->
+        <!-- Lokacija (privatno za match) -->
         <section class="cloud" aria-labelledby="lab-loc">
           <h4 id="lab-loc">Gdje želite da vas se pronađe? (privatno)</h4>
           <div class="row">
@@ -198,11 +200,10 @@
           <div class="hint" style="margin-top:8px">
             Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo za precizan match s klijentima.
           </div>
-          <!-- Hidden lat/lng/label (popunjava parser/dijalog) -->
           <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
         </section>
 
-        <!-- Područje djelovanja (JAVNO) – bijela polja, i isti JSON (objekti s .name) -->
+        <!-- Područje djelovanja (JAVNO) -->
         <section class="cloud" aria-labelledby="lab-public">
           <h4 id="lab-public">Područje djelovanja (javna informacija na profilu)</h4>
           <div class="row two">
@@ -229,7 +230,7 @@
           </div>
         </section>
 
-        <!-- Opis + slike – isti upload kao na trazimuslugu -->
+        <!-- Opis + slike -->
         <section class="cloud" aria-labelledby="lab-bio">
           <h4 id="lab-bio">Opis profila</h4>
           <textarea id="bio" placeholder="Tko ste, u čemu ste najbolji, koliko dugo radite, izdvojeni projekti…"></textarea>
@@ -243,13 +244,13 @@
 
         <!-- Recenzije -->
         <section class="cloud">
-          <label class="pill" style="gap:10px">
+          <label class="chip" style="gap:10px">
             <input type="checkbox" id="reviews" checked>
             Dozvoli ostavljanje recenzija
           </label>
         </section>
 
-        <!-- Ne uznemiravaj – bijeli time inputi -->
+        <!-- Ne uznemiravaj -->
         <section class="cloud" aria-labelledby="lab-quiet">
           <h4 id="lab-quiet">Ne uznemiravaj</h4>
           <div class="row two">
@@ -258,10 +259,9 @@
           </div>
         </section>
 
-        <!-- Akcije -->
-        <div style="display:flex;gap:10px;margin-top:12px">
+        <!-- Akcije (desno) -->
+        <div class="actions" style="margin-top:12px">
           <button id="btnSave" class="btn btn-primary">Kreiraj / Spremi profil</button>
-          <button id="btnLogout" class="btn btn-ghost" type="button">Odjava</button>
         </div>
       </div>
 
@@ -276,27 +276,25 @@
     <div data-include="footer.html"></div>
   </main>
 
-  <!-- DIALOG: odabir zanimanja (isti pattern) -->
-  <dialog id="skillsDlg" class="card" style="border:1px solid var(--fieldBorder);border-radius:16px;padding:0;max-width:620px">
-    <form method="dialog" style="padding:16px" onsubmit="return false;">
-      <div class="dlg-head">
-        <strong>Odaberi zanimanja (max 3)</strong>
-        <button class="btn btn-ghost btn-small" onclick="skillsDlg.close()">✕</button>
+  <!-- DIALOG: Zanimanja (IDENTIČAN kao na Tražim uslugu) -->
+  <dialog id="dlgSkills">
+    <div class="dlg-head">
+      <strong>Odaberi zanimanja (max 3)</strong>
+      <button class="btn btn-ghost btn-small" onclick="cancelSkillsDialog()">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="dlg-search">
+        <input id="skillSearch" placeholder="Pretraži ručno..">
       </div>
-      <div class="dlg-body">
-        <div class="row" style="padding:14px 16px; position:sticky; top:0; z-index:2; background:#0e1014; border-bottom:1px solid rgba(255,255,255,.08)">
-          <input id="skillsSearch" placeholder="Pretraži…">
-        </div>
-        <div id="skillsList" class="list" style="display:grid;gap:8px;padding:14px 16px;min-height:35vh"></div>
-      </div>
-      <div class="dlg-actions">
-        <button class="btn btn-ghost" type="button" onclick="skillsDlg.close()">Odustani</button>
-        <button class="btn btn-primary" id="skillsDone" type="button">Spremi</button>
-      </div>
-    </form>
+      <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" type="button" onclick="cancelSkillsDialog()">Odustani</button>
+      <button class="btn btn-primary" id="skillsSave" type="button">Spremi</button>
+    </div>
   </dialog>
 
-  <!-- DIALOG: Ručni odabir mjesta (isti kao na trazimuslugu) -->
+  <!-- DIALOG: Ručni odabir mjesta (isti kao na tražimuslugu) -->
   <dialog id="dlgPlace">
     <div class="dlg-head">
       <strong>Ručni odabir mjesta</strong>
@@ -319,61 +317,105 @@
   <script>
     const $ = s => document.querySelector(s);
 
-    /* ========== SKILLS ========== */
+    /* ========== SKILLS (ISTO KAO TRAŽIM USLUGU) ========== */
     const ALL_SKILLS = [];
-    const pickedSkills = new Set();
-    const skillChips  = $('#skillsChips');
-    const dlgSkills   = $('#skillsDlg');
-    const skillList   = $('#skillsList');
-    const skillSearch = $('#skillsSearch');
-
     fetch('data/skills.json').then(r=>r.json()).then(list=>{
       const arr = Array.isArray(list) ? list : (Array.isArray(list.skills) ? list.skills : []);
       ALL_SKILLS.push(...arr.sort((a,b)=>a.localeCompare(b,'hr')));
       renderSkillList();
-    }).catch(()=>{});
+    }).catch(()=>{ /* fallback ako JSON nedostupan */ });
+
+    const pickedSkills = new Set();
+    const skillChips  = $('#skillsChips');
+    const dlgSkills   = $('#dlgSkills');
+    const skillList   = $('#skillList');
+    const skillSearch = $('#skillSearch');
+
+    /* snapshot za cancel (skills) */
+    let tempSkillsBefore = new Set();
 
     function renderChips(){
       skillChips.innerHTML='';
       pickedSkills.forEach(s=>{
-        const chip=document.createElement('span'); chip.className='pill';
-        chip.innerHTML=`<span>${s}</span> <span class="x" title="Ukloni">✕</span>`;
-        chip.querySelector('.x').addEventListener('click', ()=>{ pickedSkills.delete(s); renderChips(); updateSkillCount(); });
+        const chip=document.createElement('span'); chip.className='chip';
+        chip.innerHTML=`<span>${s}</span> <button title="Ukloni" aria-label="Ukloni">✕</button>`;
+        chip.querySelector('button').addEventListener('click', ()=>{ pickedSkills.delete(s); renderChips(); updateSkillCount(); });
         skillChips.appendChild(chip);
       });
     }
     function updateSkillCount(){ $('#skillCountInfo').textContent=`(odabrano ${pickedSkills.size}/3)`; }
-    function norm(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase().trim(); }
+
+    /* HR prefiks pretraga (č/ć/š/ž/đ) */
+    function stripDiacritics(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,''); }
+    function norm(s){ return stripDiacritics((s||'').toLowerCase().trim()); }
     function startsWithWordPrefix(label, query){
       if(!query) return true;
       const L = norm(label), Q = norm(query);
       if(L.startsWith(Q)) return true;
       return L.split(/\s+/).some(w => w.startsWith(Q));
     }
+
     function renderSkillList(filter=''){
       skillList.innerHTML='';
       const f = (filter||'');
-      ALL_SKILLS.filter(s => startsWithWordPrefix(s, f)).forEach(s=>{
-        const row=document.createElement('label'); row.className='skill-row';
-        const checked = pickedSkills.has(s);
-        row.innerHTML=`<div>${s}</div><button type="button" class="btn btn-ghost btn-small">${checked?'Ukloni':'Dodaj'}</button>`;
-        const btn=row.querySelector('button');
-        btn.addEventListener('click', ()=>{
-          if(checked){ pickedSkills.delete(s); }
-          else{ if(pickedSkills.size>=3){ alert('Možete odabrati najviše 3 zanimanja.'); return; } pickedSkills.add(s); }
-          renderChips(); updateSkillCount(); renderSkillList(f);
+      ALL_SKILLS
+        .filter(s => startsWithWordPrefix(s, f))
+        .forEach(s=>{
+          const row=document.createElement('label'); row.className='item';
+          row.innerHTML=`<span>${s}</span><input type="checkbox" ${pickedSkills.has(s)?'checked':''}>`;
+          const cb=row.querySelector('input');
+          cb.addEventListener('change', ()=>{
+            if(cb.checked){
+              if(pickedSkills.size>=3){ cb.checked=false; return; }
+              pickedSkills.add(s);
+            } else {
+              pickedSkills.delete(s);
+            }
+            renderChips(); updateSkillCount();
+          });
+          skillList.appendChild(row);
         });
-        skillList.appendChild(row);
-      });
     }
-    $('#btnPickSkills').addEventListener('click', ()=>{
-      renderSkillList(); skillSearch.value=''; dlgSkills.showModal(); setTimeout(()=>skillSearch.focus(),50);
-    });
-    $('#skillsDone').addEventListener('click', ()=> dlgSkills.close());
-    skillSearch.addEventListener('input', ()=> renderSkillList(skillSearch.value));
 
-    /* ========== PRIVATNA LOKACIJA (kao trazimuslugu) ========== */
+    /* otvaranje skills dijaloga + snapshot */
+    $('#btnPickSkills').addEventListener('click', ()=>{
+      tempSkillsBefore = new Set(pickedSkills);  // snapshot prije otvaranja
+      renderSkillList();
+      skillSearch.value='';
+      dlgSkills.showModal();
+      const body = dlgSkills.querySelector('.dlg-body');
+      if (body) body.scrollTop = 0;
+      setTimeout(()=>skillSearch.focus(),50);
+    });
+
+    /* Spremi = zadrži izmjene */
+    $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
+
+    /* Cancel logika (Odustani, ✕, ESC) */
+    function cancelSkillsDialog(){
+      pickedSkills.clear();
+      tempSkillsBefore.forEach(s => pickedSkills.add(s));
+      renderChips();
+      updateSkillCount();
+      dlgSkills.close();
+    }
+    dlgSkills.addEventListener('cancel', (e)=>{
+      e.preventDefault();
+      cancelSkillsDialog();
+    });
+
+    /* Reset skrola NA SVAKI unos – da input uvijek ostane pri vrhu */
+    skillSearch.addEventListener('input', ()=>{
+      renderSkillList(skillSearch.value);
+      const body = dlgSkills.querySelector('.dlg-body');
+      if (body) body.scrollTop = 0;
+    });
+    /* ESC u searchu briše upit */
+    skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); const body=dlgSkills.querySelector('.dlg-body'); if(body) body.scrollTop=0; } });
+
+    /* ========== PRIVATNA LOKACIJA (isto kao tražimuslugu) ========== */
     const mapsUrl=$('#mapsUrl'), latEl=$('#lat'), lngEl=$('#lng'), placeLabel=$('#placeLabel');
+
     const tryParseGoogleMaps=(url)=>{
       const at=/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/.exec(url); if(at) return {lat:parseFloat(at[1]), lng:parseFloat(at[2])};
       const d3d=/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/.exec(url); if(d3d) return {lat:parseFloat(d3d[1]), lng:parseFloat(d3d[2])};
@@ -391,7 +433,7 @@
       else{ alert('Nije prepoznata lokacija iz linka. Pokušajte drugi oblik ili ručni odabir.'); }
     });
 
-    // Ručni odabir – dijalog
+    // Ručni odabir – dijalog (isti dataset kao i prije)
     const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity');
     const COUNTRY_FILES={
       "BiH": "data/cities-bih.json",
@@ -432,7 +474,7 @@
       dlgPlace.close(); alert('Lokacija postavljena.');
     });
 
-    /* ========== JAVNO PODRUČJE – isti JSON (objekti s .name) ========== */
+    /* ========== JAVNO PODRUČJE ========== */
     const P_COUNTRY_FILE = {
       'Bosna i Hercegovina': 'bih',
       'Hrvatska': 'hr',
@@ -446,7 +488,7 @@
       try{
         const r = await fetch(`data/cities-${code}.json`, {cache:'no-cache'});
         if(!r.ok) throw new Error();
-        const list = await r.json();                 // očekujemo [{name, lat, lng}, ...]
+        const list = await r.json(); // [{name,lat,lng},...]
         return Array.isArray(list) ? list.map(o=>o.name) : [];
       }catch(_){ return []; }
     }
@@ -509,7 +551,6 @@
     /* ========== INIT ========== */
     (async ()=>{
       try{
-        // Skills
         renderChips(); updateSkillCount();
 
         // Public area selects
@@ -526,10 +567,17 @@
           renderChips(); updateSkillCount();
 
           // privatna lokacija
-          lat.value       = data.lat!=null ? String(data.lat) : '';
-          lng.value       = data.lng!=null ? String(data.lng) : '';
-          mapsUrl.value   = (data.lat!=null && data.lng!=null) ? `${'https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14'}` : '';
-          placeLabel.value= data.location || '';
+          const latEl = document.getElementById('lat');
+          const lngEl = document.getElementById('lng');
+          const mapsUrl = document.getElementById('mapsUrl');
+          const placeLabel = document.getElementById('placeLabel');
+
+          if(latEl && lngEl){
+            latEl.value = data.lat!=null ? String(data.lat) : '';
+            lngEl.value = data.lng!=null ? String(data.lng) : '';
+          }
+          if(mapsUrl) mapsUrl.value = (data.lat!=null && data.lng!=null) ? ('https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14') : '';
+          if(placeLabel) placeLabel.value= data.location || '';
 
           // opis/ostalo
           bio.value       = data.bio||'';
@@ -563,39 +611,12 @@
     })();
 
     /* ========== UI akcije ========== */
-    function renderChips(){
-      const wrap = document.getElementById('skillsChips'); wrap.innerHTML='';
-      pickedSkills.forEach(s=>{
-        const el = document.createElement('span');
-        el.className = 'pill';
-        el.innerHTML = '<span>'+s+'</span><span class="x" title="Ukloni">✕</span>';
-        el.querySelector('.x').onclick = ()=>{ pickedSkills.delete(s); renderChips(); updateSkillCount(); };
-        wrap.appendChild(el);
-      });
-    }
-    function updateSkillCount(){ const el=document.getElementById('skillCountInfo'); if(el) el.textContent=`(odabrano ${pickedSkills.size}/3)`; }
-    document.getElementById('btnPickSkills').onclick = ()=>{ skillsDlg.showModal(); skillSearch.value=''; renderSkillList(); setTimeout(()=>skillSearch.focus(),50); };
-    document.getElementById('skillsDone').onclick = ()=> skillsDlg.close();
-    function renderSkillList(filter=''){
-      skillList.innerHTML='';
-      const f=filter.toLowerCase();
-      ALL_SKILLS.filter(s=>!f||s.toLowerCase().includes(f)).forEach(s=>{
-        const checked = pickedSkills.has(s);
-        const row=document.createElement('div'); row.className='pill'; row.style.justifyContent='space-between'; row.style.display='flex';
-        row.innerHTML=`<span>${s}</span><button type="button" class="btn btn-ghost btn-small">${checked?'Ukloni':'Dodaj'}</button>`;
-        row.querySelector('button').onclick=()=>{
-          if(checked) pickedSkills.delete(s);
-          else{ if(pickedSkills.size>=3){ alert('Možete odabrati najviše 3 zanimanja.'); return; } pickedSkills.add(s); }
-          renderSkillList(f); renderChips(); updateSkillCount();
-        };
-        skillList.appendChild(row);
-      });
-    }
-    skillSearch?.addEventListener('input', ()=> renderSkillList(skillSearch.value));
+    // (skills handlers su gore već postavljeni)
 
     // Spremi
     document.getElementById('btnSave').addEventListener('click', async (e)=>{
       e.preventDefault();
+
       const payload = {
         name: (name.value||'').trim(),
         phone: (phone.value||'').trim(),
@@ -606,13 +627,14 @@
           const a = (document.getElementById('svcArea').value||'').trim();
           return [c,g,a].filter(Boolean).join(' / ');
         })(),
-        lat: lat.value ? parseFloat(lat.value) : null,
-        lng: lng.value ? parseFloat(lng.value) : null,
+        lat: (document.getElementById('lat').value) ? parseFloat(document.getElementById('lat').value) : null,
+        lng: (document.getElementById('lng').value) ? parseFloat(document.getElementById('lng').value) : null,
         bio: (bio.value||'').trim(),
         reviews_enabled: reviews.checked,
         quiet_from: quiet_from.value || '18:00',
         quiet_to: quiet_to.value   || '07:00'
       };
+
       if(!payload.name || !payload.phone){ alert('Ime i telefon su obavezni.'); return; }
       if(payload.skills.length===0){ alert('Odaberite barem jedno zanimanje.'); return; }
 
@@ -634,12 +656,6 @@
         alert('Profil spremljen. Vaš profil će se prikazati na popisu majstora.');
       }catch(err){ alert(err.message||'Greška spremanja'); }
     });
-
-    document.getElementById('btnLogout').onclick = async ()=>{
-      try{ await api('logout'); }catch(_){}
-      const btn = document.getElementById('authBtn');
-      if(btn){ btn.click(); } else { location.href = 'index.html#auth'; }
-    };
   </script>
 </body>
 </html>
