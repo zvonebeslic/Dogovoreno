@@ -274,7 +274,7 @@
           const cb=row.querySelector('input');
           cb.addEventListener('change', ()=>{
             if(cb.checked){
-              if(pickedSkills.size>=3){ cb.checked=false; toast('Možete odabrati najviše 3 zanimanja.'); return; }
+              if(pickedSkills.size>=3){ cb.checked=false; return; }
               pickedSkills.add(s);
             } else {
               pickedSkills.delete(s);
