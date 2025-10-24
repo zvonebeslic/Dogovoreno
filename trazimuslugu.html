@@ -196,16 +196,22 @@
   </main>
 
   <!-- DIALOG: Zanimanja -->
-  <dialog id="dlgSkills">
-    <div class="dlg-head"><strong>Odaberi zanimanja (max 3)</strong><button class="btn btn-ghost btn-inline" onclick="dlgSkills.close()">✕</button></div>
-    <div class="dlg-body">
-      <div class="dlg-search">
-        <input id="skillSearch" placeholder="Pretraži ručno..">
-      </div>
-      <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
+<dialog id="dlgSkills">
+  <div class="dlg-head">
+    <strong>Odaberi zanimanja (max 3)</strong>
+    <button class="btn btn-ghost btn-inline" onclick="cancelSkillsDialog()">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="dlg-search">
+      <input id="skillSearch" placeholder="Pretraži ručno..">
     </div>
-    <div class="dlg-actions"><button class="btn btn-ghost" onclick="dlgSkills.close()">Odustani</button><button class="btn btn-primary" id="skillsSave">Spremi</button></div>
-  </dialog>
+    <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
+  </div>
+  <div class="dlg-actions">
+    <button class="btn btn-ghost" onclick="cancelSkillsDialog()">Odustani</button>
+    <button class="btn btn-primary" id="skillsSave">Spremi</button>
+  </div>
+</dialog>
 
   <!-- DIALOG: Ručni odabir mjesta -->
   <dialog id="dlgPlace">
@@ -242,6 +248,8 @@
     const skillList   = $('#skillList');
     const skillSearch = $('#skillSearch');
 
+    let tempSkillsBefore = new Set();
+    
     function renderChips(){
       skillChips.innerHTML='';
       pickedSkills.forEach(s=>{
@@ -286,15 +294,30 @@
     }
 
     $('#btnPickSkills').addEventListener('click', ()=>{
-      renderSkillList();
-      skillSearch.value='';
-      dlgSkills.showModal();
-      const body = dlgSkills.querySelector('.dlg-body');
-      if (body) body.scrollTop = 0; // reset skrola
-      setTimeout(()=>skillSearch.focus(),50);
-    });
+  tempSkillsBefore = new Set(pickedSkills);  // ⇦ snapshot prije otvaranja
+  renderSkillList();
+  skillSearch.value='';
+  dlgSkills.showModal();
+  const body = dlgSkills.querySelector('.dlg-body');
+  if (body) body.scrollTop = 0; // reset skrola
+  setTimeout(()=>skillSearch.focus(),50);
+});
+    
     $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
 
+    function cancelSkillsDialog(){
+  pickedSkills.clear();
+  tempSkillsBefore.forEach(s => pickedSkills.add(s));
+  renderChips();
+  updateSkillCount();
+  dlgSkills.close();
+}
+
+  dlgSkills.addEventListener('cancel', (e)=>{
+  e.preventDefault();
+  cancelSkillsDialog();
+});
+    
     /* Reset skrola NA SVAKI unos – da input uvijek ostane pri vrhu */
     skillSearch.addEventListener('input', ()=>{
       renderSkillList(skillSearch.value);
