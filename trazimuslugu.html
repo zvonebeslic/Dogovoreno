@@ -7,9 +7,8 @@
   <link rel="stylesheet" href="base.css">
   <style>
     :root{
-      --bg:#0f1115; --ink:#0b1220; --muted:#334155; /* ink/muted tamniji radi svijetlih kartica */
-      --cta:#2563eb;            /* plava (primarna) */
-      --accent:#16a34a;         /* bazna za ‘metalik’ zelenu */
+      --bg:#0f1115; --ink:#0b1220; --muted:#334155;
+      --cta:#2563eb; --accent:#16a34a;
       --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
     }
     body{ background:#0f1115; color:#f7f8fa; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
@@ -54,7 +53,6 @@
     .chip button{ all:unset; cursor:pointer; opacity:.85 } .chip button:hover{ opacity:1 }
 
     .btn{ appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer }
-    /* Moderniji plavi CTA na svijetlom */
     .btn-primary{
       background:linear-gradient(180deg, #2b6ee9 0%, #245ed0 100%);
       color:#fff; border:1px solid rgba(0,0,0,.2);
@@ -65,7 +63,6 @@
     .btn-ghost{ background:transparent; color:#ffffff; border:2px solid #ffffff; }
     .btn-inline{ padding:10px 12px; border-radius:10px }
 
-    /* ‘Metalik’ zelena */
     .btn-accent{
       background: linear-gradient(180deg, #16a34a 0%, #0f8a3a 55%, #0b6f30 100%);
       color:#e6fff4; border:1px solid rgba(0,0,0,.35);
@@ -80,12 +77,11 @@
 
     .subgrid{ display:grid; gap:10px } @media(min-width:700px){ .subgrid-2{ grid-template-columns:1fr 1fr } }
 
-    /* dialog */
+    /* dialog (default tamni) */
     dialog{ border:0; border-radius:16px; background:#0e1014; color:#f7f8fa; width:min(720px, 96vw) }
     dialog::backdrop{ background:rgba(0,0,0,.4) }
     .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
 
-    /* Sticky pretraga + stabilno tijelo */
     .dlg-body{ padding:0; max-height:70vh; overflow:auto; overscroll-behavior:contain; }
     .dlg-search{ position:sticky; top:0; z-index:2; background:#0e1014; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
     #skillSearch{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b0d11; color:#fff }
@@ -107,23 +103,41 @@
       padding:4px 0; font-weight:600; color:#f7f8fa;
     }
     /* Uploader unutar cloud (svijetle kartice) */
-.cloud .upload-link{
-  color:#0b1220;               /* tamni tekst, jasno vidljiv */
-}
+    .cloud .upload-link{ color:#0b1220; }
+    .cloud .thumb{ background:#ffffff; border:1px solid rgba(0,0,0,.12); }
+    .cloud .thumb button{ background:rgba(0,0,0,.45); color:#fff; }
 
-.cloud .thumb{
-  background:#ffffff;          /* bijela pozadina umjesto tamne */
-  border:1px solid rgba(0,0,0,.12);
-}
-.cloud .thumb button{
-  background:rgba(0,0,0,.45);  /* i dalje tamno dugme za X, ok */
-  color:#fff;
-}
     .upload-link:focus{ outline:2px solid rgba(37,99,235,.6); border-radius:6px; }
     .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:8px; }
     .thumb{ position:relative; border-radius:10px; overflow:hidden; background:#0b0d11; border:1px solid rgba(255,255,255,.12); }
     .thumb img{ width:100%; height:72px; object-fit:cover; display:block }
     .thumb button{ position:absolute; top:6px; right:6px; border:0; border-radius:8px; padding:4px 6px; background:rgba(0,0,0,.5); color:#fff; cursor:pointer; }
+
+    /* #dlgPlace — svijetli kao cloud */
+    #dlgPlace{
+      background: linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(246,247,249,.86) 100%);
+      color:#0b1220;
+    }
+    #dlgPlace .dlg-head{ border-bottom:1px solid rgba(0,0,0,.08); }
+    #dlgPlace .dlg-actions{ border-top:1px solid rgba(0,0,0,.08); }
+    #dlgPlace .field select,
+    #dlgPlace .field input[type="text"],
+    #dlgPlace .field input[type="url"],
+    #dlgPlace .field input[type="search"]{
+      background:#ffffff; color:#0b1220;
+      border:1px solid rgba(0,0,0,.15);
+      border-radius:12px; padding:10px 12px; outline:none;
+    }
+    #dlgPlace .field select:focus,
+    #dlgPlace .field input:focus{
+      outline:2px solid rgba(37,99,235,.25);
+      border-color:rgba(37,99,235,.45);
+    }
+    #dlgPlace .help, #dlgPlace .note{ color:#0b1220; }
+    #dlgPlace .btn-ghost{
+      background:transparent; color:#0b1220; border:1px solid rgba(0,0,0,.20);
+    }
+    #dlgPlace .btn-ghost:hover{ background:rgba(0,0,0,.05); }
   </style>
 </head>
 <body>
@@ -140,7 +154,6 @@
         <div class="row">
           <div class="chips" id="skillChips" aria-live="polite"></div>
           <div>
-            <!-- ZELENI GUMB samo ovdje -->
             <button class="btn btn-accent btn-inline" type="button" id="btnPickSkills">Odaberi zanimanje</button>
             <span class="muted" id="skillCountInfo">(max 3)</span>
           </div>
@@ -149,22 +162,22 @@
       </section>
 
       <!-- 2) OPIS — s uploaderom unutra -->
-<section class="cloud" aria-labelledby="lab-desc">
-  <h3 id="lab-desc">Što Vam Treba?</h3>
+      <section class="cloud" aria-labelledby="lab-desc">
+        <h3 id="lab-desc">Što Vam Treba?</h3>
 
-  <div class="field">
-    <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
-  </div>
+        <div class="field">
+          <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
+        </div>
 
-  <!-- Uploader premješten unutra -->
-  <div class="uploader-minimal">
-    <input id="fileInput" type="file" accept="image/*" multiple hidden>
-    <button class="upload-link" id="uploadLink" type="button">📎 Dodaj fotografije</button>
-    <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
-  </div>
+        <!-- Uploader premješten unutra -->
+        <div class="uploader-minimal">
+          <input id="fileInput" type="file" accept="image/*" multiple hidden>
+          <button class="upload-link" id="uploadLink" type="button">📎 Dodaj fotografije</button>
+          <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
+        </div>
 
-  <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
-</section>
+        <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
+      </section>
 
       <!-- 3) LOKACIJA -->
       <section class="cloud" aria-labelledby="lab-loc">
@@ -193,7 +206,7 @@
         <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
       </section>
 
-      <!-- AKCIJE: dva plava gumba, bez kontejnera -->
+      <!-- AKCIJE -->
       <div class="actions" style="margin-top:18px">
         <button class="btn btn-primary" id="btnSubmit">Zatraži uslugu automatski</button>
       </div>
@@ -211,35 +224,41 @@
   </main>
 
   <!-- DIALOG: Zanimanja -->
-<dialog id="dlgSkills">
-  <div class="dlg-head">
-    <strong>Odaberi zanimanja (max 3)</strong>
-    <button class="btn btn-ghost btn-inline" onclick="cancelSkillsDialog()">✕</button>
-  </div>
-  <div class="dlg-body">
-    <div class="dlg-search">
-      <input id="skillSearch" placeholder="Pretraži ručno..">
+  <dialog id="dlgSkills">
+    <div class="dlg-head">
+      <strong>Odaberi zanimanja (max 3)</strong>
+      <button class="btn btn-ghost btn-inline" onclick="cancelSkillsDialog()">✕</button>
     </div>
-    <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
-  </div>
-  <div class="dlg-actions">
-    <button class="btn btn-ghost" onclick="cancelSkillsDialog()">Odustani</button>
-    <button class="btn btn-primary" id="skillsSave">Spremi</button>
-  </div>
-</dialog>
+    <div class="dlg-body">
+      <div class="dlg-search">
+        <input id="skillSearch" placeholder="Pretraži ručno..">
+      </div>
+      <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" onclick="cancelSkillsDialog()">Odustani</button>
+      <button class="btn btn-primary" id="skillsSave">Spremi</button>
+    </div>
+  </dialog>
 
-  <!-- DIALOG: Ručni odabir mjesta -->
+  <!-- DIALOG: Ručni odabir mjesta (svijetao) -->
   <dialog id="dlgPlace">
-    <div class="dlg-head"><strong>Ručni odabir mjesta</strong><button class="btn btn-ghost btn-inline" onclick="dlgPlace.close()">✕</button></div>
+    <div class="dlg-head">
+      <strong>Ručni odabir mjesta</strong>
+      <button class="btn btn-ghost btn-inline" onclick="dlgPlace.close()">✕</button>
+    </div>
     <div class="dlg-body" style="padding:14px 16px; max-height:70vh; overflow:auto">
       <div class="grid-3">
         <div class="field"><label class="help">Država (EX-YU)</label><select id="selCountry"></select></div>
         <div class="field"><label class="help">Grad / mjesto (≥1k)</label><select id="selCity"></select></div>
-        <div class="field"><label class="help">Dodatni opis (ulica, kvart…) — opcija</label><input id="placeNote" placeholder="npr. kod općine, centar…"></div>
+        <div class="field"><label class="help">Dodatni opis (ulica, kvart…) — opcija</label><input id="placeNoteDlg" placeholder="npr. kod općine, centar…"></div>
       </div>
       <div class="note" style="margin-top:8px">Sustav će uzeti geografski centroid odabranog mjesta za izračun udaljenosti (privatno, nevidljivo).</div>
     </div>
-    <div class="dlg-actions"><button class="btn btn-ghost" onclick="dlgPlace.close()">Odustani</button><button class="btn btn-primary" id="placeSave">Spremi lokaciju</button></div>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" onclick="dlgPlace.close()">Odustani</button>
+      <button class="btn btn-primary" id="placeSave">Spremi lokaciju</button>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite">✓ Poslano! Uskoro dobivate odgovore.</div>
@@ -263,8 +282,9 @@
     const skillList   = $('#skillList');
     const skillSearch = $('#skillSearch');
 
+    /* snapshot za cancel */
     let tempSkillsBefore = new Set();
-    
+
     function renderChips(){
       skillChips.innerHTML='';
       pickedSkills.forEach(s=>{
@@ -308,38 +328,40 @@
         });
     }
 
+    /* otvaranje skills dijaloga + snapshot */
     $('#btnPickSkills').addEventListener('click', ()=>{
-  tempSkillsBefore = new Set(pickedSkills);  // ⇦ snapshot prije otvaranja
-  renderSkillList();
-  skillSearch.value='';
-  dlgSkills.showModal();
-  const body = dlgSkills.querySelector('.dlg-body');
-  if (body) body.scrollTop = 0; // reset skrola
-  setTimeout(()=>skillSearch.focus(),50);
-});
-    
+      tempSkillsBefore = new Set(pickedSkills);  // snapshot prije otvaranja
+      renderSkillList();
+      skillSearch.value='';
+      dlgSkills.showModal();
+      const body = dlgSkills.querySelector('.dlg-body');
+      if (body) body.scrollTop = 0;
+      setTimeout(()=>skillSearch.focus(),50);
+    });
+
+    /* Spremi = zadrži izmjene */
     $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
 
+    /* Cancel logika (Odustani, ✕, ESC) */
     function cancelSkillsDialog(){
-  pickedSkills.clear();
-  tempSkillsBefore.forEach(s => pickedSkills.add(s));
-  renderChips();
-  updateSkillCount();
-  dlgSkills.close();
-}
+      pickedSkills.clear();
+      tempSkillsBefore.forEach(s => pickedSkills.add(s));
+      renderChips();
+      updateSkillCount();
+      dlgSkills.close();
+    }
+    dlgSkills.addEventListener('cancel', (e)=>{
+      e.preventDefault();
+      cancelSkillsDialog();
+    });
 
-  dlgSkills.addEventListener('cancel', (e)=>{
-  e.preventDefault();
-  cancelSkillsDialog();
-});
-    
     /* Reset skrola NA SVAKI unos – da input uvijek ostane pri vrhu */
     skillSearch.addEventListener('input', ()=>{
       renderSkillList(skillSearch.value);
       const body = dlgSkills.querySelector('.dlg-body');
       if (body) body.scrollTop = 0;
     });
-    /* ESC briše upit */
+    /* ESC u searchu briše upit */
     skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); const body=dlgSkills.querySelector('.dlg-body'); if(body) body.scrollTop=0; } });
 
     /* ========= UPLOADER (minimal) ========= */
@@ -374,7 +396,7 @@
     async function uploadAllImages(){
       if(upload.files.length===0) return [];
       const fd=new FormData(); upload.files.forEach(it=> fd.append('images[]', it.file, it.file.name));
-      const r=await fetch('api/jobs/upload.php',{method:'POST',body:fd}); /* prilagodi ako koristiš /api/upload.php */
+      const r=await fetch('api/jobs/upload.php',{method:'POST',body:fd});
       const j=await r.json();
       if(!r.ok) throw new Error(j.error||'Greška pri uploadu slika');
       (j.urls||[]).forEach((url,i)=> upload.files[i].url=url);
@@ -383,6 +405,8 @@
 
     /* ========= LOKACIJA ========= */
     const mapsUrl=$('#mapsUrl'), latEl=$('#lat'), lngEl=$('#lng'), placeLabel=$('#placeLabel');
+    const placeNoteMain = $('#placeNote');           // glavno polje u cloud-u
+
     const tryParseGoogleMaps=(url)=>{
       const at=/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/.exec(url); if(at) return {lat:parseFloat(at[1]), lng:parseFloat(at[2])};
       const d3d=/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/.exec(url); if(d3d) return {lat:parseFloat(d3d[1]), lng:parseFloat(d3d[2])};
@@ -396,7 +420,7 @@
     $('#openMaps').addEventListener('click', ()=> window.open('https://maps.google.com','_blank'));
 
     // Ručni odabir — lazy load JSON po državi
-    const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity'), placeNote=$('#placeNote');
+    const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity'), placeNoteDlg=$('#placeNoteDlg');
     const COUNTRY_FILES={
       "BiH": "data/cities-bih.json",
       "Hrvatska": "data/cities-hr.json",
@@ -417,7 +441,9 @@
     $('#placeSave').addEventListener('click', ()=>{
       const opt=selCity.selectedOptions[0]; if(!opt){ toast('Odaberite grad.'); return; }
       latEl.value=parseFloat(opt.dataset.lat); lngEl.value=parseFloat(opt.dataset.lng);
-      placeLabel.value=selCountry.value+' / '+selCity.value+(placeNote.value?(' — '+placeNote.value):'');
+      placeLabel.value=selCountry.value+' / '+selCity.value+(placeNoteDlg.value?(' — '+placeNoteDlg.value):'');
+      // sinkaj opis iz dijaloga u glavno polje (opcionalno, korisno)
+      if (placeNoteMain) placeNoteMain.value = placeNoteDlg.value || '';
       dlgPlace.close(); toast('Lokacija postavljena.');
     });
 
@@ -436,7 +462,8 @@
           skills:Array.from(pickedSkills),
           description:($('#jobDesc').value||'').trim(),
           images:imageUrls,
-          location:{ lat:parseFloat(latEl.value), lng:parseFloat(lngEl.value), label:placeLabel.value||'' }
+          location:{ lat:parseFloat(latEl.value), lng:parseFloat(lngEl.value), label:placeLabel.value||'' },
+          place_note:(placeNoteMain.value||'').trim()
         };
         const r=await fetch('api/jobs/request.php',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
         const j=await r.json(); if(!r.ok) throw new Error(j.error||'Greška pri slanju');
@@ -444,7 +471,7 @@
       }catch(e){ toast('⚠ '+(e.message||e)); }
     });
 
-    /* ========= RUČNO PREGLEDAVANJE (link na majstori.html) ========= */
+    /* ========= RUČNO PREGLEDAVANJE ========= */
     function buildBrowseUrl(){
       const firstSkill = pickedSkills.size ? Array.from(pickedSkills)[0] : '';
       const lat = latEl.value ? parseFloat(latEl.value) : '';
