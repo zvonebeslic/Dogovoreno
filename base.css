@@ -275,6 +275,7 @@ button[disabled]{
 
 .site-footer .copyright{
   color:#fff !important;
+  z-index: 99999;
   font-size:12px;
 }
 
