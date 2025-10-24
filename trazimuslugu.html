@@ -194,7 +194,7 @@
           </div>
           <div class="field">
             <label class="help">Dodatno pojašnjenje (ulica, kvart…) — opcionalno</label>
-            <input id="placeNote" placeholder="npr. kod općine, centar…">
+            <input id="placeNote" type="text" placeholder="npr. kod općine, centar…">
           </div>
         </div>
         <div class="note" style="margin-top:10px">
@@ -241,22 +241,21 @@
     </div>
   </dialog>
 
-  <!-- DIALOG: Ručni odabir mjesta (svijetao) -->
+  <!-- DIALOG: Ručni odabir mjesta (svijetao, samo 2 polja) -->
   <dialog id="dlgPlace">
     <div class="dlg-head">
       <strong>Ručni odabir mjesta</strong>
-      <button class="btn btn-ghost btn-inline" onclick="dlgPlace.close()">✕</button>
+      <button class="btn btn-ghost btn-inline" id="btnPlaceX">✕</button>
     </div>
     <div class="dlg-body" style="padding:14px 16px; max-height:70vh; overflow:auto">
       <div class="grid-3">
         <div class="field"><label class="help">Država (EX-YU)</label><select id="selCountry"></select></div>
         <div class="field"><label class="help">Grad / mjesto (≥1k)</label><select id="selCity"></select></div>
-        <div class="field"><label class="help">Dodatni opis (ulica, kvart…) — opcija</label><input id="placeNoteDlg" placeholder="npr. kod općine, centar…"></div>
       </div>
       <div class="note" style="margin-top:8px">Sustav će uzeti geografski centroid odabranog mjesta za izračun udaljenosti (privatno, nevidljivo).</div>
     </div>
     <div class="dlg-actions">
-      <button class="btn btn-ghost" onclick="dlgPlace.close()">Odustani</button>
+      <button class="btn btn-ghost" id="btnPlaceCancel">Odustani</button>
       <button class="btn btn-primary" id="placeSave">Spremi lokaciju</button>
     </div>
   </dialog>
@@ -282,7 +281,7 @@
     const skillList   = $('#skillList');
     const skillSearch = $('#skillSearch');
 
-    /* snapshot za cancel */
+    /* snapshot za cancel (skills) */
     let tempSkillsBefore = new Set();
 
     function renderChips(){
@@ -405,13 +404,19 @@
 
     /* ========= LOKACIJA ========= */
     const mapsUrl=$('#mapsUrl'), latEl=$('#lat'), lngEl=$('#lng'), placeLabel=$('#placeLabel');
-    const placeNoteMain = $('#placeNote');           // glavno polje u cloud-u
+    const placeNoteMain = $('#placeNote');
 
     const tryParseGoogleMaps=(url)=>{
       const at=/@(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/.exec(url); if(at) return {lat:parseFloat(at[1]), lng:parseFloat(at[2])};
       const d3d=/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/.exec(url); if(d3d) return {lat:parseFloat(d3d[1]), lng:parseFloat(d3d[2])};
       return null;
     };
+
+    function buildGoogleMapsLink(lat, lng, label=''){
+      const q = label ? encodeURIComponent(label) : `${lat},${lng}`;
+      return `https://maps.google.com/?q=${q}&ll=${lat},${lng}&z=14`;
+    }
+
     mapsUrl.addEventListener('change', ()=>{
       const val=mapsUrl.value.trim(); const p=tryParseGoogleMaps(val);
       if(p){ latEl.value=p.lat; lngEl.value=p.lng; placeLabel.value=val; toast('Lokacija prepoznata.'); }
@@ -420,7 +425,7 @@
     $('#openMaps').addEventListener('click', ()=> window.open('https://maps.google.com','_blank'));
 
     // Ručni odabir — lazy load JSON po državi
-    const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity'), placeNoteDlg=$('#placeNoteDlg');
+    const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity');
     const COUNTRY_FILES={
       "BiH": "data/cities-bih.json",
       "Hrvatska": "data/cities-hr.json",
@@ -435,15 +440,63 @@
       try{ const list=await (await fetch(url)).json(); list.sort((a,b)=> a.name.localeCompare(b.name,'hr')); selCity.innerHTML=list.map(ci=>`<option data-lat="${ci.lat}" data-lng="${ci.lng}">${ci.name}</option>`).join(''); }
       catch{ selCity.innerHTML='<option>Greška pri učitavanju</option>'; }
     });
-    $('#btnManualPlace').addEventListener('click', ()=>{ fillCountries(); dlgPlace.showModal(); });
-    $('#btnManualPlace').addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); fillCountries(); dlgPlace.showModal(); } });
 
+    /* >>> Snapshot/cancel za dlgPlace <<< */
+    let placeSnapshot = null;
+    function snapshotPlace() {
+      placeSnapshot = {
+        lat: latEl.value,
+        lng: lngEl.value,
+        label: placeLabel.value,
+        maps: mapsUrl.value
+      };
+    }
+    function cancelPlaceDialog(){
+      if (placeSnapshot){
+        latEl.value = placeSnapshot.lat;
+        lngEl.value = placeSnapshot.lng;
+        placeLabel.value = placeSnapshot.label;
+        mapsUrl.value = placeSnapshot.maps;
+      }
+      dlgPlace.close();
+    }
+
+    $('#btnManualPlace').addEventListener('click', ()=>{
+      fillCountries();
+      snapshotPlace();
+      dlgPlace.showModal();
+    });
+    $('#btnManualPlace').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault();
+        fillCountries();
+        snapshotPlace();
+        dlgPlace.showModal();
+      }
+    });
+
+    // ESC iz dijaloga
+    dlgPlace.addEventListener('cancel', (e)=>{
+      e.preventDefault();
+      cancelPlaceDialog();
+    });
+    // Gornji X i Odustani
+    $('#btnPlaceX').addEventListener('click', (e)=>{ e.preventDefault(); cancelPlaceDialog(); });
+    $('#btnPlaceCancel').addEventListener('click', (e)=>{ e.preventDefault(); cancelPlaceDialog(); });
+
+    // Spremi lokaciju (popuni mapsUrl i hidden polja)
     $('#placeSave').addEventListener('click', ()=>{
       const opt=selCity.selectedOptions[0]; if(!opt){ toast('Odaberite grad.'); return; }
-      latEl.value=parseFloat(opt.dataset.lat); lngEl.value=parseFloat(opt.dataset.lng);
-      placeLabel.value=selCountry.value+' / '+selCity.value+(placeNoteDlg.value?(' — '+placeNoteDlg.value):'');
-      // sinkaj opis iz dijaloga u glavno polje (opcionalno, korisno)
-      if (placeNoteMain) placeNoteMain.value = placeNoteDlg.value || '';
+      const lat = parseFloat(opt.dataset.lat);
+      const lng = parseFloat(opt.dataset.lng);
+      const label = selCountry.value+' / '+selCity.value;
+
+      latEl.value = lat;
+      lngEl.value = lng;
+      placeLabel.value = label;
+
+      mapsUrl.value = buildGoogleMapsLink(lat, lng, label);
+
       dlgPlace.close(); toast('Lokacija postavljena.');
     });
 
