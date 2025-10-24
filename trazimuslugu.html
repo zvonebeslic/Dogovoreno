@@ -106,6 +106,19 @@
       appearance:none; background:transparent; border:0; text-decoration:underline; cursor:pointer;
       padding:4px 0; font-weight:600; color:#f7f8fa;
     }
+    /* Uploader unutar cloud (svijetle kartice) */
+.cloud .upload-link{
+  color:#0b1220;               /* tamni tekst, jasno vidljiv */
+}
+
+.cloud .thumb{
+  background:#ffffff;          /* bijela pozadina umjesto tamne */
+  border:1px solid rgba(0,0,0,.12);
+}
+.cloud .thumb button{
+  background:rgba(0,0,0,.45);  /* i dalje tamno dugme za X, ok */
+  color:#fff;
+}
     .upload-link:focus{ outline:2px solid rgba(37,99,235,.6); border-radius:6px; }
     .upload-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; margin-top:8px; }
     .thumb{ position:relative; border-radius:10px; overflow:hidden; background:#0b0d11; border:1px solid rgba(255,255,255,.12); }
@@ -135,21 +148,23 @@
         <div class="note">* Odaberite zanimanje za koje mislite da će najbolje odraditi ono što vam treba.</div>
       </section>
 
-      <!-- 2) OPIS -->
-      <section class="cloud" aria-labelledby="lab-desc">
-        <h3 id="lab-desc">Što Vam Treba?</h3>
-        <div class="field">
-          <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
-        </div>
-        <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
-      </section>
+      <!-- 2) OPIS — s uploaderom unutra -->
+<section class="cloud" aria-labelledby="lab-desc">
+  <h3 id="lab-desc">Što Vam Treba?</h3>
 
-      <!-- Minimal uploader: mali link lijevo, bez dodatnih tekstova -->
-      <div class="uploader-minimal">
-        <input id="fileInput" type="file" accept="image/*" multiple hidden>
-        <button class="upload-link" id="uploadLink" type="button">📎 Dodaj fotografije</button>
-        <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
-      </div>
+  <div class="field">
+    <textarea id="jobDesc" placeholder="U nekoliko rečenica opišite što točno treba uraditi: opseg posla, važni detalji, rok…"></textarea>
+  </div>
+
+  <!-- Uploader premješten unutra -->
+  <div class="uploader-minimal">
+    <input id="fileInput" type="file" accept="image/*" multiple hidden>
+    <button class="upload-link" id="uploadLink" type="button">📎 Dodaj fotografije</button>
+    <div class="upload-grid" id="uploadGrid" aria-live="polite"></div>
+  </div>
+
+  <div class="note">* Opišite što vam točno treba uraditi u nekoliko bitnih detalja. Ova poruka će stići do kvalificiranih radnika.</div>
+</section>
 
       <!-- 3) LOKACIJA -->
       <section class="cloud" aria-labelledby="lab-loc">
