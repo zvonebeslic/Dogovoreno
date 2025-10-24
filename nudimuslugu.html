@@ -144,38 +144,39 @@
         <section class="cloud" aria-labelledby="lab-name">
           <h4 id="lab-name">Ime / Obrt / Firma *</h4>
           <input id="name" required placeholder="npr. Marko Marković / Obrt MarkoGradnja / XYZ d.o.o.">
-          <div class="hint">* unesite svoje ime, ili ime obrta, ili ime firme</div>
+          <div class="hint">* unesite svoje ime, ili ime obrta, ili ime firme.</div>
         </section>
 
         <!-- Telefon -->
         <section class="cloud" aria-labelledby="lab-phone">
           <h4 id="lab-phone">Broj mob/tel *</h4>
+          <div class="hint">* Napišite predbroj.</div>
           <input id="phone" required placeholder="+387 6X XXX XXX">
         </section>
 
         <!-- E-mail (kontaktni) -->
         <section class="cloud" aria-labelledby="lab-email">
           <h4 id="lab-email">E-mail</h4>
-          <input id="email" placeholder="vaš@primjer.com (kontaktni e-mail)" disabled>
-          <div class="hint">E-mail koristimo za obavijesti. Promjena e-maila ide kroz postavke računa.</div>
+          <input id="email" placeholder="vaš email@primjer.com" disabled>
+          <div class="hint">*E-mail koristimo za obavijesti.</div>
         </section>
 
         <!-- Zanimanja – identičan “Tko Vam Treba” UX -->
         <section class="cloud" aria-labelledby="lab-skill">
-          <h4 id="lab-skill">Tko ste po zanimanju? (max 3)</h4>
+          <h4 id="lab-skill">Što ste po zanimanju? (max 3)</h4>
           <div class="row">
             <div id="skillsChips" class="chips"></div>
             <div>
               <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
               <span class="muted" id="skillCountInfo">(max 3)</span>
             </div>
-            <div class="hint">* odaberite zanimanje(a) iz popisa (isti katalog kao kod “Tražim uslugu”).</div>
+            <div class="hint">* odaberite zanimanje iz popisa.</div>
           </div>
         </section>
 
         <!-- Lokacija (privatno za match) – kao na trazimuslugu (bez “Učitaj iz linka” i bez GPS-a) -->
         <section class="cloud" aria-labelledby="lab-loc">
-          <h4 id="lab-loc">Gdje želite da vas pronađu? (privatno)</h4>
+          <h4 id="lab-loc">Gdje želite da vas se pronađe? (privatno)</h4>
           <div class="row">
             <label class="help">Zalijepite link s Google karata (preporučeno)</label>
             <input id="mapsUrl" type="url" placeholder="https://maps.google.com/…">
