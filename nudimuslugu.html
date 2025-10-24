@@ -62,7 +62,6 @@
     }
     .cloud input::placeholder,
     .cloud textarea::placeholder{ color:#64748b; }
-    .cloud input::placeholder,
     
     /* Gumbi – kao na trazimuslugu */
     .btn{ appearance:none; border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer }
@@ -121,6 +120,15 @@
     }
     #dlgPlace .btn-ghost:hover{ background:rgba(0,0,0,.05); }
 
+    /* skills popup da bude crni – identično kao na trazimuslugu */
+#skillsDlg{
+  background:#0e1014 !important;
+  color:#f7f8fa !important;
+}
+#skillsDlg::backdrop{
+  background:rgba(0,0,0,.55) !important;
+}
+    
     /* Upload – identičan */
     .uploader-minimal{ margin:8px 0 0; }
     .upload-link{ appearance:none; background:transparent; border:0; text-decoration:underline; cursor:pointer; padding:4px 0; font-weight:600; color:#f7f8fa; }
