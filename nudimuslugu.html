@@ -174,13 +174,13 @@
 
         <!-- Zanimanja – identičan UX kao na Tražim uslugu -->
         <section class="cloud" aria-labelledby="lab-skill">
-          <h4 id="lab-skill">Što ste po zanimanju? (max 3)</h4>
+          <h4 id="lab-skill">Što ste po zanimanju?</h4>
           <div class="row">
             <div id="skillsChips" class="chips" aria-live="polite"></div>
-            <div>
-              <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
-              <span class="muted" id="skillCountInfo">(max 3)</span>
-            </div>
+               <div style="display:flex;align-items:center;gap:8px">
+  <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
+  <span class="muted" id="skillCountInfo">odabrano 0/3</span>
+</div>
             <div class="hint">* Odaberite zanimanje iz popisa.</div>
           </div>
         </section>
@@ -343,8 +343,11 @@
         skillChips.appendChild(chip);
       });
     }
-    function updateSkillCount(){ $('#skillCountInfo').textContent=`(odabrano ${pickedSkills.size}/3)`; }
-
+    function updateSkillCount(){
+  const el = document.getElementById('skillCountInfo');
+  if (el) el.textContent = `odabrano ${pickedSkills.size}/3`;
+}
+    
     /* HR prefiks pretraga (č/ć/š/ž/đ) */
     function stripDiacritics(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,''); }
     function norm(s){ return stripDiacritics((s||'').toLowerCase().trim()); }
