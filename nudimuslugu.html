@@ -663,26 +663,34 @@
 
       pop.appendChild(grid);
 
-      // Pozicioniraj pop-up iznad inputa
+       // --- PRVO: privremeno prikaži da možeš točno izmjeriti visinu ---
+pop.style.visibility = 'hidden';
+pop.style.display = 'block';
+
+// Sada mjeri i poravnaj donji rub popupa tik iznad inputa
 const r = targetInput.getBoundingClientRect();
 const popRect = pop.getBoundingClientRect();
 const margin = 6;
 
-// izračun iznad
+// donji rub popupa = gornji rub inputa - margin
 let top = window.scrollY + r.top - popRect.height - margin;
-// clamp da ne ode izvan ekrana gore
+
+// clamp gore (da ne izađe iz viewporta)
 const minTop = window.scrollY + 8;
 if (top < minTop) top = minTop;
 
-// lijevo poravnanje kao input (sa clampom da ne iscuri desno)
+// lijevo poravnaj s inputom (i clamp desno)
 let left = window.scrollX + r.left;
 const maxLeft = window.scrollX + window.innerWidth - popRect.width - 8;
 if (left > maxLeft) left = Math.max(window.scrollX + 8, maxLeft);
 
+// postavi i prikaži
 pop.style.top  = top + 'px';
 pop.style.left = left + 'px';
-pop.style.display = 'block';
+pop.style.visibility = 'visible';
+
 targetInput.setAttribute('aria-expanded','true');
+
       
       // Zaključaj body scroll dok je pop-up otvoren
       document.body._prevOverflow = document.body.style.overflow || '';
