@@ -140,6 +140,26 @@
 
     /* Akcije kao na tražimuslugu (desno) */
     .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+
+    /* CENTRIRAJ “Recenzije” */
+    .cloud.center{ display:flex; justify-content:center; }
+    .cloud.center .chip{ margin:0 auto; }
+
+    /* TOAST – isti kao na Tražim uslugu */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background:#0b7; /* zeleni */
+      color:#fff;
+      padding:10px 14px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      display:none;
+      z-index:9999;
+    }
+    .toast.show{ display:block }
   </style>
 </head>
 <body>
@@ -177,9 +197,10 @@
           <h4 id="lab-skill">Što ste po zanimanju?</h4>
           <div class="row">
             <div id="skillsChips" class="chips" aria-live="polite"></div>
-               <div style="display:flex;align-items:center;gap:8px">
-  <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
-  </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
+              <!-- (opcionalno) <span class="muted" id="skillCountInfo">(odabrano 0/3)</span> -->
+            </div>
             <div class="hint">* Odaberite zanimanje iz popisa. Max. 3 zanimanja po profilu.</div>
           </div>
         </section>
@@ -197,7 +218,7 @@
             </div>
           </div>
           <div class="hint" style="margin-top:8px">
-           * Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo za precizan match s klijentima.
+            * Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo za precizan match s klijentima.
           </div>
           <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
         </section>
@@ -225,7 +246,7 @@
             </label>
           </div>
           <div class="hint">
-           * Ovo je <strong>javna</strong> informacija na vašem profilu i u pretragama. Za precizno spajanje i dalje koristimo vašu <strong>privatnu</strong> lat/lng lokaciju.
+            * Ovo je <strong>javna</strong> informacija na vašem profilu i u pretragama. Za precizno spajanje i dalje koristimo vašu <strong>privatnu</strong> lat/lng lokaciju.
           </div>
         </section>
 
@@ -241,8 +262,8 @@
           </div>
         </section>
 
-        <!-- Recenzije -->
-        <section class="cloud">
+        <!-- Recenzije (centrirano) -->
+        <section class="cloud center">
           <label class="chip" style="gap:10px">
             <input type="checkbox" id="reviews" checked>
             Dozvoli ostavljanje recenzija
@@ -274,6 +295,9 @@
     <div data-include="promos.html"></div>
     <div data-include="footer.html"></div>
   </main>
+
+  <!-- Toast (zajednički) -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <!-- DIALOG: Zanimanja (IDENTIČAN kao na Tražim uslugu) -->
   <dialog id="dlgSkills">
@@ -316,6 +340,18 @@
   <script>
     const $ = s => document.querySelector(s);
 
+    /* ===== Toast helper + preusmjeravanje alert() ===== */
+    function toast(msg){
+      const t = document.getElementById('toast');
+      if(!t) return;
+      t.textContent = String(msg || '');
+      t.classList.add('show');
+      clearTimeout(t._hide);
+      t._hide = setTimeout(()=> t.classList.remove('show'), 3000);
+    }
+    // SVE alert poruke postaju zeleni toast pri dnu (isti UX kao na Tražim uslugu)
+    window.alert = (m)=> toast(m);
+
     /* ========== SKILLS (ISTO KAO TRAŽIM USLUGU) ========== */
     const ALL_SKILLS = [];
     fetch('data/skills.json').then(r=>r.json()).then(list=>{
@@ -343,10 +379,10 @@
       });
     }
     function updateSkillCount(){
-  const el = document.getElementById('skillCountInfo');
-  if (el) el.textContent = `odabrano ${pickedSkills.size}/3`;
-}
-    
+      const el = document.getElementById('skillCountInfo');
+      if (el) el.textContent = `odabrano ${pickedSkills.size}/3`;
+    }
+
     /* HR prefiks pretraga (č/ć/š/ž/đ) */
     function stripDiacritics(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,''); }
     function norm(s){ return stripDiacritics((s||'').toLowerCase().trim()); }
