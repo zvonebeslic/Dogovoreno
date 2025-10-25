@@ -580,70 +580,72 @@
     }
 
     /* ========== INIT ========== */
-    (async ()=>{
-      try{
-        renderChips(); updateSkillCount();
+(async ()=>{
+  try{
+    renderChips();
+    updateSkillCount();
 
-        // Public area selects
-        const pubChain  = wireLocationChain({ country:'svcCountry', city:'svcCity', area:'svcArea' });
+    // Public area selects — NEMA area jer nemamo <select id="svcArea">
+    const pubChain = wireLocationChain({ country:'svcCountry', city:'svcCity' });
 
-        // Učitaj profil
-        const { data } = await api('profile','GET');
-        if(data){
-          email.value     = data.email||'';
-          name.value      = data.name||'';
-          phone.value     = data.phone||'';
+    // Učitaj profil
+    const { data } = await api('profile','GET');
+    if (data){
+      email.value     = data.email||'';
+      name.value      = data.name||'';
+      phone.value     = data.phone||'';
 
-          (Array.isArray(data.skills)? data.skills:[]).slice(0,3).forEach(s=> pickedSkills.add(s));
-          renderChips(); updateSkillCount();
+      (Array.isArray(data.skills)? data.skills:[]).slice(0,3).forEach(s=> pickedSkills.add(s));
+      renderChips(); updateSkillCount();
 
-          // privatna lokacija
-          const latEl = document.getElementById('lat');
-          const lngEl = document.getElementById('lng');
-          const mapsUrl = document.getElementById('mapsUrl');
-          const placeLabel = document.getElementById('placeLabel');
+      // privatna lokacija
+      const latEl = document.getElementById('lat');
+      const lngEl = document.getElementById('lng');
+      const mapsUrl = document.getElementById('mapsUrl');
+      const placeLabel = document.getElementById('placeLabel');
 
-          if(latEl && lngEl){
-            latEl.value = data.lat!=null ? String(data.lat) : '';
-            lngEl.value = data.lng!=null ? String(data.lng) : '';
-          }
-          if(mapsUrl) mapsUrl.value = (data.lat!=null && data.lng!=null) ? ('https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14') : '';
-          if(placeLabel) placeLabel.value= data.location || '';
+      if (latEl && lngEl){
+        latEl.value = data.lat!=null ? String(data.lat) : '';
+        lngEl.value = data.lng!=null ? String(data.lng) : '';
+      }
+      if (mapsUrl) mapsUrl.value = (data.lat!=null && data.lng!=null)
+        ? ('https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14')
+        : '';
+      if (placeLabel) placeLabel.value = data.location || '';
 
-          // opis/ostalo
-          bio.value       = data.bio||'';
-          reviews.checked = !!data.reviews_enabled;
-          quiet_from.value= data.quiet_from||'18:00';
-          quiet_to.value  = data.quiet_to  ||'07:00';
+      // opis/ostalo
+      bio.value        = data.bio||'';
+      reviews.checked  = !!data.reviews_enabled;
+      quiet_from.value = data.quiet_from||'18:00';
+      quiet_to.value   = data.quiet_to  ||'07:00';
 
-          // javno područje
-          const locLabel = (data.location || '').trim();
-          if(locLabel){
-            const parts = locLabel.split('/').map(s=>s.trim());
-            const cc   = parts[0]||'';
-            const city = parts[1]||'';
-            const area = parts[2]||'';
-            if(cc && pubChain.countrySel.querySelector(`option[value="${cc}"]`)){
-              pubChain.countrySel.value = cc;
-              pubChain.countrySel.dispatchEvent(new Event('change'));
-              setTimeout(()=>{
-                if(city){ pubChain.citySel.value = city; pubChain.citySel.dispatchEvent(new Event('change')); }
-                if(area){ pubChain.areaSel.value = area; }
-              }, 60);
+      // javno područje (država / grad)
+      const locLabel = (data.location || '').trim();
+      if (locLabel){
+        const parts = locLabel.split('/').map(s=>s.trim());
+        const cc   = parts[0]||'';
+        const city = parts[1]||'';
+        if (cc && pubChain.countrySel.querySelector(`option[value="${cc}"]`)){
+          pubChain.countrySel.value = cc;
+          pubChain.countrySel.dispatchEvent(new Event('change'));
+          setTimeout(()=>{
+            if (city){
+              pubChain.citySel.value = city;
+              pubChain.citySel.dispatchEvent(new Event('change'));
             }
-          }
+          }, 60);
         }
       }
-      } catch(e){
-  // DEV: isključen redirect dok backend ne radi
-  // alert('Prijavite se ili registrirajte kako biste uredili profil.');
-  // const btn = document.getElementById('authBtn');
-  // if(btn){ btn.click(); }
-  // else { location.href = 'index.html#auth'; }
-
-  console.warn('DEV: api(profile) nije dostupan → ne radim redirect', e);
-}
-    })();
+    }
+  } catch(e){
+    // DEV: isključen redirect dok backend ne radi
+    // alert('Prijavite se ili registrirajte kako biste uredili profil.');
+    // const btn = document.getElementById('authBtn');
+    // if(btn){ btn.click(); }
+    // else { location.href = 'index.html#auth'; }
+    console.warn('DEV: api(profile) nije dostupan → ne radim redirect', e);
+  }
+})();
 
     /* ========== UI akcije ========== */
     // (skills handlers su gore već postavljeni)
