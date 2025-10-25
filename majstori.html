@@ -71,6 +71,26 @@
     .btn-small{ padding:8px 10px; border-radius:10px }
     .btn-ghost{ background:transparent; color:#ffffff; border:2px solid #ffffff; }
 
+    /* >>> NOVO: lagani ghost gumb za "Odaberi područje/radijus" (tanji okvir, crna slova) */
+    .btn-light-ghost{
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.45);
+      color:#0b1220;
+      font-weight:600;
+      transition: background .2s, border .2s, transform .08s ease;
+    }
+    .btn-light-ghost:hover{
+      background:rgba(255,255,255,.22);
+      border-color:rgba(255,255,255,.60);
+    }
+    .btn-light-ghost:active{
+      transform:translateY(1px);
+    }
+    .btn-light-ghost:focus-visible{
+      outline:2px solid rgba(37,99,235,.4);
+      outline-offset:2px;
+    }
+
     /* Rezultati */
     .card{ border:1px solid var(--fieldBorder); border-radius:12px; background:rgba(255,255,255,.06) }
     .card-pad{ padding:16px }
@@ -101,7 +121,7 @@
     .list{ display:grid; gap:8px; padding:14px 16px; min-height:35vh }
     .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03) }
 
-    /* DlgPlace – SVIJETLI (kao na nudim/tražim) */
+    /* DlgPlace – SVIJETLI (trenutno ostavljeno kako si poslao) */
     #dlgPlace{
       background: linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(246,247,249,.86) 100%);
       color:#0b1220;
@@ -116,7 +136,7 @@
       outline:2px solid rgba(37,99,235,.25); border-color:rgba(37,99,235,.45);
     }
 
-    /* DlgRadius – TAKOĐER SVIJETLI (ujednačeno kao Područje) */
+    /* DlgRadius – SVIJETLI (ujednačeno kao Područje) */
     #dlgRadius{
       background: linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(246,247,249,.86) 100%);
       color:#0b1220;
@@ -139,7 +159,7 @@
     <div class="page-wrap">
       <div class="panel">
         <h1 class="h1">Pronađi majstora</h1>
-        <p class="lead">Pronađi provjerene majstore po vještinama i lokaciji.</p> <!-- PODNASLOV (vratili) -->
+        <p class="lead">Pronađi provjerene majstore po vještinama i lokaciji.</p>
 
         <!-- 1) VJEŠTINA (max 3) -->
         <section class="cloud" aria-labelledby="lab-skill">
@@ -148,7 +168,7 @@
             <div id="skillChips" class="chips" aria-live="polite"></div>
             <div><button id="btnPickSkill" class="btn btn-accent btn-small" type="button">Odaberi vještinu</button></div>
           </div>
-          <div class="hint">Možeš odabrati najviše <b>3 vještine</b>. Počni s najvažnijom.</div> <!-- HINT ispod vještina -->
+          <div class="hint">Možeš odabrati najviše <b>3 vještine</b>. Počni s najvažnijom.</div>
         </section>
 
         <!-- 2) PODRUČJE ILI RADIJUS (međusobno isključivo) -->
