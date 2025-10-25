@@ -203,6 +203,29 @@
       outline-offset: 0;
     }
 
+      /* Checkbox + label – zbijeno i desno */
+.quiet-skip-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end; /* desno u oblaku */
+  gap:6px;                  /* bliže kvačica i tekst */
+  margin-top:8px;
+  font-size:14px;
+}
+.quiet-skip-wrap input[type="checkbox"]{
+  transform:scale(1.1);
+}
+
+/* Kad je isključeno: onemogući samo Od/Do, ali ne i checkbox */
+#quietSection.is-disabled #quietRow{
+  opacity:.55;
+  pointer-events:none;
+}
+#quietSection.is-disabled .quiet-skip-wrap{
+  opacity:1;
+  pointer-events:auto;
+}
+
     /* Disable vizual kad je “Nije potrebno” */
     #quietSection.is-disabled{ opacity:.55; pointer-events:none }
   </style>
@@ -330,10 +353,10 @@
                      aria-expanded="false" />
             </label>
           </div>
-          <label style="display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none">
-            <input type="checkbox" id="quiet_skip">
-            <span>Nije potrebno</span>
-          </label>
+              <div class="quiet-skip-wrap">
+  <input type="checkbox" id="quiet_skip">
+  <label for="quiet_skip">Nije potrebno</label>
+</div>
         </section>
 
         <!-- Akcije (desno) -->
