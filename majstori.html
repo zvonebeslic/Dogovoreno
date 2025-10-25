@@ -27,7 +27,7 @@
 
     /* Naslovi — iste veličine kao na drugim stranicama */
     .h1{ font-weight:600; font-size:clamp(18px,3vw,26px); margin:0 0 6px }
-    .lead{ color:#c7cbd4 }
+    .lead{ color:#c7cbd4; margin:0 0 10px } /* (dodano malo dna radi razmaka) */
 
     /* Cloud (svijetli “oblaci”) */
     .cloud{
@@ -139,6 +139,7 @@
     <div class="page-wrap">
       <div class="panel">
         <h1 class="h1">Pronađi majstora</h1>
+        <p class="lead">Pronađi provjerene majstore po vještinama i lokaciji.</p> <!-- PODNASLOV (vratili) -->
 
         <!-- 1) VJEŠTINA (max 3) -->
         <section class="cloud" aria-labelledby="lab-skill">
@@ -147,6 +148,7 @@
             <div id="skillChips" class="chips" aria-live="polite"></div>
             <div><button id="btnPickSkill" class="btn btn-accent btn-small" type="button">Odaberi vještinu</button></div>
           </div>
+          <div class="hint">Možeš odabrati najviše <b>3 vještine</b>. Počni s najvažnijom.</div> <!-- HINT ispod vještina -->
         </section>
 
         <!-- 2) PODRUČJE ILI RADIJUS (međusobno isključivo) -->
@@ -403,7 +405,7 @@
       const lat=parseFloat(opt.dataset.lat), lng=parseFloat(opt.dataset.lng);
       const label = selCountry.value+' / '+selCity.value;
       chosenPlace = { country:selCountry.value, city:selCity.value, lat, lng, label };
-      chosenRadius = null; renderRadiusChip();           // mutual exclusive
+      chosenRadius = null; renderRadiusChip();  // mutual exclusive
       renderPlaceChip(); setLocks();
       closePlace();
     });
@@ -446,7 +448,7 @@
     $('#radiusSave').addEventListener('click', ()=>{
       if(!Number.isFinite(tempRadius)){ toast('Odaberi radijus.'); return; }
       chosenRadius = tempRadius;
-      chosenPlace = null; renderPlaceChip();            // mutual exclusive
+      chosenPlace = null; renderPlaceChip();   // mutual exclusive
       renderRadiusChip(); setLocks();
       closeRadius();
     });
@@ -517,4 +519,3 @@
   </script>
 </body>
 </html>
-```0
