@@ -524,32 +524,60 @@
       }catch(_){ return []; }
     }
     function fillSelect(sel, items, placeholder){
-      sel.innerHTML=''; if(placeholder) sel.appendChild(new Option(placeholder,''));
-      items.forEach(v=> sel.appendChild(new Option(v, v)));
-      sel.disabled = items.length===0;
+
+      function fillSelect(sel, items, placeholder){
+  if(!sel) return;
+  sel.innerHTML = '';
+  if(placeholder) sel.appendChild(new Option(placeholder, ''));
+  items.forEach(v => sel.appendChild(new Option(v, v)));
+  sel.disabled = items.length === 0;
+}
+
+function wireLocationChain(ids){
+  const countrySel = document.getElementById(ids.country);
+  const citySel    = document.getElementById(ids.city);
+  const areaSel    = ids.area ? document.getElementById(ids.area) : null; // može biti null
+
+  const countries = Object.keys(P_COUNTRY_FILE);
+  fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
+
+  if (citySel){
+    citySel.innerHTML = '<option value="">— prvo odaberite državu —</option>';
+    citySel.disabled = true;
+  }
+  if (areaSel){
+    areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+    areaSel.disabled = true;
+  }
+
+  countrySel.addEventListener('change', async ()=>{
+    const ctry = countrySel.value;
+    const cities = (await loadCitiesFor(ctry)).sort((a,b)=>a.localeCompare(b,'hr'));
+    if (cities.length){
+      fillSelect(citySel, cities, '— odaberite grad —');
+      citySel.disabled = false;
+    } else {
+      citySel.innerHTML = '<option value="">— nema popisa (koristite “Ručni odabir mjesta”) —</option>';
+      citySel.disabled = false;
+      toast('Nije učitan popis gradova — koristite “Ručni odabir mjesta”.');
     }
-    function wireLocationChain(ids){
-      const countrySel = document.getElementById(ids.country);
-      const citySel    = document.getElementById(ids.city);
-      const areaSel    = document.getElementById(ids.area);
-
-      const countries = Object.keys(P_COUNTRY_FILE);
-      fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
-      citySel.innerHTML = '<option value="">— prvo odaberite državu —</option>'; citySel.disabled = true;
-      areaSel.innerHTML = '<option value="">— nije obavezno —</option>'; areaSel.disabled = true;
-
-      countrySel.addEventListener('change', async ()=>{
-        const ctry = countrySel.value;
-        const cities = await loadCitiesFor(ctry);
-        fillSelect(citySel, cities.sort((a,b)=>a.localeCompare(b,'hr')), cities.length?'— odaberite grad —':'— nema gradova —');
-        areaSel.innerHTML = '<option value="">— nije obavezno —</option>'; areaSel.disabled = true;
-      });
-      citySel.addEventListener('change', ()=>{
-        areaSel.innerHTML = '<option value="">— nije obavezno —</option>'; areaSel.disabled = true;
-      });
-
-      return { countrySel, citySel, areaSel };
+    if (areaSel){
+      areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+      areaSel.disabled = true;
     }
+  });
+
+  if (citySel){
+    citySel.addEventListener('change', ()=>{
+      if (areaSel){
+        areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+        areaSel.disabled = true;
+      }
+    });
+  }
+
+  return { countrySel, citySel, areaSel };
+}
 
     /* ========== Upload ========== */
     const photos = document.getElementById('photos');
