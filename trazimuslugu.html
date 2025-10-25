@@ -14,6 +14,19 @@
     body{ background:#0f1115; color:#f7f8fa; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif }
     .page{ min-height:100svh; display:grid; grid-template-rows:auto 1fr auto; }
     .wrap{ max-width:980px; margin:18px auto 64px; padding:0 16px; }
+
+    /* DODANO: antracit wrapper panel */
+    .panel{
+      background: linear-gradient(180deg, rgba(22,26,33,.96) 0%, rgba(17,20,27,.96) 100%);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    @media(min-width:700px){
+      .panel{ padding:20px 22px; }
+    }
+
     .h1{ font-weight:600; font-size:clamp(18px,3vw,26px); margin:10px 0 6px; color:#f7f8fa }
     .lead{ margin:0 0 16px; color:#c7cbd4; font-size:clamp(13px,2.5vw,16px); }
 
@@ -151,6 +164,9 @@
     <div data-include="header.html"></div>
 
     <div class="wrap">
+      <!-- DODANO: otvaranje panela -->
+      <div class="panel">
+
       <h1 class="h1">Tražite uslugu?</h1>
       <p class="lead">U par klikova ćemo vam pomoći da pronađete odgovarajuću osobu/majstora.</p>
 
@@ -222,6 +238,9 @@
 
       <div class="note" style="margin-top:12px; color:#c7cbd4">
         Nakon slanja, naš sistem će u najkraćem mogućem roku pokušati pronaći odgovarajuću osobu s profesijom koja će moći odraditi ono što tražite.
+      </div>
+
+      <!-- DODANO: zatvaranje panela -->
       </div>
     </div>
 
