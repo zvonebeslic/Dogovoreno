@@ -318,8 +318,11 @@
         skillChips.appendChild(chip);
       });
     }
-    function updateSkillCount(){ $('#skillCountInfo').textContent=`(odabrano ${pickedSkills.size}/3)`; }
-
+    function updateSkillCount(){
+  const el = document.querySelector('#skillCountInfo');
+  if (el) el.textContent = `(odabrano ${pickedSkills.size}/3)`;
+}
+    
     /* === HR prefiks pretraga (č/ć/š/ž/đ) === */
     function stripDiacritics(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,''); }
     function norm(s){ return stripDiacritics((s||'').toLowerCase().trim()); }
