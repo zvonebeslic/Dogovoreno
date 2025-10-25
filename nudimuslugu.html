@@ -46,7 +46,6 @@
     .cloud input[type="text"],
     .cloud input[type="url"],
     .cloud input[type="search"],
-    .cloud input[type="time"],
     .cloud select,
     .cloud textarea{
       width:100%; padding:12px; border-radius:12px;
@@ -160,6 +159,38 @@
       z-index:9999;
     }
     .toast.show{ display:block }
+
+    /* ============ DODANO: mini popup za sate ============ */
+    #hourPopover{
+      z-index: 9999;
+      background: rgba(15,17,21,.98);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      width: 220px;
+    }
+    .hour-grid{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .hour-btn{
+      appearance: none;
+      border: 1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.06);
+      color: #f7f8fa;
+      border-radius: 10px;
+      padding: 8px 6px;
+      font-size: 14px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .hour-btn:hover{ background: rgba(255,255,255,.12) }
+    .hour-btn[aria-current="true"]{ outline: 2px solid #16a34a; outline-offset: 0; }
+
+    /* Disable vizual kad je “Nije potrebno” */
+    #quietSection.is-disabled{ opacity:.55; pointer-events:none }
   </style>
 </head>
 <body>
@@ -263,13 +294,33 @@
           </label>
         </section>
 
-        <!-- Ne uznemiravaj -->
-        <section class="cloud" aria-labelledby="lab-quiet">
+        <!-- Ne uznemiravaj (samo sati + “Nije potrebno”) -->
+        <section class="cloud" aria-labelledby="lab-quiet" id="quietSection">
           <h4 id="lab-quiet">Ne uznemiravaj</h4>
-          <div class="row two">
-            <label>Od <input type="time" id="quiet_from" value="18:00"></label>
-            <label>Do <input type="time" id="quiet_to" value="07:00"></label>
+          <div class="row two" id="quietRow">
+            <label>Od
+              <input type="text"
+                     id="quiet_from"
+                     inputmode="none"
+                     readonly
+                     placeholder="—:—"
+                     aria-haspopup="true"
+                     aria-expanded="false" />
+            </label>
+            <label>Do
+              <input type="text"
+                     id="quiet_to"
+                     inputmode="none"
+                     readonly
+                     placeholder="—:—"
+                     aria-haspopup="true"
+                     aria-expanded="false" />
+            </label>
           </div>
+          <label style="display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none">
+            <input type="checkbox" id="quiet_skip">
+            <span>Nije potrebno</span>
+          </label>
         </section>
 
         <!-- Akcije (desno) -->
@@ -292,7 +343,7 @@
   <!-- Toast (zajednički) -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- DIALOG: Zanimanja (IDENTIČAN kao na Tražim uslugu) -->
+  <!-- DIALOG: Zanimanja -->
   <dialog id="dlgSkills">
     <div class="dlg-head">
       <strong>Odaberi zanimanja (max 3)</strong>
@@ -310,7 +361,7 @@
     </div>
   </dialog>
 
-  <!-- DIALOG: Ručni odabir mjesta (isti kao na tražimuslugu) -->
+  <!-- DIALOG: Ručni odabir mjesta -->
   <dialog id="dlgPlace">
     <div class="dlg-head">
       <strong>Ručni odabir mjesta</strong>
@@ -329,6 +380,9 @@
     </div>
   </dialog>
 
+  <!-- Reusable mini popup za sate -->
+  <div id="hourPopover" style="position:absolute; inset:auto auto; display:none"></div>
+
   <script src="include.js"></script>
   <script>
     const $ = s => document.querySelector(s);
@@ -342,7 +396,6 @@
       clearTimeout(t._hide);
       t._hide = setTimeout(()=> t.classList.remove('show'), 3000);
     }
-    // SVE alert poruke postaju zeleni toast pri dnu (isti UX kao na Tražim uslugu)
     window.alert = (m)=> toast(m);
 
     /* ========== SKILLS (ISTO KAO TRAŽIM USLUGU) ========== */
@@ -376,7 +429,6 @@
       if (el) el.textContent = `odabrano ${pickedSkills.size}/3`;
     }
 
-    /* HR prefiks pretraga (č/ć/š/ž/đ) */
     function stripDiacritics(s){ return (s||'').normalize('NFD').replace(/\p{Diacritic}/gu,''); }
     function norm(s){ return stripDiacritics((s||'').toLowerCase().trim()); }
     function startsWithWordPrefix(label, query){
@@ -408,9 +460,8 @@
         });
     }
 
-    /* otvaranje skills dijaloga + snapshot */
     $('#btnPickSkills').addEventListener('click', ()=>{
-      tempSkillsBefore = new Set(pickedSkills);  // snapshot prije otvaranja
+      tempSkillsBefore = new Set(pickedSkills);
       renderSkillList();
       skillSearch.value='';
       dlgSkills.showModal();
@@ -419,10 +470,8 @@
       setTimeout(()=>skillSearch.focus(),50);
     });
 
-    /* Spremi = zadrži izmjene */
     $('#skillsSave').addEventListener('click', ()=> dlgSkills.close());
 
-    /* Cancel logika (Odustani, ✕, ESC) */
     function cancelSkillsDialog(){
       pickedSkills.clear();
       tempSkillsBefore.forEach(s => pickedSkills.add(s));
@@ -435,13 +484,11 @@
       cancelSkillsDialog();
     });
 
-    /* Reset skrola NA SVAKI unos – da input uvijek ostane pri vrhu */
     skillSearch.addEventListener('input', ()=>{
       renderSkillList(skillSearch.value);
       const body = dlgSkills.querySelector('.dlg-body');
       if (body) body.scrollTop = 0;
     });
-    /* ESC u searchu briše upit */
     skillSearch.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ skillSearch.value=''; renderSkillList(''); const body=dlgSkills.querySelector('.dlg-body'); if(body) body.scrollTop=0; } });
 
     /* ========== PRIVATNA LOKACIJA (isto kao tražimuslugu) ========== */
@@ -464,7 +511,7 @@
       else{ alert('Nije prepoznata lokacija iz linka. Pokušajte drugi oblik ili ručni odabir.'); }
     });
 
-    // Ručni odabir – dijalog (isti dataset kao i prije)
+    // Ručni odabir – dijalog
     const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity');
     const COUNTRY_FILES={
       "BiH": "data/cities-bih.json",
@@ -505,81 +552,76 @@
       dlgPlace.close(); alert('Lokacija postavljena.');
     });
 
-     /* ========== JAVNO PODRUČJE ========== */
-const P_COUNTRY_FILE = {
-  'Bosna i Hercegovina': 'bih',
-  'Hrvatska': 'hr',
-  'Srbija': 'rs',
-  'Crna Gora': 'me',
-  'Slovenija': 'si',
-  'Sjeverna Makedonija': 'mk'
-};
+    /* ========== JAVNO PODRUČJE ========== */
+    const P_COUNTRY_FILE = {
+      'Bosna i Hercegovina': 'bih',
+      'Hrvatska': 'hr',
+      'Srbija': 'rs',
+      'Crna Gora': 'me',
+      'Slovenija': 'si',
+      'Sjeverna Makedonija': 'mk'
+    };
 
-async function loadCitiesFor(country){
-  const code = P_COUNTRY_FILE[country]; if(!code) return [];
-  try{
-    const r = await fetch(`data/cities-${code}.json`, { cache:'no-cache' });
-    if(!r.ok) throw new Error();
-    const list = await r.json(); // [{name,lat,lng}, ...]
-    return Array.isArray(list) ? list.map(o => o.name) : [];
-  }catch(_){ return []; }
-}
-
-/* Jedna, ispravna verzija fillSelect */
-function fillSelect(sel, items, placeholder){
-  if(!sel) return;
-  sel.innerHTML = '';
-  if(placeholder) sel.appendChild(new Option(placeholder, ''));
-  items.forEach(v => sel.appendChild(new Option(v, v)));
-  sel.disabled = items.length === 0;
-}
-
-/* Vezivanje lanaca za državu → grad (područje djelovanja) */
-function wireLocationChain(ids){
-  const countrySel = document.getElementById(ids.country);
-  const citySel    = document.getElementById(ids.city);
-  const areaSel    = ids.area ? document.getElementById(ids.area) : null; // opcionalno (može i ne mora postojati)
-
-  const countries = Object.keys(P_COUNTRY_FILE);
-  fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
-
-  if (citySel){
-    citySel.innerHTML = '<option value="">— prvo odaberite državu —</option>';
-    citySel.disabled = true;
-  }
-  if (areaSel){
-    areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
-    areaSel.disabled = true;
-  }
-
-  countrySel.addEventListener('change', async ()=>{
-    const ctry = countrySel.value;
-    const cities = (await loadCitiesFor(ctry)).sort((a,b)=>a.localeCompare(b,'hr'));
-    if (cities.length){
-      fillSelect(citySel, cities, '— odaberite grad —');
-      citySel.disabled = false;
-    } else {
-      citySel.innerHTML = '<option value="">— nema popisa (koristite “Ručni odabir mjesta”) —</option>';
-      citySel.disabled = false;
-      toast('Nije učitan popis gradova — koristite “Ručni odabir mjesta”.');
+    async function loadCitiesFor(country){
+      const code = P_COUNTRY_FILE[country]; if(!code) return [];
+      try{
+        const r = await fetch(`data/cities-${code}.json`, { cache:'no-cache' });
+        if(!r.ok) throw new Error();
+        const list = await r.json();
+        return Array.isArray(list) ? list.map(o => o.name) : [];
+      }catch(_){ return []; }
     }
-    if (areaSel){
-      areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
-      areaSel.disabled = true;
+    function fillSelect(sel, items, placeholder){
+      if(!sel) return;
+      sel.innerHTML = '';
+      if(placeholder) sel.appendChild(new Option(placeholder, ''));
+      items.forEach(v => sel.appendChild(new Option(v, v)));
+      sel.disabled = items.length === 0;
     }
-  });
+    function wireLocationChain(ids){
+      const countrySel = document.getElementById(ids.country);
+      const citySel    = document.getElementById(ids.city);
+      const areaSel    = ids.area ? document.getElementById(ids.area) : null;
 
-  if (citySel){
-    citySel.addEventListener('change', ()=>{
+      const countries = Object.keys(P_COUNTRY_FILE);
+      fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
+
+      if (citySel){
+        citySel.innerHTML = '<option value="">— prvo odaberite državu —</option>';
+        citySel.disabled = true;
+      }
       if (areaSel){
         areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
         areaSel.disabled = true;
       }
-    });
-  }
 
-  return { countrySel, citySel, areaSel };
-}
+      countrySel.addEventListener('change', async ()=>{
+        const ctry = countrySel.value;
+        const cities = (await loadCitiesFor(ctry)).sort((a,b)=>a.localeCompare(b,'hr'));
+        if (cities.length){
+          fillSelect(citySel, cities, '— odaberite grad —');
+          citySel.disabled = false;
+        } else {
+          citySel.innerHTML = '<option value="">— nema popisa (koristite “Ručni odabir mjesta”) —</option>';
+          citySel.disabled = false;
+          toast('Nije učitan popis gradova — koristite “Ručni odabir mjesta”.');
+        }
+        if (areaSel){
+          areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+          areaSel.disabled = true;
+        }
+      });
+
+      if (citySel){
+        citySel.addEventListener('change', ()=>{
+          if (areaSel){
+            areaSel.innerHTML = '<option value="">— nije obavezno —</option>';
+            areaSel.disabled = true;
+          }
+        });
+      }
+      return { countrySel, citySel, areaSel };
+    }
 
     /* ========== Upload ========== */
     const photos = document.getElementById('photos');
@@ -609,108 +651,196 @@ function wireLocationChain(ids){
       return j;
     }
 
-    /* ========== INIT ========== */
-(async ()=>{
-  try{
-    renderChips();
-    updateSkillCount();
+    /* ========== DODANO: mini satni popover util ========== */
+    const HOURS = Array.from({length:24}, (_,i)=> String(i+1).padStart(2,'0') + ':00'); // 01..24
 
-    // Public area selects — NEMA area jer nemamo <select id="svcArea">
-    const pubChain = wireLocationChain({ country:'svcCountry', city:'svcCity' });
+    function showHourPopover(targetInput){
+      const pop = document.getElementById('hourPopover');
+      pop.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.className = 'hour-grid';
 
-    // Učitaj profil
-    const { data } = await api('profile','GET');
-    if (data){
-      email.value     = data.email||'';
-      name.value      = data.name||'';
-      phone.value     = data.phone||'';
+      const current = (targetInput.value||'').slice(0,5);
+      HOURS.forEach(hh => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'hour-btn';
+        btn.textContent = hh + 'h';
+        btn.setAttribute('data-hour', hh);
+        if (current === hh) btn.setAttribute('aria-current','true');
+        btn.addEventListener('click', ()=>{
+          targetInput.value = hh;
+          hideHourPopover();
+        });
+        grid.appendChild(btn);
+      });
 
-      (Array.isArray(data.skills)? data.skills:[]).slice(0,3).forEach(s=> pickedSkills.add(s));
-      renderChips(); updateSkillCount();
+      pop.appendChild(grid);
+      const r = targetInput.getBoundingClientRect();
+      pop.style.top  = (window.scrollY + r.bottom + 6) + 'px';
+      pop.style.left = (window.scrollX + r.left) + 'px';
+      pop.style.display = 'block';
+      targetInput.setAttribute('aria-expanded','true');
 
-      // privatna lokacija
-      const latEl = document.getElementById('lat');
-      const lngEl = document.getElementById('lng');
-      const mapsUrl = document.getElementById('mapsUrl');
-      const placeLabel = document.getElementById('placeLabel');
-
-      if (latEl && lngEl){
-        latEl.value = data.lat!=null ? String(data.lat) : '';
-        lngEl.value = data.lng!=null ? String(data.lng) : '';
-      }
-      if (mapsUrl) mapsUrl.value = (data.lat!=null && data.lng!=null)
-        ? ('https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14')
-        : '';
-      if (placeLabel) placeLabel.value = data.location || '';
-
-      // opis/ostalo
-      bio.value        = data.bio||'';
-      reviews.checked  = !!data.reviews_enabled;
-      quiet_from.value = data.quiet_from||'18:00';
-      quiet_to.value   = data.quiet_to  ||'07:00';
-
-      // javno područje (država / grad)
-      const locLabel = (data.location || '').trim();
-      if (locLabel){
-        const parts = locLabel.split('/').map(s=>s.trim());
-        const cc   = parts[0]||'';
-        const city = parts[1]||'';
-        if (cc && pubChain.countrySel.querySelector(`option[value="${cc}"]`)){
-          pubChain.countrySel.value = cc;
-          pubChain.countrySel.dispatchEvent(new Event('change'));
-          setTimeout(()=>{
-            if (city){
-              pubChain.citySel.value = city;
-              pubChain.citySel.dispatchEvent(new Event('change'));
-            }
-          }, 60);
-        }
-      }
+      setTimeout(()=>{
+        const onDown = (e)=>{ if(!pop.contains(e.target)) hideHourPopover(); };
+        const onEsc  = (e)=>{ if(e.key==='Escape') hideHourPopover(); };
+        document.addEventListener('mousedown', onDown, { once:true });
+        document.addEventListener('keydown', onEsc, { once:true });
+        pop._cleanup = ()=> {
+          document.removeEventListener('mousedown', onDown, { once:true });
+          document.removeEventListener('keydown', onEsc, { once:true });
+        };
+      },0);
     }
-  } catch(e){
-    // DEV: isključen redirect dok backend ne radi
-    // alert('Prijavite se ili registrirajte kako biste uredili profil.');
-    // const btn = document.getElementById('authBtn');
-    // if(btn){ btn.click(); }
-    // else { location.href = 'index.html#auth'; }
-    console.warn('DEV: api(profile) nije dostupan → ne radim redirect', e);
-  }
-})();
+    function hideHourPopover(){
+      const pop = document.getElementById('hourPopover');
+      if (pop._cleanup) pop._cleanup();
+      pop.style.display='none';
+      const expanded = document.querySelector('[aria-haspopup="true"][aria-expanded="true"]');
+      if (expanded) expanded.setAttribute('aria-expanded','false');
+    }
+
+    /* ========== INIT ========== */
+    (async ()=>{
+      try{
+        renderChips();
+        updateSkillCount();
+
+        const pubChain = wireLocationChain({ country:'svcCountry', city:'svcCity' });
+
+        // Učitaj profil
+        const { data } = await api('profile','GET');
+        if (data){
+          email.value     = data.email||'';
+          name.value      = data.name||'';
+          phone.value     = data.phone||'';
+
+          (Array.isArray(data.skills)? data.skills:[]).slice(0,3).forEach(s=> pickedSkills.add(s));
+          renderChips(); updateSkillCount();
+
+          // privatna lokacija
+          const latEl = document.getElementById('lat');
+          const lngEl = document.getElementById('lng');
+          const mapsUrl = document.getElementById('mapsUrl');
+          const placeLabel = document.getElementById('placeLabel');
+
+          if (latEl && lngEl){
+            latEl.value = data.lat!=null ? String(data.lat) : '';
+            lngEl.value = data.lng!=null ? String(data.lng) : '';
+          }
+          if (mapsUrl) mapsUrl.value = (data.lat!=null && data.lng!=null)
+            ? ('https://maps.google.com/?q='+data.lat+','+data.lng+'&ll='+data.lat+','+data.lng+'&z=14')
+            : '';
+          if (placeLabel) placeLabel.value = data.location || '';
+
+          // opis/ostalo
+          bio.value        = data.bio||'';
+          reviews.checked  = !!data.reviews_enabled;
+
+          // DND (novo: skip + popup za sate)
+          const quietFrom = document.getElementById('quiet_from');
+          const quietTo   = document.getElementById('quiet_to');
+          const quietSkip = document.getElementById('quiet_skip');
+          const quietSec  = document.getElementById('quietSection');
+
+          const skipVal = !!(data.quiet_skip);
+          if (skipVal){
+            quietSkip.checked = true;
+            quietSec.classList.add('is-disabled');
+            quietFrom.value = '';
+            quietTo.value   = '';
+          } else {
+            quietSkip.checked = false;
+            quietSec.classList.remove('is-disabled');
+            quietFrom.value = (typeof data.quiet_from === 'string' ? data.quiet_from : '');
+            quietTo.value   = (typeof data.quiet_to   === 'string' ? data.quiet_to   : '');
+          }
+
+          [quietFrom, quietTo].forEach(inp=>{
+            inp.addEventListener('click', ()=>{
+              if (quietSkip.checked) return;
+              showHourPopover(inp);
+            });
+            inp.addEventListener('keydown', (e)=> e.preventDefault());
+          });
+
+          quietSkip.addEventListener('change', ()=>{
+            if (quietSkip.checked){
+              quietSec.classList.add('is-disabled');
+              quietFrom.value = '';
+              quietTo.value   = '';
+            } else {
+              quietSec.classList.remove('is-disabled');
+            }
+          });
+
+          // javno područje (država / grad)
+          const locLabel = (data.location || '').trim();
+          if (locLabel){
+            const parts = locLabel.split('/').map(s=>s.trim());
+            const cc   = parts[0]||'';
+            const city = parts[1]||'';
+            if (cc && pubChain.countrySel.querySelector(`option[value="${cc}"]`)){
+              pubChain.countrySel.value = cc;
+              pubChain.countrySel.dispatchEvent(new Event('change'));
+              setTimeout(()=>{
+                if (city){
+                  pubChain.citySel.value = city;
+                  pubChain.citySel.dispatchEvent(new Event('change'));
+                }
+              }, 60);
+            }
+          }
+        }
+      } catch(e){
+        console.warn('DEV: api(profile) nije dostupan → ne radim redirect', e);
+      }
+    })();
 
     /* ========== UI akcije ========== */
-    // (skills handlers su gore već postavljeni)
-
     // Spremi
     document.getElementById('btnSave').addEventListener('click', async (e)=>{
       e.preventDefault();
+
+      const _skip = document.getElementById('quiet_skip').checked;
+      const _from = document.getElementById('quiet_from').value.trim();
+      const _to   = document.getElementById('quiet_to').value.trim();
 
       const payload = {
         name: (name.value||'').trim(),
         phone: (phone.value||'').trim(),
         skills: Array.from(pickedSkills).slice(0,3),
         location: (function(){
-  const getVal = (id) => {
-    const el = document.getElementById(id);
-    return (el && typeof el.value === 'string') ? el.value.trim() : '';
-  };
-  const c = getVal('svcCountry');
-  const g = getVal('svcCity');
-  const a = getVal('svcArea'); // neće puknuti iako element ne postoji
-  return [c,g,a].filter(Boolean).join(' / ');
-})(),
+          const getVal = (id) => {
+            const el = document.getElementById(id);
+            return (el && typeof el.value === 'string') ? el.value.trim() : '';
+          };
+          const c = getVal('svcCountry');
+          const g = getVal('svcCity');
+          const a = getVal('svcArea'); // ne postoji, ali ne smeta
+          return [c,g,a].filter(Boolean).join(' / ');
+        })(),
         lat: (document.getElementById('lat').value) ? parseFloat(document.getElementById('lat').value) : null,
         lng: (document.getElementById('lng').value) ? parseFloat(document.getElementById('lng').value) : null,
         bio: (bio.value||'').trim(),
         reviews_enabled: reviews.checked,
-        quiet_from: quiet_from.value || '18:00',
-        quiet_to: quiet_to.value   || '07:00'
+
+        // DND po novom
+        quiet_skip: _skip,
+        quiet_from: _skip ? null : (_from || null),
+        quiet_to:   _skip ? null : (_to   || null)
       };
 
       if(!payload.name || !payload.phone){ alert('Ime i telefon su obavezni.'); return; }
       if(payload.skills.length===0){ alert('Odaberite barem jedno zanimanje.'); return; }
 
       try{
+        // Ako želiš da se uopće ne šalju sati kad je skip, odkomentiraj:
+        // if (payload.quiet_skip){ delete payload.quiet_from; delete payload.quiet_to; }
+
         await api('profile','PUT', payload);
+
         const pv = document.getElementById('pv');
         const preview = document.getElementById('preview');
         pv.innerHTML = `
@@ -721,7 +851,10 @@ function wireLocationChain(ids){
           <div class="muted">🌐 ${payload.lat??'-'}, ${payload.lng??'-'}</div>
           <div style="margin-top:6px">${payload.bio?payload.bio.replace(/</g,'&lt;'):'—'}</div>
           <div class="muted" style="margin-top:6px">⭐ Recenzije: ${payload.reviews_enabled?'DA':'NE'}</div>
-          <div class="muted">⛔ ${payload.quiet_from} → ${payload.quiet_to}</div>
+          <div class="muted">⛔ ${
+            payload.quiet_skip ? 'Nije potrebno' :
+            ((payload.quiet_from||'—:—') + ' → ' + (payload.quiet_to||'—:—'))
+          }</div>
         `;
         preview.hidden = false;
         alert('Profil spremljen. Vaš profil će se prikazati na popisu majstora.');
