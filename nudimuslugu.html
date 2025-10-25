@@ -926,6 +926,42 @@ targetInput.setAttribute('aria-expanded','true');
         alert('Profil spremljen. Vaš profil će se prikazati na popisu majstora.');
       }catch(err){ alert(err.message||'Greška spremanja'); }
     });
+
+    /* 
+======================================================
+ PRIVREMENI MODE:
+ gumb "Spremi / Kreiraj profil" NE šalje podatke,
+ NE validira ništa → SAMO radi redirect na majstor.html
+
+ Kada backend bude gotov:
+ - ovaj blok možeš obrisati
+ - i vratiti originalni handler koji sprema u bazu
+
+ OVDJE JE SVE ŠTO ĆE OSTAVLIS TIJEKOM IZRADE:
+ - layout stranice
+ - vizual komponenata
+ - skill picker
+ - pop-upovi
+ - logika UI-a
+ - preview (ako želiš)
+ Sve ostaje netaknuto!
+======================================================
+*/
+
+(function forceRedirectOnSave(){
+  const oldBtn = document.getElementById('btnSave');
+  if (!oldBtn) return;
+
+  // kloniramo gumb da maknemo stare event listenere
+  const freshBtn = oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(freshBtn, oldBtn);
+
+  // privremeni handler: samo redirect
+  freshBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    window.location.href = 'majstor.html';
+  });
+})();
   </script>
 </body>
 </html>
