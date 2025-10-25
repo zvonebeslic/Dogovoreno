@@ -215,7 +215,7 @@
           <img src="images/stranica-za-trazim-uslugu-nudim-uslugu.png" alt="Dogovor: klijent i majstor — rukovanje" />
           <div class="cta-row">
             <a class="cta" id="btn-trazim" href="trazimuslugu.html">Tražim uslugu</a>
-            <a class="cta" id="btn-nudim" href="nudimuslugu.html">Nudim uslugu</a>
+            <a class="cta" id="btn-nudim" href="profile.html">Nudim uslugu</a>
           </div>
         </div>
       </div>
@@ -255,9 +255,24 @@
     })();
 
     // CTA
-    document.getElementById('btn-trazim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='trazimuslugu.html'; });
-    document.getElementById('btn-nudim')?.addEventListener('click', e=>{ e.preventDefault(); location.href='nudimuslugu.html'; });
+document.getElementById('btn-trazim')?.addEventListener('click', e => {
+  e.preventDefault();
+  location.href = 'trazimuslugu.html';
+});
 
+function goToOfferGate(){
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  if (isLoggedIn){
+    location.href = 'nudimuslugu.html';
+  } else {
+    location.href = 'profile.html#login';
+  }
+}
+
+document.getElementById('btn-nudim')?.addEventListener('click', e => {
+  e.preventDefault();
+  goToOfferGate();
+});
 (function(){
   // Tajming
   const OPEN_DELAY_MS = 5000;   // prva pojava nakon 5 s
