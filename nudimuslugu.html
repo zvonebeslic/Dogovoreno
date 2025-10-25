@@ -927,41 +927,76 @@ targetInput.setAttribute('aria-expanded','true');
       }catch(err){ alert(err.message||'Greška spremanja'); }
     });
 
-    /* 
+
+/*
 ======================================================
- PRIVREMENI MODE:
- gumb "Spremi / Kreiraj profil" NE šalje podatke,
- NE validira ništa → SAMO radi redirect na majstor.html
+ PRIVREMENI MODE (DEMO REDIRECT):
+ - "Spremi / Kreiraj profil" NE šalje podatke
+ - NE validira ništa
+ - SAMO redirecta na stranicu profila: profil.html?id=DEMO...
 
- Kada backend bude gotov:
- - ovaj blok možeš obrisati
- - i vratiti originalni handler koji sprema u bazu
-
- OVDJE JE SVE ŠTO ĆE OSTAVLIS TIJEKOM IZRADE:
- - layout stranice
- - vizual komponenata
- - skill picker
- - pop-upovi
- - logika UI-a
- - preview (ako želiš)
- Sve ostaje netaknuto!
+ Kad backend bude gotov:
+ - ovaj blok obriši
+ - vrati originalni handler koji sprema u bazu
 ======================================================
 */
 
-(function forceRedirectOnSave(){
+(function tempSaveRedirect(){
+  const TARGET_PAGE = 'profil.html'; // ako se tvoja stranica zove "majstor.html", promijeni ovo
+
   const oldBtn = document.getElementById('btnSave');
   if (!oldBtn) return;
 
-  // kloniramo gumb da maknemo stare event listenere
+  // kloniramo gumb da maknemo stare listenere
   const freshBtn = oldBtn.cloneNode(true);
   oldBtn.parentNode.replaceChild(freshBtn, oldBtn);
 
-  // privremeni handler: samo redirect
+  function getCoords(){
+    try{
+      const qlat = sessionStorage.getItem('qlat') || localStorage.getItem('qlat');
+      const qlng = sessionStorage.getItem('qlng') || localStorage.getItem('qlng');
+      return (qlat && qlng) ? { qlat, qlng } : null;
+    }catch{ return null; }
+  }
+
+  function getOrMakeDemoProviderId(){
+    try{
+      let id = localStorage.getItem('demo_provider_id');
+      if(!id){
+        id = 'demo-' + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('demo_provider_id', id);
+      }
+      return id;
+    }catch{ return 'demo-0001'; }
+  }
+
+  // izgradi apsolutni URL u istom folderu (radi i na podstranicama)
+  function buildTargetUrl(file){
+    const basePath = location.pathname.replace(/[^\/]+$/, '');
+    const url = new URL(location.origin + basePath + file);
+    return url;
+  }
+
   freshBtn.addEventListener('click', (e)=>{
     e.preventDefault();
-    window.location.href = 'majstor.html?draft=1';
+
+    const providerId = getOrMakeDemoProviderId();
+    const coords = getCoords();
+
+    const url = buildTargetUrl(TARGET_PAGE);
+    url.searchParams.set('id', providerId);
+    if (coords){
+      url.searchParams.set('qlat', coords.qlat);
+      url.searchParams.set('qlng', coords.qlng);
+    }
+
+    // Ako ŽELIŠ zadržati "draft" natpis na profilu (privremeno), otkomentiraj:
+    // url.searchParams.set('draft', '1');
+
+    location.href = url.toString();
   });
 })();
+
   </script>
 </body>
 </html>
