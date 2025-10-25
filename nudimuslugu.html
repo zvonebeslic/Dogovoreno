@@ -633,12 +633,16 @@
             }
           }
         }
-      }catch(e){
-        alert('Prijavite se ili registrirajte kako biste uredili profil.');
-        const btn = document.getElementById('authBtn');
-        if(btn){ btn.click(); }
-        else { location.href = 'index.html#auth'; }
       }
+      } catch(e){
+  // DEV: isključen redirect dok backend ne radi
+  // alert('Prijavite se ili registrirajte kako biste uredili profil.');
+  // const btn = document.getElementById('authBtn');
+  // if(btn){ btn.click(); }
+  // else { location.href = 'index.html#auth'; }
+
+  console.warn('DEV: api(profile) nije dostupan → ne radim redirect', e);
+}
     })();
 
     /* ========== UI akcije ========== */
