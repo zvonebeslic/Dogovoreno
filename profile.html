@@ -133,22 +133,34 @@
       if (v.includes('@') && v.includes('.')) resendEmail.value = v;
     });
 
-    // Tabovi
-    function openLogin(){
-      tabLogin.setAttribute('aria-selected','true');
-      tabReg.setAttribute('aria-selected','false');
-      loginForm.style.display='grid';
-      regForm.style.display='none';
-    }
-    function openRegister(){
-      tabLogin.setAttribute('aria-selected','false');
-      tabReg.setAttribute('aria-selected','true');
-      loginForm.style.display='none';
-      regForm.style.display='grid';
-    }
-    tabLogin.addEventListener('click', openLogin);
-    tabReg.addEventListener('click', openRegister);
+     // Tabovi s hash-sync
+function openLogin(){
+  tabLogin.setAttribute('aria-selected','true');
+  tabReg.setAttribute('aria-selected','false');
+  loginForm.style.display='grid';
+  regForm.style.display='none';
+  lg_identifier?.focus();
+}
+function openRegister(){
+  tabLogin.setAttribute('aria-selected','false');
+  tabReg.setAttribute('aria-selected','true');
+  loginForm.style.display='none';
+  regForm.style.display='grid';
+  rg_name?.focus();
+}
 
+tabLogin.addEventListener('click', () => { location.hash = '#login'; });
+tabReg.addEventListener('click', () => { location.hash = '#register'; });
+
+function syncFromHash(){
+  const h = (location.hash || '').toLowerCase();
+  if (h === '#register') openRegister();
+  else openLogin();
+}
+
+window.addEventListener('hashchange', syncFromHash);
+document.addEventListener('DOMContentLoaded', syncFromHash);
+    
     // Submit: PRIJAVA
     loginForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
