@@ -505,27 +505,28 @@
       dlgPlace.close(); alert('Lokacija postavljena.');
     });
 
-    /* ========== JAVNO PODRUČJE ========== */
-    const P_COUNTRY_FILE = {
-      'Bosna i Hercegovina': 'bih',
-      'Hrvatska': 'hr',
-      'Srbija': 'rs',
-      'Crna Gora': 'me',
-      'Slovenija': 'si',
-      'Sjeverna Makedonija': 'mk'
-    };
-    async function loadCitiesFor(country){
-      const code = P_COUNTRY_FILE[country]; if(!code) return [];
-      try{
-        const r = await fetch(`data/cities-${code}.json`, {cache:'no-cache'});
-        if(!r.ok) throw new Error();
-        const list = await r.json(); // [{name,lat,lng},...]
-        return Array.isArray(list) ? list.map(o=>o.name) : [];
-      }catch(_){ return []; }
-    }
-    function fillSelect(sel, items, placeholder){
+     /* ========== JAVNO PODRUČJE ========== */
+const P_COUNTRY_FILE = {
+  'Bosna i Hercegovina': 'bih',
+  'Hrvatska': 'hr',
+  'Srbija': 'rs',
+  'Crna Gora': 'me',
+  'Slovenija': 'si',
+  'Sjeverna Makedonija': 'mk'
+};
 
-      function fillSelect(sel, items, placeholder){
+async function loadCitiesFor(country){
+  const code = P_COUNTRY_FILE[country]; if(!code) return [];
+  try{
+    const r = await fetch(`data/cities-${code}.json`, { cache:'no-cache' });
+    if(!r.ok) throw new Error();
+    const list = await r.json(); // [{name,lat,lng}, ...]
+    return Array.isArray(list) ? list.map(o => o.name) : [];
+  }catch(_){ return []; }
+}
+
+/* Jedna, ispravna verzija fillSelect */
+function fillSelect(sel, items, placeholder){
   if(!sel) return;
   sel.innerHTML = '';
   if(placeholder) sel.appendChild(new Option(placeholder, ''));
@@ -533,10 +534,11 @@
   sel.disabled = items.length === 0;
 }
 
+/* Vezivanje lanaca za državu → grad (područje djelovanja) */
 function wireLocationChain(ids){
   const countrySel = document.getElementById(ids.country);
   const citySel    = document.getElementById(ids.city);
-  const areaSel    = ids.area ? document.getElementById(ids.area) : null; // može biti null
+  const areaSel    = ids.area ? document.getElementById(ids.area) : null; // opcionalno (može i ne mora postojati)
 
   const countries = Object.keys(P_COUNTRY_FILE);
   fillSelect(countrySel, countries.sort((a,b)=>a.localeCompare(b,'hr')), '— odaberite —');
@@ -687,11 +689,15 @@ function wireLocationChain(ids){
         phone: (phone.value||'').trim(),
         skills: Array.from(pickedSkills).slice(0,3),
         location: (function(){
-          const c = (document.getElementById('svcCountry').value||'').trim();
-          const g = (document.getElementById('svcCity').value||'').trim();
-          const a = (document.getElementById('svcArea').value||'').trim();
-          return [c,g,a].filter(Boolean).join(' / ');
-        })(),
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return (el && typeof el.value === 'string') ? el.value.trim() : '';
+  };
+  const c = getVal('svcCountry');
+  const g = getVal('svcCity');
+  const a = getVal('svcArea'); // neće puknuti iako element ne postoji
+  return [c,g,a].filter(Boolean).join(' / ');
+})(),
         lat: (document.getElementById('lat').value) ? parseFloat(document.getElementById('lat').value) : null,
         lng: (document.getElementById('lng').value) ? parseFloat(document.getElementById('lng').value) : null,
         bio: (bio.value||'').trim(),
