@@ -160,20 +160,30 @@
     }
     .toast.show{ display:block }
 
-    /* ============ DODANO: mini popup za sate ============ */
+    /* ================== POPUP ZA SATE ================== */
+    /* Pop-up kontejner: fiksne dimenzije, ne širi stranicu */
     #hourPopover{
+      position:absolute;
       z-index: 9999;
       background: rgba(15,17,21,.98);
       border: 1px solid rgba(255,255,255,.12);
       border-radius: 12px;
       padding: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      width: 220px;
+      width: 240px;
+      max-height: 50vh;      /* pop-up visina */
+      overflow: hidden;      /* što izađe, ne vidi se */
     }
+    /* Jedan stupac, scroll unutar pop-upa */
     .hour-grid{
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex;
+      flex-direction: column;
       gap: 6px;
+      max-height: 45vh;      /* lista scrola unutra */
+      overflow-y: auto;
+      padding-right: 4px;    /* da scrollbar ne preklapa tekst */
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
     .hour-btn{
       appearance: none;
@@ -181,13 +191,17 @@
       background: rgba(255,255,255,.06);
       color: #f7f8fa;
       border-radius: 10px;
-      padding: 8px 6px;
-      font-size: 14px;
-      text-align: center;
+      padding: 10px 12px;
+      font-size: 16px;
+      text-align: left;
       cursor: pointer;
+      width: 100%;           /* puna širina za lakši tap */
     }
     .hour-btn:hover{ background: rgba(255,255,255,.12) }
-    .hour-btn[aria-current="true"]{ outline: 2px solid #16a34a; outline-offset: 0; }
+    .hour-btn[aria-current="true"]{
+      outline: 2px solid #16a34a;
+      outline-offset: 0;
+    }
 
     /* Disable vizual kad je “Nije potrebno” */
     #quietSection.is-disabled{ opacity:.55; pointer-events:none }
@@ -230,7 +244,6 @@
             <div id="skillsChips" class="chips" aria-live="polite"></div>
             <div style="display:flex;align-items:center;gap:8px">
               <button id="btnPickSkills" type="button" class="btn btn-accent btn-small">Odaberi zanimanja</button>
-              <!-- (opcionalno) <span class="muted" id="skillCountInfo">(odabrano 0/3)</span> -->
             </div>
             <div class="hint">* Odaberite zanimanje iz popisa. Max. 3 zanimanja po profilu.</div>
           </div>
@@ -249,7 +262,7 @@
             </div>
           </div>
           <div class="hint" style="margin-top:8px">
-            * Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo za precizno spajanje s klijentima.
+            * Vaša će lokacija ovdje ostati <b>uvijek tajna</b> i nitko je neće vidjeti. Koristimo je samo za precizan match s klijentima.
           </div>
           <input type="hidden" id="lat"><input type="hidden" id="lng"><input type="hidden" id="placeLabel">
         </section>
@@ -623,13 +636,13 @@
       return { countrySel, citySel, areaSel };
     }
 
-    /* ========== DODANO: mini satni popover util ========== */
-    // 00:00 → 23:00
-const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00'); // 00..23
-          
+    /* ===== POPUP SATI (00:00 – 23:00) ===== */
+    const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00'); // 00..23
+
     function showHourPopover(targetInput){
       const pop = document.getElementById('hourPopover');
       pop.innerHTML = '';
+
       const grid = document.createElement('div');
       grid.className = 'hour-grid';
 
@@ -649,11 +662,17 @@ const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00')
       });
 
       pop.appendChild(grid);
+
+      // Pozicioniraj pop-up ispod inputa
       const r = targetInput.getBoundingClientRect();
       pop.style.top  = (window.scrollY + r.bottom + 6) + 'px';
       pop.style.left = (window.scrollX + r.left) + 'px';
       pop.style.display = 'block';
       targetInput.setAttribute('aria-expanded','true');
+
+      // Zaključaj body scroll dok je pop-up otvoren
+      document.body._prevOverflow = document.body.style.overflow || '';
+      document.body.style.overflow = 'hidden';
 
       setTimeout(()=>{
         const onDown = (e)=>{ if(!pop.contains(e.target)) hideHourPopover(); };
@@ -672,6 +691,11 @@ const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00')
       pop.style.display='none';
       const expanded = document.querySelector('[aria-haspopup="true"][aria-expanded="true"]');
       if (expanded) expanded.setAttribute('aria-expanded','false');
+      // Vrati body scroll
+      if (document.body._prevOverflow !== undefined){
+        document.body.style.overflow = document.body._prevOverflow;
+        delete document.body._prevOverflow;
+      }
     }
 
     /* === DND wiring (radi odmah, bez obzira na API) === */
@@ -802,8 +826,8 @@ const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00')
       e.preventDefault();
 
       const _skip = document.getElementById('quiet_skip').checked;
-      const _from = document.getElementById('quiet_from').value.trim();
-      const _to   = document.getElementById('quiet_to').value.trim();
+      let _from = document.getElementById('quiet_from').value.trim();
+      let _to   = document.getElementById('quiet_to').value.trim();
 
       const payload = {
         name: (name.value||'').trim(),
@@ -834,9 +858,6 @@ const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00')
       if(payload.skills.length===0){ alert('Odaberite barem jedno zanimanje.'); return; }
 
       try{
-        // Ako želiš da se uopće ne šalju sati kad je skip, odkomentiraj:
-        // if (payload.quiet_skip){ delete payload.quiet_from; delete payload.quiet_to; }
-
         await api('profile','PUT', payload);
 
         const pv = document.getElementById('pv');
