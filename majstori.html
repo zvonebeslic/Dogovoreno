@@ -71,18 +71,28 @@
     .btn-small{ padding:8px 10px; border-radius:10px }
     .btn-ghost{ background:transparent; color:#ffffff; border:2px solid #ffffff; }
 
-    /* NOVO: lagani ghost gumb za filtere (odaberi područje/radijus) */
-    .btn-light-ghost{
-      background:rgba(255,255,255,.14);
-      border:1px solid rgba(255,255,255,.45);
-      color:#0b1220;
-      font-weight:600;
-      transition: background .2s, border .2s, transform .08s ease;
-    }
-    .btn-light-ghost:hover{ background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.60); }
-    .btn-light-ghost:active{ transform:translateY(1px); }
-    .btn-light-ghost:focus-visible{ outline:2px solid rgba(37,99,235,.4); outline-offset:2px; }
-
+/* Lagani ghost ali PUNO BIJELO (bez prozirnosti i bez sjene) */
+.btn-light-ghost{
+  background:#ffffff;
+  color:#0b1220;
+  border:1px solid rgba(0,0,0,.20);
+  font-weight:600;
+  border-radius:10px;
+  box-shadow:none;               /* nema sjene */
+  transition:background .15s, border .15s, transform .08s ease;
+}
+.btn-light-ghost:hover{
+  background:#f2f3f5;
+  border-color:rgba(0,0,0,.28);
+}
+.btn-light-ghost:active{
+  transform:translateY(1px);
+}
+.btn-light-ghost:focus-visible{
+  outline:2px solid rgba(37,99,235,.35);
+  outline-offset:2px;
+}
+    
     /* NOVO: neutralni (svijetlosivi) gumb "Odustani" kao na slici */
     .btn-neutral{
       background:linear-gradient(180deg, #f2f4f7 0%, #e7eaee 100%);
