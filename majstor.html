@@ -73,6 +73,26 @@
     // ------- helpers
     const qs = new URLSearchParams(location.search);
     const id = qs.get('id');
+
+// -------ovo se brise
+const isDraft = qs.get('draft') === '1';
+
+if (isDraft) {
+  const wrap = document.getElementById('wrap');
+  wrap.innerHTML = `
+    <div class="card card-pad" style="margin:16px 0">
+      <h3 style="margin:0 0 8px">Nacrt profila</h3>
+      <p class="muted" style="margin:0">
+        Ovo je privremeni prikaz profila. Podaci će se pojaviti nakon stvarnog spremanja.
+      </p>
+    </div>
+  `;
+  // STOP: nema dohvaćanja profila u draft modu
+  throw new Error('DRAFT MODE');
+}
+// -----  do ovde se brise
+
+    
     const userLat = qs.get('qlat') ? parseFloat(qs.get('qlat')) : null;
     const userLng = qs.get('qlng') ? parseFloat(qs.get('qlng')) : null;
 
