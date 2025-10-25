@@ -10,78 +10,91 @@
       --cta:#2563eb;   /* plava */
       --cta2:#ea580c;  /* narančasta */
     }
-    .btn-blue{ background:var(--cta); color:#fff; }
-    .btn-orange{ background:var(--cta2); color:#fff; }
-    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .muted{ opacity:.8; }
-    .underline{ text-decoration:underline; }
-    .field-inline{ display:flex; align-items:center; gap:8px; }
+    /* osnovne klase */
+    .btn-blue{ background:var(--cta); color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .btn-orange{ background:var(--cta2); color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .btn-ghost{ background:transparent; border:1px solid rgba(0,0,0,.06); padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+    .field-inline{ display:flex; align-items:center; gap:8px }
+    .help{ color:#666; font-size:13px }
+    .container{ padding:0 16px }
+    .card{ background:#fff; color:#111; border-radius:12px; padding:16px; max-width:720px; margin:0 auto }
+    label{ display:block; margin:8px 0 4px; font-size:14px; }
+    input{ padding:8px; border:1px solid #ddd; border-radius:6px; width:100%; }
   </style>
 </head>
 <body>
-  <!-- Header partial -->
+  <!-- Header (partial) -->
   <div data-include="header.html"></div>
 
-  <main class="container" style="max-width:720px;margin:24px auto">
-    <div class="card" style="padding:16px">
-      <h2 style="margin:0 0 4px">Moj profil</h2>
+  <main class="container" style="margin:24px auto">
+    <div class="card">
+      <h2 style="margin:0 0 6px">Moj profil</h2>
       <p class="help" style="margin:0 0 12px">(profil za one koji nude usluge)</p>
 
-      <!-- Tabovi (obojani) -->
+      <!-- TABOVI (samo prikaz formi) -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button id="tabLogin" class="btn btn-blue" type="button" aria-selected="true">Prijava</button>
-        <button id="tabRegister" class="btn btn-orange" type="button" aria-selected="false">Registracija</button>
+        <!-- Važno: ovo su TABOVI (PRIJAVA / REGISTRACIJA) — ne rade redirect -->
+        <button id="tabLogin" class="btn-ghost" type="button" aria-selected="true">Prijava</button>
+        <button id="tabRegister" class="btn-ghost" type="button" aria-selected="false">Registracija</button>
       </div>
 
       <!-- PRIJAVA -->
-      <form id="loginForm" class="grid" style="margin:0" onsubmit="return false;">
+      <form id="loginForm" onsubmit="return false;">
         <label>Email ili ime ili telefon*
           <input id="lg_identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…">
         </label>
+
         <label>Lozinka*
-          <div class="field-inline">
+          <div class="field-inline" style="width:100%">
             <input id="lg_password" type="password" required>
-            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+            <label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer;margin-left:8px">
               <input id="lg_showpw" type="checkbox"> prikaži
             </label>
           </div>
         </label>
 
-        <div class="row" style="margin:2px 0 8px">
-          <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+        <div class="row" style="margin:8px 0 12px">
+          <label style="display:inline-flex;gap:8px;align-items:center;cursor:pointer">
             <input id="lg_remember_id" type="checkbox"> Zapamti me
           </label>
         </div>
 
-        <button id="lg_submit" class="btn btn-blue" type="submit">Prijavi se</button>
+        <!-- Ovaj gumb JE submit koji vodi na majstor.html (ili DEV bypass sada) -->
+        <div style="margin-top:6px">
+          <button id="lg_submit" class="btn-blue" type="submit">Prijavi se</button>
+        </div>
       </form>
 
-      <!-- REGISTRACIJA (samo e-mail + lozinka) -->
-      <form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">
+      <!-- REGISTRACIJA -->
+      <form id="regForm" style="display:none;margin-top:12px" onsubmit="return false;">
         <label>E-mail*
           <input id="rg_email" type="email" required placeholder="ime@primjer.com">
         </label>
+
         <label>Lozinka* <span class="help">(min. 8 znakova)</span>
-          <div class="field-inline">
+          <div class="field-inline" style="width:100%">
             <input id="rg_password" type="password" required minlength="8">
-            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+            <label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer;margin-left:8px">
               <input id="rg_showpw" type="checkbox"> prikaži
             </label>
           </div>
         </label>
 
-        <div id="resendRow" class="grid" style="gap:8px">
-          <p class="help" style="margin:6px 0 0">
-            Niste dobili e-mail s potvrdom nakon registracije?
-          </p>
+        <!-- Resend (samo u registraciji) -->
+        <div id="resendRow" style="margin:10px 0 6px">
+          <p class="help" style="margin:0 0 6px">Niste dobili e-mail s potvrdom nakon registracije?</p>
           <div class="row">
             <input id="resend_email" type="email" placeholder="upišite svoj e-mail" style="max-width:280px">
-            <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>
-            <span class="help">ili <a class="underline" href="mailto:podrska@dogovoreno.com">javite nam se</a></span>
+            <button id="resend_btn" class="btn-ghost" type="button">Pošalji ponovo potvrdu</button>
+            <span class="help">ili <a href="mailto:podrska@dogovoreno.com" style="text-decoration:underline">javite nam se</a></span>
           </div>
         </div>
 
-        <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>
+        <!-- Ovaj gumb JE submit koji vodi na nudimuslugu.html (ili DEV bypass sada) -->
+        <div style="margin-top:6px">
+          <button id="rg_submit" class="btn-orange" type="submit">Registriraj se</button>
+        </div>
       </form>
     </div>
   </main>
@@ -92,6 +105,17 @@
 
   <script>
   (function(){
+    /* ======================================================
+       KONFIGURACIJA DEV BYPASS
+       ------------------------------------------------------
+       Trenutno uključen DEV BYPASS (brzi test bez backenda).
+       Ako želiš isključiti: postavi DEV_MODE = false.
+       ====================================================== */
+    const DEV_MODE = true; // <-- AKTIVNO sada: klik na submit odmah ide dalje
+    // const DEV_MODE = false; // <-- postavi false kad ukloniš bypass (ili kad backend radi)
+    /* ====================================================== */
+
+    // ELEMENTI
     const tabLogin   = document.getElementById('tabLogin');
     const tabReg     = document.getElementById('tabRegister');
     const loginForm  = document.getElementById('loginForm');
@@ -101,25 +125,36 @@
     const lg_password   = document.getElementById('lg_password');
     const lg_showpw     = document.getElementById('lg_showpw');
     const lg_remember_id= document.getElementById('lg_remember_id');
+    const lg_submit     = document.getElementById('lg_submit');
 
     const rg_email      = document.getElementById('rg_email');
     const rg_password   = document.getElementById('rg_password');
     const rg_showpw     = document.getElementById('rg_showpw');
+    const rg_submit     = document.getElementById('rg_submit');
 
-    const resendRow   = document.getElementById('resendRow');
     const resendEmail = document.getElementById('resend_email');
     const resendBtn   = document.getElementById('resend_btn');
+    const resendRow   = document.getElementById('resendRow');
 
-    // mini auth
+    /* -----------------------
+       MINI AUTH (localStorage)
+       ----------------------- */
     const Auth = {
       isLoggedIn(){ return localStorage.getItem('isLoggedIn') === 'true'; },
       loginPersist(user){
         localStorage.setItem('isLoggedIn','true');
         if (user) localStorage.setItem('me', JSON.stringify(user));
       },
+      logout(){
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('me');
+      },
       me(){ try{ return JSON.parse(localStorage.getItem('me')||'null'); }catch{ return null; } }
     };
 
+    /* -----------------------
+       API helper (produkcija)
+       ----------------------- */
     async function api(route, method='GET', body=null){
       const res = await fetch('api/auth.php?route='+route, {
         method,
@@ -127,38 +162,35 @@
         body: body ? JSON.stringify(body) : null,
         credentials: 'same-origin'
       });
-      const text = await res.text();
+      const txt = await res.text();
       let data;
-      try { data = text ? JSON.parse(text) : null; }
+      try { data = txt ? JSON.parse(txt) : null; }
       catch { throw new Error('Neispravan odgovor poslužitelja'); }
       if (!res.ok) throw new Error((data && data.error) || 'Greška');
       return data;
     }
 
-    // ako je već prijavljen lokalno → odmah na uređivanje profila
-    (function(){
-      if (Auth.isLoggedIn()){
-        location.href = 'nudimuslugu.html';
-      }
-    })();
-
-    // Tabovi s hash-sync
+    /* -----------------------
+       TABOVI (samo show/hide)
+       ----------------------- */
     function showLogin(){
       tabLogin.setAttribute('aria-selected','true');
       tabReg.setAttribute('aria-selected','false');
-      loginForm.style.display='grid';
+      loginForm.style.display='block';
       regForm.style.display='none';
+      if (resendRow) resendRow.style.display = 'none';
       lg_identifier?.focus();
     }
     function showRegister(){
       tabLogin.setAttribute('aria-selected','false');
       tabReg.setAttribute('aria-selected','true');
       loginForm.style.display='none';
-      regForm.style.display='grid';
+      regForm.style.display='block';
+      if (resendRow) resendRow.style.display = 'flex';
       rg_email?.focus();
     }
-    tabLogin.addEventListener('click', () => { location.hash = '#login'; });
-    tabReg.addEventListener('click', () => { location.hash = '#register'; });
+    tabLogin.addEventListener('click', ()=>{ location.hash = '#login'; });
+    tabReg.addEventListener('click', ()=>{ location.hash = '#register'; });
     function syncFromHash(){
       const h = (location.hash || '').toLowerCase();
       if (h === '#register') showRegister(); else showLogin();
@@ -166,20 +198,22 @@
     window.addEventListener('hashchange', syncFromHash);
     document.addEventListener('DOMContentLoaded', syncFromHash);
 
-    // UX: email detektiran u login identifier → pripremi za resend
-    lg_identifier?.addEventListener('input', ()=>{
-      const v = lg_identifier.value.trim();
-      if (v.includes('@') && v.includes('.')) resendEmail.value = v;
-    });
-
-    // Prikaži lozinku toggle
+    /* -----------------------
+       UI helpers
+       ----------------------- */
     function bindShowPw(toggle, input){
       toggle?.addEventListener('change', ()=>{ input.type = toggle.checked ? 'text' : 'password'; });
     }
     bindShowPw(lg_showpw, lg_password);
     bindShowPw(rg_showpw, rg_password);
 
-    // Učitavanje "Zapamti me" i spremljenog identifikatora
+    // kad u login polju napišeš e-mail, prekopiraj ga u resend input
+    lg_identifier?.addEventListener('input', ()=>{
+      const v = lg_identifier.value.trim();
+      if (v.includes('@') && v.includes('.')) resendEmail.value = v;
+    });
+
+    // učitaj "Zapamti me" i eventualno spremljeni identifier
     (function loadRemember(){
       const rid = localStorage.getItem('remember_id') === '1';
       const sv_id = localStorage.getItem('saved_identifier') || '';
@@ -187,58 +221,113 @@
       if (rid && sv_id) lg_identifier.value = sv_id;
     })();
 
-    // PRIJAVA
-    loginForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
+    /* ======================================================
+       DEV BYPASS funkcije (trenutno AKTIVNE kad je DEV_MODE=true)
+       - Lako ih isključiti: postavi DEV_MODE = false
+       - One simuliraju uspjeh i redirectaju bez poziva backendu
+       ====================================================== */
+    function devLoginBypass(){
+      Auth.loginPersist({ id:'dev', email: lg_identifier.value || 'dev@local', name:'DEV korisnik' });
+      location.href = 'majstor.html';
+    }
+    function devRegisterBypass(){
+      Auth.loginPersist({ id:'dev-reg', email: rg_email.value || 'dev@local', name:'NOVI MAJSTOR' });
+      location.href = 'nudimuslugu.html';
+    }
+
+    /* ======================================================
+       PROD funkcije (pravi pozivi na backend)
+       - Kad ukloniš DEV bypass, koristi ove funkcije
+       ====================================================== */
+    async function prodLogin(){
       const identifier = (lg_identifier.value||'').trim();
       const password   = lg_password.value;
-
-      // "Zapamti me" → spremi identifikator i trajnu prijavu
+      // spremi "remember" (samo identifikator)
       localStorage.setItem('remember_id', lg_remember_id.checked ? '1' : '0');
-      if (lg_remember_id.checked){
-        localStorage.setItem('saved_identifier', identifier);
-      } else {
-        localStorage.removeItem('saved_identifier');
-      }
+      if (lg_remember_id.checked) localStorage.setItem('saved_identifier', identifier);
+      else localStorage.removeItem('saved_identifier');
 
-      try{
-        const me = await api('login','POST', { identifier, password });
-        if (lg_remember_id.checked){
-          Auth.loginPersist(me && (me.user || me));
-        }
-        location.href = 'nudimuslugu.html';
-      }catch(err){
-        alert(err.message||'Greška prijave');
-      }
-    });
+      const me = await api('login','POST', { identifier, password });
+      if (lg_remember_id.checked) Auth.loginPersist(me && (me.user || me));
+      // redirect samo na uspjeh
+      location.href = 'majstor.html';
+    }
 
-    // REGISTRACIJA
-    regForm.addEventListener('submit', async (e)=>{
-      e.preventDefault();
+    async function prodRegister(){
       const email = (rg_email.value||'').trim().toLowerCase();
       const password = rg_password.value;
+      const me = await api('register','POST', { email, password });
+      Auth.loginPersist(me && (me.user || { email }));
+      location.href = 'nudimuslugu.html';
+    }
 
-      try{
-        const me = await api('register','POST', { email, password });
-        // nakon uspješne registracije — odmah prijavi i zapamti session trajno
-        Auth.loginPersist(me && (me.user || { email }));
-        location.href = 'nudimuslugu.html';
-      }catch(err){
-        alert(err.message||'Greška registracije');
+    /* -----------------------
+       Submit handleri (login / register)
+       - Trenutno koriste DEV bypass ako je DEV_MODE === true
+       - Kad ukloniš bypass, postavi DEV_MODE = false i pozovi prod* funkcije
+       ----------------------- */
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if (DEV_MODE) {
+        devLoginBypass(); // <<< DEV: odmah ulazimo (bez API)
+        return;
+      }
+      try {
+        await prodLogin(); // <<< PROD: radi stvarni poziv
+      } catch(err) {
+        alert(err.message || 'Greška prijave');
       }
     });
 
-    // RESEND (samo na Registraciji je vidljiv)
+    regForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if (DEV_MODE) {
+        devRegisterBypass(); // <<< DEV: odmah ulazimo (bez API)
+        return;
+      }
+      try {
+        await prodRegister(); // <<< PROD: radi stvarni poziv
+      } catch(err) {
+        alert(err.message || 'Greška registracije');
+      }
+    });
+
+    /* -----------------------
+       RESEND (samo u registraciji)
+       - U DEV modu samo simuliramo poruku
+       - U PROD modu odkomentiraj/prilagodi poziv na api('resend','POST',...)
+       ----------------------- */
     resendBtn?.addEventListener('click', async ()=>{
       const email = (resendEmail.value || '').trim().toLowerCase();
       if (!email || !email.includes('@')) { alert('Unesite ispravan e-mail.'); return; }
-      try{
+
+      if (DEV_MODE) {
+        alert('DEV: simuliramo slanje potvrde — u produkciji će ovo pozvati API.');
+        return;
+      }
+
+      try {
         await api('resend','POST', { email });
         alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');
-      }catch(_){
+      } catch(_) {
         alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');
       }
     });
+
+    /* -----------------------
+       Debug util (iz konzole)
+       - window._devAuth.clear() briše lažne podatke
+       ----------------------- */
+    window._devAuth = {
+      clear: ()=>{
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('me');
+        localStorage.removeItem('remember_id');
+        localStorage.removeItem('saved_identifier');
+        console.info('devAuth cleared from localStorage');
+      }
+    };
+
   })();
   </script>
 </body>
