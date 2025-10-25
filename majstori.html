@@ -38,15 +38,16 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 22px rgba(0,0,0,.22);
       padding:16px; margin:12px 0; color:var(--ink);
     }
-    .cloud h4{ margin:0 0 10px; font-size:18px; color:#0b1220 }
+    .cloud h4{ margin:0 0 10px; font-size:18px; color:#0b1220 } /* manji podnaslov */
     .hint{ color:#334155; font-size:12px; margin-top:6px }
     .row{ display:grid; gap:10px }
     .row.two{ grid-template-columns:1fr 1fr }
 
+    /* Chip – bijeli s crnim tekstom */
     .chips{ display:flex; flex-wrap:wrap; gap:8px }
     .chip{
       display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px;
-      border:1px solid rgba(0,0,0,.10); background:rgba(255,255,255,.6); font-weight:600; color:#0b1220;
+      border:1px solid rgba(0,0,0,.10); background:#ffffff; color:#0b1220; font-weight:600;
     }
     .chip button{ all:unset; cursor:pointer; opacity:.85 } .chip button:hover{ opacity:1 }
 
@@ -87,7 +88,7 @@
     }
     .toast.show{ display:block }
 
-    /* Dialogi – identični kao na drugim stranicama */
+    /* Dialogi – teme isto kao na drugim stranicama */
     dialog{ border:0; border-radius:16px; background:#0e1014; color:#f7f8fa; width:min(720px, 96vw) }
     dialog::backdrop{ background:rgba(0,0,0,.4) }
     .dlg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
@@ -95,12 +96,12 @@
     .dlg-actions{ padding:14px 16px; display:flex; gap:10px; justify-content:center; border-top:1px solid rgba(255,255,255,.08) }
     .dlg-search{ position:sticky; top:0; z-index:2; background:#0e1014; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08) }
 
-    /* Skill list u popupu */
+    /* Skill list u popupu (tamni, kao i drugdje) */
     #skillSearch{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0b0d11; color:#fff }
     .list{ display:grid; gap:8px; padding:14px 16px; min-height:35vh }
     .item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03) }
 
-    /* DlgPlace – SVIJETLI kao na nudim/tražim */
+    /* DlgPlace – SVIJETLI (kao na nudim/tražim) */
     #dlgPlace{
       background: linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(246,247,249,.86) 100%);
       color:#0b1220;
@@ -115,12 +116,18 @@
       outline:2px solid rgba(37,99,235,.25); border-color:rgba(37,99,235,.45);
     }
 
-    /* DlgRadius – tamni (isti kao skills), gumbi u gridu */
+    /* DlgRadius – TAKOĐER SVIJETLI (ujednačeno kao Područje) */
+    #dlgRadius{
+      background: linear-gradient(180deg, rgba(255,255,255,.90) 0%, rgba(246,247,249,.86) 100%);
+      color:#0b1220;
+    }
+    #dlgRadius .dlg-head{ border-bottom:1px solid rgba(0,0,0,.08) }
+    #dlgRadius .dlg-actions{ border-top:1px solid rgba(0,0,0,.08) }
     #dlgRadius .dlg-body{ padding:14px 16px }
     .radius-grid{ display:grid; gap:8px; grid-template-columns:repeat(3,1fr) }
     .radius-btn{
-      appearance:none; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:10px 12px;
-      background:rgba(255,255,255,.06); color:#f7f8fa; cursor:pointer; text-align:center;
+      appearance:none; border:1px solid rgba(0,0,0,.15); border-radius:10px; padding:10px 12px;
+      background:#ffffff; color:#0b1220; cursor:pointer; text-align:center; font-weight:600;
     }
     .radius-btn[aria-current="true"]{ outline:2px solid #16a34a; outline-offset:0 }
   </style>
@@ -132,16 +139,14 @@
     <div class="page-wrap">
       <div class="panel">
         <h1 class="h1">Pronađi majstora</h1>
-        <p class="lead">Odaberi vještinu i <b>područje</b> ili <b>radijus</b>. Popupovi i “oblaci” su isti kao na Nudim/Tražim uslugu.</p>
 
-        <!-- 1) VJEŠTINA -->
+        <!-- 1) VJEŠTINA (max 3) -->
         <section class="cloud" aria-labelledby="lab-skill">
           <h4 id="lab-skill">Vještina</h4>
           <div class="row">
-            <div id="skillChip" class="chips" aria-live="polite"></div>
+            <div id="skillChips" class="chips" aria-live="polite"></div>
             <div><button id="btnPickSkill" class="btn btn-accent btn-small" type="button">Odaberi vještinu</button></div>
           </div>
-          <div class="hint">* Jedna vještina. Odustani/✕ brišu privremeni izbor, Spremi potvrđuje.</div>
         </section>
 
         <!-- 2) PODRUČJE ILI RADIJUS (međusobno isključivo) -->
@@ -155,7 +160,6 @@
                 <button id="btnPickPlace" class="btn btn-ghost btn-small" type="button">Odaberi područje</button>
                 <div id="placeChip" class="chips" aria-live="polite"></div>
               </div>
-              <div class="hint">* Svijetli popup (država → grad) kao na “Područje djelovanja”.</div>
             </div>
 
             <!-- Radijus -->
@@ -164,7 +168,6 @@
                 <button id="btnPickRadius" class="btn btn-ghost btn-small" type="button">Odaberi radijus</button>
                 <div id="radiusChip" class="chips" aria-live="polite"></div>
               </div>
-              <div class="hint">* 10 km → 100 km (svakih 10 km). Odustani/✕ brišu, Spremi potvrđuje.</div>
             </div>
           </div>
 
@@ -178,7 +181,6 @@
 
         <!-- REZULTATI -->
         <section id="resultsWrap" style="margin-top:12px">
-          <div id="emptyHint" class="card card-pad">Odaberi vještinu i područje ili radijus, pa klikni “Potraži majstora”.</div>
           <section id="results" class="results"></section>
         </section>
       </div>
@@ -188,15 +190,15 @@
   </main>
 
   <!-- ====== DIALOGI ====== -->
-  <!-- Skills (1 komad) -->
+  <!-- Vještine (max 3, Save/Cancel/✕) -->
   <dialog id="dlgSkills">
     <div class="dlg-head">
-      <strong>Odaberi vještinu (1)</strong>
+      <strong>Odaberi vještine (max 3)</strong>
       <button class="btn btn-ghost btn-small" id="skillX" type="button">✕</button>
     </div>
     <div class="dlg-body">
       <div class="dlg-search"><input id="skillSearch" placeholder="Pretraži ručno.."></div>
-      <div id="skillList" class="list" role="listbox" aria-multiselectable="false"></div>
+      <div id="skillList" class="list" role="listbox" aria-multiselectable="true"></div>
     </div>
     <div class="dlg-actions">
       <button class="btn btn-ghost" id="skillCancel" type="button">Odustani</button>
@@ -204,7 +206,7 @@
     </div>
   </dialog>
 
-  <!-- Područje (svijetli kao drugdje) -->
+  <!-- Područje (svijetli) -->
   <dialog id="dlgPlace">
     <div class="dlg-head">
       <strong>Ručni odabir mjesta</strong>
@@ -215,7 +217,6 @@
         <div class="field"><label class="hint">Država</label><select id="selCountry"></select></div>
         <div class="field"><label class="hint">Grad / mjesto</label><select id="selCity" disabled></select></div>
       </div>
-      <div class="hint" style="margin-top:8px">Sustav koristi centroid grada za izračun udaljenosti.</div>
     </div>
     <div class="dlg-actions">
       <button class="btn btn-ghost" id="placeCancel" type="button">Odustani</button>
@@ -223,7 +224,7 @@
     </div>
   </dialog>
 
-  <!-- Radijus (10→100 km) -->
+  <!-- Radijus (svijetli, 10→100 km) -->
   <dialog id="dlgRadius">
     <div class="dlg-head">
       <strong>Odaberi radijus</strong>
@@ -251,6 +252,7 @@
     async function apiProviders(filters={}){
       const qs = new URLSearchParams();
       if (filters.skill) qs.set('skill', filters.skill);
+      if (filters.skills && filters.skills.length) qs.set('skills', filters.skills.join(',')); // (opcija: više vještina)
       if (filters.location) qs.set('location', filters.location);
       if (Number.isFinite(filters.qlat)) qs.set('qlat', filters.qlat);
       if (Number.isFinite(filters.qlng)) qs.set('qlng', filters.qlng);
@@ -261,22 +263,27 @@
       return j.data || [];
     }
 
-    /* ===== SKILLS (Spremi/Cancel UX) ===== */
+    /* ===== VJEŠTINE (max 3, Save/Cancel/✕) ===== */
     const ALL_SKILLS=[];
     const dlgSkills = $('#dlgSkills');
     const skillSearch = $('#skillSearch');
     const skillList = $('#skillList');
-    const skillChip = $('#skillChip');
-    let selectedSkill = '';   // POTVRĐENO
-    let tempSkill = '';       // PRIVREMENO (u popupu)
+    const skillChips = $('#skillChips');
 
-    function renderSkillChip(){
-      skillChip.innerHTML='';
-      if(!selectedSkill) return;
-      const chip=document.createElement('span'); chip.className='chip';
-      chip.innerHTML=`<span>${selectedSkill}</span> <button title="Ukloni" aria-label="Ukloni">✕</button>`;
-      chip.querySelector('button').addEventListener('click', ()=>{ selectedSkill=''; renderSkillChip(); });
-      skillChip.appendChild(chip);
+    const selectedSkills = new Set();   // POTVRĐENO
+    let tempSkills = new Set();         // PRIVREMENO u popupu
+
+    function renderSkillChips(){
+      skillChips.innerHTML='';
+      selectedSkills.forEach(s=>{
+        const chip=document.createElement('span'); chip.className='chip';
+        chip.innerHTML=`<span>${s}</span> <button title="Ukloni" aria-label="Ukloni">✕</button>`;
+        chip.querySelector('button').addEventListener('click', ()=>{
+          selectedSkills.delete(s);
+          renderSkillChips();
+        });
+        skillChips.appendChild(chip);
+      });
     }
     function renderSkillList(filter=''){
       skillList.innerHTML='';
@@ -285,23 +292,38 @@
         .filter(s=>!f || s.toLowerCase().includes(f))
         .forEach(s=>{
           const row=document.createElement('label'); row.className='item';
-          row.innerHTML=`<span>${s}</span><input type="radio" name="skillPick" ${tempSkill===s?'checked':''}>`;
-          row.querySelector('input').addEventListener('change', ()=> tempSkill=s);
+          row.innerHTML=`<span>${s}</span><input type="checkbox" ${tempSkills.has(s)?'checked':''}>`;
+          const cb=row.querySelector('input');
+          cb.addEventListener('change', ()=>{
+            if(cb.checked){
+              if(tempSkills.size>=3){ cb.checked=false; toast('Max 3 vještine.'); return; }
+              tempSkills.add(s);
+            } else {
+              tempSkills.delete(s);
+            }
+          });
           skillList.appendChild(row);
         });
     }
     $('#btnPickSkill').addEventListener('click', ()=>{
-      tempSkill = selectedSkill; // snapshot
+      // snapshot
+      tempSkills = new Set(selectedSkills);
       dlgSkills.showModal();
       skillSearch.value=''; renderSkillList();
       setTimeout(()=>skillSearch.focus(),50);
     });
-    $('#skillSave').addEventListener('click', ()=>{ selectedSkill = tempSkill || ''; renderSkillChip(); dlgSkills.close(); });
-    function cancelSkill(){ tempSkill=''; dlgSkills.close(); }
-    $('#skillCancel').addEventListener('click', cancelSkill);
-    $('#skillX').addEventListener('click', cancelSkill);
-    dlgSkills.addEventListener('cancel', (e)=>{ e.preventDefault(); cancelSkill(); });
+    $('#skillSave').addEventListener('click', ()=>{
+      selectedSkills.clear();
+      tempSkills.forEach(s=> selectedSkills.add(s));
+      renderSkillChips();
+      dlgSkills.close();
+    });
+    function closeSkills(){ tempSkills = new Set(); dlgSkills.close(); }
+    $('#skillCancel').addEventListener('click', closeSkills);
+    $('#skillX').addEventListener('click', closeSkills);
+    dlgSkills.addEventListener('cancel', (e)=>{ e.preventDefault(); closeSkills(); });
     skillSearch.addEventListener('input', ()=> renderSkillList(skillSearch.value));
+
     fetch('data/skills.json').then(r=>r.json()).then(list=>{
       const arr = Array.isArray(list) ? list : (Array.isArray(list.skills) ? list.skills : []);
       ALL_SKILLS.push(...arr.sort((a,b)=>a.localeCompare(b,'hr')));
@@ -312,6 +334,7 @@
     const dlgPlace=$('#dlgPlace'), selCountry=$('#selCountry'), selCity=$('#selCity');
     const placeChip=$('#placeChip');
     const btnPickPlace = $('#btnPickPlace');
+
     const COUNTRY_FILES={
       "BiH": "data/cities-bih.json",
       "Hrvatska": "data/cities-hr.json",
@@ -361,8 +384,7 @@
 
     btnPickPlace.addEventListener('click', ()=>{
       if (btnPickPlace.disabled){ toast('Najprije očisti radijus.'); return; }
-      // snapshot
-      tempPlace = chosenPlace ? {...chosenPlace} : null;
+      tempPlace = chosenPlace ? {...chosenPlace} : null; // snapshot
       fillCountries();
       if (tempPlace){
         selCountry.value = tempPlace.country;
@@ -381,13 +403,12 @@
       const lat=parseFloat(opt.dataset.lat), lng=parseFloat(opt.dataset.lng);
       const label = selCountry.value+' / '+selCity.value;
       chosenPlace = { country:selCountry.value, city:selCity.value, lat, lng, label };
-      // mutual exclusive:
-      chosenRadius = null; renderRadiusChip();
+      chosenRadius = null; renderRadiusChip();           // mutual exclusive
       renderPlaceChip(); setLocks();
       closePlace();
     });
 
-    /* ===== RADIJUS (Spremi/Cancel UX) ===== */
+    /* ===== RADIJUS (svijetli, Save/Cancel/✕) ===== */
     const dlgRadius=$('#dlgRadius'), radiusList=$('#radiusList'), radiusChip=$('#radiusChip');
     function renderRadiusList(){
       radiusList.innerHTML='';
@@ -398,7 +419,6 @@
         if (tempRadius===km) btn.setAttribute('aria-current','true');
         btn.addEventListener('click', ()=>{
           tempRadius = km;
-          // highlight
           [...radiusList.children].forEach(b=>b.removeAttribute('aria-current'));
           btn.setAttribute('aria-current','true');
         });
@@ -426,7 +446,7 @@
     $('#radiusSave').addEventListener('click', ()=>{
       if(!Number.isFinite(tempRadius)){ toast('Odaberi radijus.'); return; }
       chosenRadius = tempRadius;
-      chosenPlace = null; renderPlaceChip();
+      chosenPlace = null; renderPlaceChip();            // mutual exclusive
       renderRadiusChip(); setLocks();
       closeRadius();
     });
@@ -434,29 +454,30 @@
     /* ===== PRETRAGA ===== */
     const btnSearch = $('#btnSearch');
     const results = $('#results');
-    const emptyHint = $('#emptyHint');
     let fullList=[];
 
     btnSearch.addEventListener('click', async ()=>{
-      if (!selectedSkill){
-        toast('Odaberi vještinu.'); return;
+      if (!selectedSkills.size){
+        toast('Odaberi barem jednu vještinu.'); return;
       }
       if (!chosenPlace && !Number.isFinite(chosenRadius)){
         toast('Odaberi područje ili radijus.'); return;
       }
 
-      const filters = { skill: selectedSkill };
+      // Ako backend podržava više vještina: šaljemo "skills"
+      const filters = { skills: Array.from(selectedSkills) };
+      // Ako podržava samo jednu, možeš promijeniti u: filters.skill = Array.from(selectedSkills)[0];
+
       if (chosenPlace){
         filters.location = chosenPlace.label;
         filters.qlat = chosenPlace.lat;
         filters.qlng = chosenPlace.lng;
       } else if (Number.isFinite(chosenRadius)){
         filters.radius_km = chosenRadius;
-        // Ako backend treba qlat/qlng za radijus, povucite iz korisničke lokacije (prethodno spremljeno u profilu/tražim uslugu).
+        // Ako backend treba qlat/qlng za radijus, uzmi ih iz korisničke spremljene lokacije (profil / Tražim uslugu).
       }
 
       try{
-        emptyHint.style.display='none';
         results.innerHTML = '';
         fullList = await apiProviders(filters);
         if(!fullList.length){
@@ -468,7 +489,7 @@
         fullList.forEach(p=>{
           const el=document.createElement('div');
           el.className='card card-pad';
-          const skills = (p.skills||[]).slice(0,3).join(', ') || '—';
+          const skillsStr = (p.skills||[]).slice(0,3).join(', ') || '—';
           const badge = (p.reviews_enabled? `<span class="badge">⭐ Recenzije uključene</span>` : '');
           const dist = (p.distance_km!=null) ? ` · 📏 ${p.distance_km} km` : '';
           el.innerHTML = `
@@ -476,7 +497,7 @@
               <div>
                 <div style="font-weight:800;font-size:18px;display:inline-block;margin-right:8px">${p.name || 'Majstor'}</div>
                 ${badge}
-                <div class="muted">🧩 ${skills}</div>
+                <div class="muted">🧩 ${skillsStr}</div>
                 <div class="muted">📍 ${p.location || '-'}${dist}</div>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -491,8 +512,9 @@
       }
     });
 
-    // init render
-    renderSkillChip(); renderPlaceChip(); renderRadiusChip(); setLocks();
+    // init
+    renderSkillChips(); renderPlaceChip(); renderRadiusChip(); setLocks();
   </script>
 </body>
 </html>
+```0
