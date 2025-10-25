@@ -1,4 +1,22 @@
 <script>
+const qs = new URLSearchParams(location.search);
+const isDraft = qs.get('draft') === '1';
+
+if (isDraft) {
+  // ovdje samo prikažemo placeholder umjesto errora
+  const root = document.getElementById('providerRoot') || document.body;
+  root.innerHTML = `
+    <div class="card card-pad" style="margin:16px 0">
+      <h3 style="margin:0 0 8px">Nacrt profila</h3>
+      <p class="muted" style="margin:0">Ovo je privremeni prikaz. Podaci će se ovdje pojaviti nakon stvarnog spremanja profila.</p>
+    </div>
+  `;
+  // i STOP!!! nema fetch-a, nema greške
+  throw new Error('DRAFT MODE');
+}
+
+
+  
 // majstori.js — frontend utili za pretragu / detalje / kontakt
 
 (function(){
