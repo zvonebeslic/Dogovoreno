@@ -170,8 +170,8 @@
       border-radius: 12px;
       padding: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      width: 240px;
-      max-height: 50vh;      /* pop-up visina */
+      width: 150px;
+      max-height: 40vh;      /* pop-up visina */
       overflow: hidden;      /* što izađe, ne vidi se */
     }
     /* Jedan stupac, scroll unutar pop-upa */
@@ -179,7 +179,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 45vh;      /* lista scrola unutra */
+      max-height: 35vh;      /* lista scrola unutra */
       overflow-y: auto;
       padding-right: 4px;    /* da scrollbar ne preklapa tekst */
       overscroll-behavior: contain;
@@ -663,13 +663,27 @@
 
       pop.appendChild(grid);
 
-      // Pozicioniraj pop-up ispod inputa
-      const r = targetInput.getBoundingClientRect();
-      pop.style.top  = (window.scrollY + r.bottom + 6) + 'px';
-      pop.style.left = (window.scrollX + r.left) + 'px';
-      pop.style.display = 'block';
-      targetInput.setAttribute('aria-expanded','true');
+      // Pozicioniraj pop-up iznad inputa
+const r = targetInput.getBoundingClientRect();
+const popRect = pop.getBoundingClientRect();
+const margin = 6;
 
+// izračun iznad
+let top = window.scrollY + r.top - popRect.height - margin;
+// clamp da ne ode izvan ekrana gore
+const minTop = window.scrollY + 8;
+if (top < minTop) top = minTop;
+
+// lijevo poravnanje kao input (sa clampom da ne iscuri desno)
+let left = window.scrollX + r.left;
+const maxLeft = window.scrollX + window.innerWidth - popRect.width - 8;
+if (left > maxLeft) left = Math.max(window.scrollX + 8, maxLeft);
+
+pop.style.top  = top + 'px';
+pop.style.left = left + 'px';
+pop.style.display = 'block';
+targetInput.setAttribute('aria-expanded','true');
+      
       // Zaključaj body scroll dok je pop-up otvoren
       document.body._prevOverflow = document.body.style.overflow || '';
       document.body.style.overflow = 'hidden';
