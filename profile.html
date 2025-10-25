@@ -27,10 +27,10 @@
       <h2 style="margin:0 0 4px">Moj profil</h2>
       <p class="help" style="margin:0 0 12px">(profil za one koji nude usluge)</p>
 
-      <!-- Tabovi -->
+      <!-- Tabovi (obojani) -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button id="tabLogin" class="btn btn-ghost" type="button" aria-selected="true">Prijava</button>
-        <button id="tabRegister" class="btn btn-ghost" type="button" aria-selected="false">Registracija</button>
+        <button id="tabLogin" class="btn btn-blue" type="button" aria-selected="true">Prijava</button>
+        <button id="tabRegister" class="btn btn-orange" type="button" aria-selected="false">Registracija</button>
       </div>
 
       <!-- PRIJAVA -->
@@ -51,15 +51,12 @@
           <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
             <input id="lg_remember_id" type="checkbox"> Zapamti me
           </label>
-          <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
-            <input id="lg_remember_pw" type="checkbox"> Zapamti lozinku (nesigurno)
-          </label>
         </div>
 
         <button id="lg_submit" class="btn btn-blue" type="submit">Prijavi se</button>
       </form>
 
-      <!-- REGISTRACIJA -->
+      <!-- REGISTRACIJA (samo e-mail + lozinka) -->
       <form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">
         <label>E-mail*
           <input id="rg_email" type="email" required placeholder="ime@primjer.com">
@@ -104,7 +101,6 @@
     const lg_password   = document.getElementById('lg_password');
     const lg_showpw     = document.getElementById('lg_showpw');
     const lg_remember_id= document.getElementById('lg_remember_id');
-    const lg_remember_pw= document.getElementById('lg_remember_pw');
 
     const rg_email      = document.getElementById('rg_email');
     const rg_password   = document.getElementById('rg_password');
@@ -113,6 +109,16 @@
     const resendRow   = document.getElementById('resendRow');
     const resendEmail = document.getElementById('resend_email');
     const resendBtn   = document.getElementById('resend_btn');
+
+    // mini auth
+    const Auth = {
+      isLoggedIn(){ return localStorage.getItem('isLoggedIn') === 'true'; },
+      loginPersist(user){
+        localStorage.setItem('isLoggedIn','true');
+        if (user) localStorage.setItem('me', JSON.stringify(user));
+      },
+      me(){ try{ return JSON.parse(localStorage.getItem('me')||'null'); }catch{ return null; } }
+    };
 
     async function api(route, method='GET', body=null){
       const res = await fetch('api/auth.php?route='+route, {
@@ -129,13 +135,11 @@
       return data;
     }
 
-    (async function checkAuth(){
-      try{
-        const me = await api('profile','GET');
-        if (me && (me.authenticated === true || (me.user && me.user.id))) {
-          location.href = 'nudimuslugu.html';
-        }
-      }catch(_){}
+    // ako je već prijavljen lokalno → odmah na uređivanje profila
+    (function(){
+      if (Auth.isLoggedIn()){
+        location.href = 'nudimuslugu.html';
+      }
     })();
 
     // Tabovi s hash-sync
@@ -175,51 +179,49 @@
     bindShowPw(lg_showpw, lg_password);
     bindShowPw(rg_showpw, rg_password);
 
-    // Učitavanje "Remember" s localStorage
+    // Učitavanje "Zapamti me" i spremljenog identifikatora
     (function loadRemember(){
       const rid = localStorage.getItem('remember_id') === '1';
-      const rpw = localStorage.getItem('remember_pw') === '1';
       const sv_id = localStorage.getItem('saved_identifier') || '';
-      const sv_pw  = localStorage.getItem('saved_password') || '';
-
       lg_remember_id.checked = rid;
-      lg_remember_pw.checked = rpw;
       if (rid && sv_id) lg_identifier.value = sv_id;
-      if (rpw && sv_pw)  lg_password.value = sv_pw;
     })();
 
-    // Submit: PRIJAVA
+    // PRIJAVA
     loginForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const identifier = (lg_identifier.value||'').trim();
       const password   = lg_password.value;
 
-      // čuvanje prema izboru korisnika
+      // "Zapamti me" → spremi identifikator i trajnu prijavu
       localStorage.setItem('remember_id', lg_remember_id.checked ? '1' : '0');
-      localStorage.setItem('remember_pw', lg_remember_pw.checked ? '1' : '0');
-      if (lg_remember_id.checked) localStorage.setItem('saved_identifier', identifier);
-      else localStorage.removeItem('saved_identifier');
-      if (lg_remember_pw.checked) localStorage.setItem('saved_password', password);
-      else localStorage.removeItem('saved_password');
+      if (lg_remember_id.checked){
+        localStorage.setItem('saved_identifier', identifier);
+      } else {
+        localStorage.removeItem('saved_identifier');
+      }
 
       try{
-        await api('login','POST', { identifier, password });
+        const me = await api('login','POST', { identifier, password });
+        if (lg_remember_id.checked){
+          Auth.loginPersist(me && (me.user || me));
+        }
         location.href = 'nudimuslugu.html';
       }catch(err){
         alert(err.message||'Greška prijave');
       }
     });
 
-    // Submit: REGISTRACIJA
+    // REGISTRACIJA
     regForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const email = (rg_email.value||'').trim().toLowerCase();
       const password = rg_password.value;
 
       try{
-        await api('register','POST', { email, password });
-        // nakon uspješne registracije backend šalje potvrdu mailom
-        // preusmjeri na uređivanje profila
+        const me = await api('register','POST', { email, password });
+        // nakon uspješne registracije — odmah prijavi i zapamti session trajno
+        Auth.loginPersist(me && (me.user || { email }));
         location.href = 'nudimuslugu.html';
       }catch(err){
         alert(err.message||'Greška registracije');
