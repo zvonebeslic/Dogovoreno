@@ -624,8 +624,9 @@
     }
 
     /* ========== DODANO: mini satni popover util ========== */
-    const HOURS = Array.from({length:24}, (_,i)=> String(i+1).padStart(2,'0') + ':00'); // 01..24
-
+    // 00:00 → 23:00
+const HOURS = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ':00'); // 00..23
+          
     function showHourPopover(targetInput){
       const pop = document.getElementById('hourPopover');
       pop.innerHTML = '';
