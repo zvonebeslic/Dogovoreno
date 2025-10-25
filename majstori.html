@@ -176,15 +176,30 @@
 #dlgSkills .dlg-head,
 #dlgSkills .dlg-actions{ border-color:rgba(255,255,255,.08); }
 
-/* Specifično za vještine – dark ghost (crna podloga, bijela slova) */
-#dlgSkills .btn-ghost{
-  background:#0b0d11;       /* crno / tamno */
-  color:#ffffff;
-  border:1px solid rgba(255,255,255,.14);
+/* === FIX: #dlgSkills — X i Odustani crno s bijelim slovima === */
+
+/* "X" gore desno u Skills popupu */
+#dlgSkills .dlg-close{
+  background:#0b0d11 !important;
+  color:#ffffff !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  box-shadow:none !important;
 }
-#dlgSkills .btn-ghost:hover{
-  background:#14171c;
-  border-color:rgba(255,255,255,.20);
+#dlgSkills .dlg-close:hover{
+  background:#14171c !important;
+  border-color:rgba(255,255,255,.22) !important;
+}
+
+/* "Odustani" u Skills popupu (trenutno ima .btn-neutral) */
+#dlgSkills .btn-neutral{
+  background:#0b0d11 !important;
+  color:#ffffff !important;
+  border:1px solid rgba(255,255,255,.16) !important;
+  box-shadow:none !important;
+}
+#dlgSkills .btn-neutral:hover{
+  background:#14171c !important;
+  border-color:rgba(255,255,255,.22) !important;
 }
       
   </style>
