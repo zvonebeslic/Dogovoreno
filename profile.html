@@ -57,33 +57,39 @@
       </form>  
   
       <!-- REGISTRACIJA (samo e-mail + lozinka) -->  
-      <form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">  
-        <label>E-mail*  
-          <input id="rg_email" type="email" required placeholder="ime@primjer.com">  
-        </label>  
-        <label>Lozinka* <span class="help">(min. 8 znakova)</span>  
-          <div class="field-inline">  
-            <input id="rg_password" type="password" required minlength="8">  
-            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">  
-              <input id="rg_showpw" type="checkbox"> prikaži  
-            </label>  
-          </div>  
-        </label>  
+<form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">  
+  <label>E-mail*  
+    <input id="rg_email" type="email" required placeholder="ime@primjer.com">  
+  </label>  
 
-        <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>  
-  
-        <div id="resendRow" class="grid" style="gap:8px">  
-          <p class="help" style="margin:6px 0 0">  
-            Niste dobili e-mail s potvrdom nakon registracije?  
-          </p>  
-          <div class="row">  
-            <input id="resend_email" type="email" placeholder="upišite svoj e-mail" style="max-width:280px">  
-            <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>  
-            <span class="help">ili <a class="underline" href="mailto:podrska@dogovoreno.com">javite nam se</a></span>  
-          </div>  
-        </div>  
-  
-        </form>  
+  <label>Lozinka* <span class="help">(min. 8 znakova)</span>  
+    <div class="field-inline">  
+      <input id="rg_password" type="password" required minlength="8">
+      <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">  
+        <input id="rg_showpw" type="checkbox"> prikaži  
+      </label>  
+    </div>  
+  </label>
+
+  <!-- UVJETI KORIŠTENJA -->
+  <label class="accept-terms" style="display:flex;align-items:center;gap:8px;margin:6px 0 10px;">
+    <input id="rg_terms" type="checkbox" required style="transform:scale(1.1);">
+    <span>Prihvaćam <a href="faq.html" class="underline" target="_blank">uvjete korištenja</a></span>
+  </label>
+
+  <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>  
+
+  <div id="resendRow" class="grid" style="gap:8px">  
+    <p class="help" style="margin:6px 0 0">  
+      Niste dobili e-mail s potvrdom nakon registracije?  
+    </p>  
+    <div class="row">  
+      <input id="resend_email" type="email" placeholder="upišite svoj e-mail" style="max-width:280px">  
+      <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>  
+      <span class="help">ili <a class="underline" href="mailto:podrska@dogovoreno.com">javite nam se</a></span>  
+    </div>  
+  </div>  
+</form>
     </div>  
   </main>  
   
