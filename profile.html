@@ -16,6 +16,23 @@
     .muted{ opacity:.8; }  
     .underline{ text-decoration:underline; }  
     .field-inline{ display:flex; align-items:center; gap:8px; }  
+  
+     .accept-terms{
+  display:flex;
+  align-items:center;
+  gap:6px;           /* smanjuje razmak checkbox ↔ tekst */
+  font-size:15px;    /* smanjuje veličinu slova */
+  line-height:1.2;
+  margin:4px 0 8px;  /* bliže ostalim elementima */
+}
+
+.accept-terms a{
+  text-decoration:underline;
+}
+.accept-terms input[type="checkbox"]{
+  transform:scale(1); /* ako želiš još manje → 0.9 */
+}
+  
   </style>  
 </head>  
 <body>  
@@ -72,10 +89,10 @@
   </label>
 
   <!-- UVJETI KORIŠTENJA -->
-  <label class="accept-terms" style="display:flex;align-items:center;gap:8px;margin:6px 0 10px;">
-    <input id="rg_terms" type="checkbox" required style="transform:scale(1.1);">
-    <span>Prihvaćam <a href="faq.html" class="underline" target="_blank">uvjete korištenja</a></span>
-  </label>
+    <label class="accept-terms">
+  <input id="rg_terms" type="checkbox" required>
+  <span>Prihvaćam <a href="faq.html" target="_blank">uvjete korištenja</a></span>
+</label>
 
   <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>  
 
