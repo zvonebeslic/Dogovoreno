@@ -162,8 +162,18 @@
 
 @media (min-width: 900px){
   body{
-    max-width: 480px;
+    width:100%;
+    max-width:480px;
     margin-inline:auto;
+  }
+
+  /* full-screen hero na desktopu/laptopu */
+  .hero,
+  .index-hero,
+  .duo{
+    min-height:100vh;
+    height:auto;
+    overflow:visible;
   }
 }
     
