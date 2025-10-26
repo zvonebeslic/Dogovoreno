@@ -20,27 +20,38 @@
      /* Registracija – prihvat uvjeta */
 
 .accept-terms{
-  display:flex;
+  display:grid;
+  grid-template-columns:16px auto; /* prva kolona je točno širina kocke */
   align-items:center;
-  font-size:13px;
-  line-height:1.1;
+  column-gap:4px;
   margin:2px 0 6px;
 }
 
-.accept-terms input[type="checkbox"]{
-  appearance:auto;
-  accent-color:#000;
+.cb-wrap{
+  inline-size:16px;         /* “kavez” koji ne dopušta širenje */
+  block-size:16px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;          /* odreže sve što strši */
+}
+
+.cb-wrap input[type="checkbox"]{
+  appearance:auto;          /* normalan checkbox */
+  -webkit-appearance:auto;
+  width:16px;
+  height:16px;
+  margin:0;                 /* bez dodatnih margina */
+  accent-color:#000;        /* crna kvačica */
+}
+
+.terms-text{
+  font-size:13px;
+  line-height:1.15;
   margin:0;
-  padding:0;
-  transform:translateX(-4px); /* PRAVI pomak */
 }
 
-.accept-terms span{
-  transform:translateX(-4px); /* da se poravna sa checkboxom */
-}
-
-.accept-terms a{
-  text-decoration:underline;
+.terms-text a{
+  text-decoration:underline; /* underline obavezno */
   color:#fff;
 }
   
@@ -100,10 +111,14 @@
   </label>
 
   <!-- UVJETI KORIŠTENJA -->
-    <label class="accept-terms">
-  <input id="rg_terms" type="checkbox" required>
-  <span>Prihvaćam <a href="faq.html" target="_blank">uvjete korištenja</a></span>
-</label>
+    <div class="accept-terms">
+  <span class="cb-wrap">
+    <input id="rg_terms" type="checkbox" required>
+  </span>
+  <label for="rg_terms" class="terms-text">
+    Pročitao/la sam i prihvaćam <a href="faq.html" target="_blank">uvjete korištenja</a>
+  </label>
+</div>
 
   <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>  
 
