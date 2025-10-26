@@ -20,23 +20,25 @@
      .accept-terms{
   display:flex;
   align-items:center;
-  gap:6px;        /* efektivno gotovo 0 nakon reseta */
-  font-size:14px;
+  gap:2px;                 /* gotovo priljubljeno */
+  font-size:13px;
   line-height:1.1;
   margin:0 0 6px;
 }
 
 .accept-terms input[type="checkbox"]{
-  appearance:none;          /* resetira default */
+  appearance:none;
   width:14px;
   height:14px;
-  border:1px solid #999;
-  border-radius:3px;
+  border:1px solid #fff;   /* bijeli obrub */
+  background:transparent;  /* kocka je bijela samo kad je čekirano */
   cursor:pointer;
   position:relative;
+  margin:0;
+  padding:0;
 }
 
-/* kvačica kad je čekirano */
+/* kvačica */
 .accept-terms input[type="checkbox"]:checked::after{
   content:"";
   position:absolute;
@@ -49,10 +51,15 @@
   transform:rotate(40deg);
 }
 
-/* orange varijanta granice kad je čekirano */
+/* pozadina kad je čekirano */
 .accept-terms input[type="checkbox"]:checked{
-  background:#f97316; /* ili tvoja btn-orange varijanta */
-  border-color:#f97316;
+  background:#fff;         /* bijela */
+  border-color:#fff;
+}
+
+.accept-terms a{
+  text-decoration:underline;   /* force underline */
+  color:#fff;                  /* sigurno bijelo na tamnoj pozadini */
 }
   
   </style>  
