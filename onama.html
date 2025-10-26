@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>O nama — Dogovoreno.com</title>
+
+  <!-- Globalni stilovi -->
+  <link rel="stylesheet" href="base.css">
+
+  <style>
+    .page { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; }
+    .wrap { max-width: 820px; margin: 24px auto 64px; padding: 0 16px; }
+    h1 { margin: 8px 0 12px; font-size: clamp(22px, 3.5vw, 30px); }
+    p { margin: 0 0 14px; line-height: 1.65; color: var(--muted, #c7cbd4); }
+    .lede { font-size: 1.05rem; color: #e5e7eb; }
+    .note { font-size: .92rem; opacity: .9; }
+    .divider { height: 1px; background: rgba(255,255,255,.08); margin: 18px 0; border: 0; }
+    a.inline { color: #93c5fd; text-decoration: none; }
+    a.inline:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="page">
+  <!-- Header partial -->
+  <div data-include="header.html"></div>
+
+  <main class="wrap">
+    <h1>O nama</h1>
+    <p class="lede">
+      Dogovoreno.com je online platforma za jednostavno povezivanje korisnika s majstorima, obrtnicima i radnicima
+      različitih zanimanja. Naš je cilj olakšati pronalazak odgovarajuće usluge na lokalnoj razini — bez nepotrebnih
+      poziva, nepreglednih oglasa i lutanja po društvenim mrežama.
+    </p>
+    <p>
+      Kroz Dogovoreno.com korisnik opiše što mu je potrebno, a naš sustav pronalazi dostupne izvođače koji nude tu
+      uslugu. Time štedimo vrijeme i činimo komunikaciju jasnijom te organiziranijom, uz mogućnost filtriranja prema
+      vrsti posla i području.
+    </p>
+    <p>
+      Dogovoreno.com može u budućnosti uvesti određene modele naplate unutar same platforme (npr. premium isticanje,
+      prioritetni upiti ili dodatne usluge), ali <strong>nikada izvan platforme i nikada izravno mimo službenog sustava</strong>.
+      Ne tražimo plaćanje preko privatnih računa, poruka, e-maila ili telefona — <em>sve potencijalne naplate, ako ih bude,
+      odvijat će se isključivo unutar službenog sustava Dogovoreno.com</em>.
+    </p>
+
+    <hr class="divider" />
+
+    <p class="note">
+      Za pravne informacije i detalje o ograničenjima odgovornosti pogledaj
+      <a class="inline" href="faq.html">FAQ / Odricanje od odgovornosti</a>.
+    </p>
+  </main>
+
+  <!-- Footer partial -->
+  <div data-include="footer.html"></div>
+
+  <!-- Globalni include loader -->
+  <script src="include.js"></script>
+</body>
+</html>
