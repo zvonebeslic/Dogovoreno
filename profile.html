@@ -20,46 +20,22 @@
      .accept-terms{
   display:flex;
   align-items:center;
-  gap:2px;                 /* gotovo priljubljeno */
+  gap:4px;           /* blizu, ali lijepo čitko */
   font-size:13px;
   line-height:1.1;
-  margin:0 0 6px;
+  margin:2px 0 6px;
 }
 
 .accept-terms input[type="checkbox"]{
-  appearance:none;
-  width:14px;
-  height:14px;
-  border:1px solid #fff;   /* bijeli obrub */
-  background:transparent;  /* kocka je bijela samo kad je čekirano */
-  cursor:pointer;
-  position:relative;
+  appearance:auto;  /* vrati normalan izgled */
+  accent-color:#000; /* crna kvačica */
   margin:0;
   padding:0;
 }
 
-/* kvačica */
-.accept-terms input[type="checkbox"]:checked::after{
-  content:"";
-  position:absolute;
-  left:3px;
-  top:1px;
-  width:6px;
-  height:10px;
-  border-right:2px solid #fff;
-  border-bottom:2px solid #fff;
-  transform:rotate(40deg);
-}
-
-/* pozadina kad je čekirano */
-.accept-terms input[type="checkbox"]:checked{
-  background:#fff;         /* bijela */
-  border-color:#fff;
-}
-
 .accept-terms a{
-  text-decoration:underline;   /* force underline */
-  color:#fff;                  /* sigurno bijelo na tamnoj pozadini */
+  text-decoration:underline;
+  color:#fff;
 }
   
   </style>  
