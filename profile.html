@@ -1,299 +1,420 @@
-<!doctype html>    
-<html lang="hr">    
-<head>    
-  <meta charset="utf-8" />    
-  <meta name="viewport" content="width=device-width, initial-scale=1" />    
-  <title>Moj profil — Dogovoreno.com</title>    
-  <link rel="stylesheet" href="base.css">    
-  <style>    
-    :root{    
-      --cta:#2563eb;   /* plava */    
-      --cta2:#ea580c;  /* narančasta */    
-    }    
-    .btn-blue{ background:var(--cta); color:#fff; }    
-    .btn-orange{ background:var(--cta2); color:#fff; }    
-    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }    
-    .muted{ opacity:.8; }    
-    .underline{ text-decoration:underline; }    
-    .field-inline{ display:flex; align-items:center; gap:8px; }    
-    
-     /* Registracija – prihvat uvjeta */  
-  
-.accept-terms{  
-  display:grid;  
-  grid-template-columns:16px auto; /* prva kolona je točno širina kocke */  
-  align-items:center;  
-  column-gap:4px;  
-  margin:2px 0 6px;  
-}  
-  
-.cb-wrap{  
-  inline-size:16px;         /* “kavez” koji ne dopušta širenje */  
-  block-size:16px;  
-  display:grid;  
-  place-items:center;  
-  overflow:hidden;          /* odreže sve što strši */  
-}  
-  
-.cb-wrap input[type="checkbox"]{  
-  appearance:auto;          /* normalan checkbox */  
-  -webkit-appearance:auto;  
-  width:16px;  
-  height:16px;  
-  margin:0;                 /* bez dodatnih margina */  
-  accent-color:#000;        /* crna kvačica */  
-}  
-  
-.terms-text{  
-  font-size:13px;  
-  line-height:1.15;  
-  margin:0;  
-}  
-  
-.terms-text a{  
-  text-decoration:underline; /* underline obavezno */  
-  color:#fff;  
-}  
-    
-  </style>    
-</head>    
-<body>    
-  <!-- Header partial -->    
-  <div data-include="header.html"></div>    
-    
-  <main class="container" style="max-width:720px;margin:24px auto">    
-    <div class="card" style="padding:16px">    
-      <h2 style="margin:0 0 4px">Moj profil</h2>    
-      <p class="help" style="margin:0 0 12px">(profil za one koji nude usluge)</p>    
-    
-      <!-- Tabovi (obojani) -->    
-      <div style="display:flex;gap:8px;margin-bottom:12px">    
-        <button id="tabLogin" class="btn btn-blue" type="button" aria-selected="true">Prijava</button>    
-        <button id="tabRegister" class="btn btn-orange" type="button" aria-selected="false">Registracija</button>    
-      </div>    
-    
-      <!-- PRIJAVA -->    
-      <form id="loginForm" class="grid" style="margin:0" onsubmit="return false;">    
-        <label>Email ili ime ili telefon*    
-          <input id="lg_identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…">    
-        </label>    
-        <label>Lozinka*    
-          <div class="field-inline">    
-            <input id="lg_password" type="password" required>    
-            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">    
-              <input id="lg_showpw" type="checkbox"> prikaži    
-            </label>    
-          </div>    
-        </label>    
-    
-        <div class="row" style="margin:2px 0 8px">    
-          <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">    
-            <input id="lg_remember_id" type="checkbox"> Zapamti me    
-          </label>    
-        </div>    
-    
-        <button id="lg_submit" class="btn btn-blue" type="submit">Prijavi se</button>    
-      </form>    
-    
-      <!-- REGISTRACIJA (samo e-mail + lozinka) -->    
-<form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">    
-  <label>E-mail*    
-    <input id="rg_email" type="email" required placeholder="ime@primjer.com">    
-  </label>    
-  
-  <label>Lozinka* <span class="help">(min. 8 znakova)</span>    
-    <div class="field-inline">    
-      <input id="rg_password" type="password" required minlength="8">  
-      <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">    
-        <input id="rg_showpw" type="checkbox"> prikaži    
-      </label>    
-    </div>    
-  </label>  
-  
-  <!-- UVJETI KORIŠTENJA -->  
-    <div class="accept-terms">  
-  <span class="cb-wrap">  
-    <input id="rg_terms" type="checkbox" required>  
-  </span>  
-  <label for="rg_terms" class="terms-text">  
-    Pročitao/la sam i prihvaćam <a href="faq.html" target="_blank">uvjete korištenja</a>  
-  </label>  
-</div>  
-  
-  <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>    
-  
-  <div id="resendRow" class="grid" style="gap:8px">    
-    <p class="help" style="margin:6px 0 0">    
-      Niste dobili e-mail s potvrdom nakon registracije?    
-    </p>    
-    <div class="row">    
-      <input id="resend_email" type="email" placeholder="upišite svoj e-mail" style="max-width:280px">    
-      <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>    
-      <span class="help">ili <a class="underline" href="mailto:podrska@dogovoreno.com">javite nam se</a></span>    
-    </div>    
-  </div>    
-</form>  
-    </div>    
-  </main>    
-    
-  <!-- Footer partial -->    
-  <div data-include="footer.html"></div>    
-  <script src="include.js"></script>    
-  
-  <script>  
-(function(){  
-  const tabLogin   = document.getElementById('tabLogin');  
-  const tabReg     = document.getElementById('tabRegister');  
-  const loginForm  = document.getElementById('loginForm');  
-  const regForm    = document.getElementById('regForm');  
-  
-  const lg_identifier = document.getElementById('lg_identifier');  
-  const lg_password   = document.getElementById('lg_password');  
-  const lg_showpw     = document.getElementById('lg_showpw');  
-  const lg_remember_id= document.getElementById('lg_remember_id');  
-  
-  const rg_email      = document.getElementById('rg_email');  
-  const rg_password   = document.getElementById('rg_password');  
-  const rg_showpw     = document.getElementById('rg_showpw');  
-  
-  const resendRow   = document.getElementById('resendRow');  
-  const resendEmail = document.getElementById('resend_email');  
-  const resendBtn   = document.getElementById('resend_btn');  
-  
-  // mini auth (samo localStorage – za DEV)  
-  const Auth = {  
-    loginPersist(user){  
-      localStorage.setItem('isLoggedIn','true');  
-      if (user) localStorage.setItem('me', JSON.stringify(user));  
-    }  
-  };  
-  
-  // ==========================  
-  // VAŽNO: UKINUT AUTO-REDIRECT NA ULAZU  
-  // (prije je ovdje bilo: ako je isLoggedIn -> nudimuslugu.html)  
-  // ==========================  
-  
-  // Tabovi s hash-sync  
-  function showLogin(){  
-    tabLogin.setAttribute('aria-selected','true');  
-    tabReg.setAttribute('aria-selected','false');  
-    loginForm.style.display='grid';  
-    regForm.style.display='none';  
-    lg_identifier?.focus();  
-  }  
-  function showRegister(){  
-    tabLogin.setAttribute('aria-selected','false');  
-    tabReg.setAttribute('aria-selected','true');  
-    loginForm.style.display='none';  
-    regForm.style.display='grid';  
-    rg_email?.focus();  
-  }  
-  tabLogin.addEventListener('click', () => { location.hash = '#login'; });  
-  tabReg.addEventListener('click', () => { location.hash = '#register'; });  
-  function syncFromHash(){  
-    const h = (location.hash || '').toLowerCase();  
-    if (h === '#register') showRegister(); else showLogin();  
-  }  
-  window.addEventListener('hashchange', syncFromHash);  
-  document.addEventListener('DOMContentLoaded', syncFromHash);  
-  
-  // UX: auto-prebaci mail iz login polja u resend polje  
-  lg_identifier?.addEventListener('input', ()=>{  
-    const v = lg_identifier.value.trim();  
-    if (v.includes('@') && v.includes('.')) resendEmail.value = v;  
-  });  
-  
-  // toggle prikaza lozinke  
-  function bindShowPw(toggle, input){  
-    toggle?.addEventListener('change', ()=>{ input.type = toggle.checked ? 'text' : 'password'; });  
-  }  
-  bindShowPw(lg_showpw, lg_password);  
-  bindShowPw(rg_showpw, rg_password);  
-  
-  // zapamti me (samo identifier – DEV; ne uvjetujemo redirect)  
-  (function loadRemember(){  
-    const rid = localStorage.getItem('remember_id') === '1';  
-    const sv_id = localStorage.getItem('saved_identifier') || '';  
-    lg_remember_id.checked = rid;  
-    if (rid && sv_id) lg_identifier.value = sv_id;  
-  })();  
-  
-  // ==========================  
-  // DEV BYPASS: odmah vodi dalje, bez provjere polja i bez backenda  
-  // (PROD logika ostavljena ispod – zakomentirana)  
-  // ==========================  
-  loginForm.addEventListener('submit', (e)=>{  
-    e.preventDefault();  
-    // DEV: simuliraj session i vodi na MAJSTOR  
-    Auth.loginPersist({ id:'dev', email: lg_identifier.value || 'dev@local' });  
-    location.href = 'majstor.html';  
-  });  
-  
-  regForm.addEventListener('submit', (e)=>{  
-    e.preventDefault();  
-    // DEV: simuliraj session i vodi na NUDIM USLUGU  
-    Auth.loginPersist({ id:'dev', email: rg_email.value || 'dev@local' });  
-    location.href = 'nudimuslugu.html';  
-  });  
-  
-  // ==========================  
-  // PROD LOGIKA (kasnije odkomentirati i koristiti umjesto DEV)  
-  // ==========================  
-  
-  /*  
-  async function api(route, method='GET', body=null){  
-    const res = await fetch('api/auth.php?route='+route, {  
-      method,  
-      headers: {'Content-Type':'application/json'},  
-      body: body ? JSON.stringify(body) : null,  
-      credentials: 'same-origin'  
-    });  
-    const text = await res.text();  
-    let data;  
-    try { data = text ? JSON.parse(text) : null; }  
-    catch { throw new Error('Neispravan odgovor poslužitelja'); }  
-    if (!res.ok) throw new Error((data && data.error) || 'Greška');  
-    return data;  
-  }  
-  
-  // PRIJAVA (PROD)  
-  // loginForm.addEventListener('submit', async (e)=>{  
-  //   e.preventDefault();  
-  //   const identifier = (lg_identifier.value||'').trim();  
-  //   const password   = lg_password.value;  
-  //   localStorage.setItem('remember_id', lg_remember_id.checked ? '1' : '0');  
-  //   if (lg_remember_id.checked) localStorage.setItem('saved_identifier', identifier);  
-  //   else localStorage.removeItem('saved_identifier');  
-  //   const me = await api('login','POST', { identifier, password });  
-  //   Auth.loginPersist(me && (me.user || me));  
-  //   location.href = 'majstor.html';  
-  // });  
-  
-  // REGISTRACIJA (PROD)  
-  // regForm.addEventListener('submit', async (e)=>{  
-  //   e.preventDefault();  
-  //   const email = (rg_email.value||'').trim().toLowerCase();  
-  //   const password = rg_password.value;  
-  //   const me = await api('register','POST', { email, password });  
-  //   Auth.loginPersist(me && (me.user || { email }));  
-  //   location.href = 'nudimuslugu.html';  
-  // });  
-  
-  // RESEND (PROD)  
-  // resendBtn?.addEventListener('click', async ()=>{  
-  //   const email = (resendEmail.value || '').trim().toLowerCase();  
-  //   if (!email || !email.includes('@')) { alert('Unesite ispravan e-mail.'); return; }  
-  //   try{  
-  //     await api('resend','POST', { email });  
-  //     alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');  
-  //   }catch(_){  
-  //     alert('Ako račun postoji i nije potvrđen, poslali smo novu potvrdu na e-mail.');  
-  //   }  
-  // });  
-  */  
-  
-})();  
-</script>  
-        
-</body>    
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moj profil — Dogovoreno.com</title>
+  <link rel="stylesheet" href="base.css">
+  <style>
+    :root{
+      --cta:#2563eb;   /* plava */
+      --cta2:#ea580c;  /* narančasta */
+    }
+    .btn-blue{ background:var(--cta); color:#fff; }
+    .btn-orange{ background:var(--cta2); color:#fff; }
+    .row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .muted{ opacity:.8; }
+    .underline{ text-decoration:underline; }
+    .field-inline{ display:flex; align-items:center; gap:8px; }
+
+    /* Registracija – prihvat uvjeta (sistemski checkbox, bez lufta) */
+    .accept-terms{
+      display:grid;
+      grid-template-columns:16px auto; /* prva kolona je točno širina kocke */
+      align-items:center;
+      column-gap:4px;
+      margin:2px 0 6px;
+    }
+    .cb-wrap{
+      inline-size:16px;  /* “kavez” koji ne dopušta širenje */
+      block-size:16px;
+      display:grid;
+      place-items:center;
+      overflow:hidden;   /* odreže sve što strši */
+    }
+    .cb-wrap input[type="checkbox"]{
+      appearance:auto;          /* normalan checkbox */
+      -webkit-appearance:auto;
+      width:16px;
+      height:16px;
+      margin:0;                 /* bez dodatnih margina */
+      accent-color:#000;        /* crna kvačica */
+    }
+    .terms-text{
+      font-size:13px;
+      line-height:1.15;
+      margin:0;
+    }
+    .terms-text a{
+      text-decoration:underline; /* underline obavezno */
+      color:#fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header partial -->
+  <div data-include="header.html"></div>
+
+  <main class="container" style="max-width:720px;margin:24px auto">
+    <div class="card" style="padding:16px">
+      <h2 style="margin:0 0 4px">Moj profil</h2>
+      <p class="help" style="margin:0 0 12px">(profil za one koji nude usluge)</p>
+
+      <!-- Tabovi (obojani) -->
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button id="tabLogin" class="btn btn-blue" type="button" aria-selected="true">Prijava</button>
+        <button id="tabRegister" class="btn btn-orange" type="button" aria-selected="false">Registracija</button>
+      </div>
+
+      <!-- PRIJAVA -->
+      <form id="loginForm" class="grid" style="margin:0" onsubmit="return false;">
+        <label>Email ili ime ili telefon*
+          <input id="lg_identifier" required placeholder="npr. ime@primjer.com ili Marko ili +3876…">
+        </label>
+        <label>Lozinka*
+          <div class="field-inline">
+            <input id="lg_password" type="password" required>
+            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+              <input id="lg_showpw" type="checkbox"> prikaži
+            </label>
+          </div>
+        </label>
+
+        <div class="row" style="margin:2px 0 8px">
+          <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+            <input id="lg_remember_id" type="checkbox"> Zapamti me
+          </label>
+        </div>
+
+        <button id="lg_submit" class="btn btn-blue" type="submit">Prijavi se</button>
+      </form>
+
+      <!-- REGISTRACIJA (samo e-mail + lozinka) -->
+      <form id="regForm" class="grid" style="display:none;margin:0" onsubmit="return false;">
+        <label>E-mail*
+          <input id="rg_email" type="email" required placeholder="ime@primjer.com">
+        </label>
+
+        <label>Lozinka* <span class="help">(min. 8 znakova)</span>
+          <div class="field-inline">
+            <input id="rg_password" type="password" required minlength="8">
+            <label class="help" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+              <input id="rg_showpw" type="checkbox"> prikaži
+            </label>
+          </div>
+        </label>
+
+        <!-- UVJETI KORIŠTENJA -->
+        <div class="accept-terms">
+          <span class="cb-wrap">
+            <input id="rg_terms" type="checkbox" required>
+          </span>
+          <label for="rg_terms" class="terms-text">
+            Pročitao/la sam i prihvaćam
+            <a href="faq.html" target="_blank" data-terms-version="2025-10-26">uvjete korištenja</a>
+          </label>
+        </div>
+
+        <button id="rg_submit" class="btn btn-orange" type="submit">Registriraj se</button>
+
+        <div id="resendRow" class="grid" style="gap:8px">
+          <p class="help" style="margin:6px 0 0">
+            Niste dobili e-mail s potvrdom nakon registracije?
+          </p>
+          <div class="row">
+            <input id="resend_email" type="email" placeholder="upišite svoj e-mail" style="max-width:280px">
+            <button id="resend_btn" class="btn btn-ghost" type="button">Pošalji ponovo potvrdu</button>
+            <span class="help">ili <a class="underline" href="mailto:podrska@dogovoreno.com">javite nam se</a></span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer partial -->
+  <div data-include="footer.html"></div>
+  <script src="include.js"></script>
+
+  <script>
+  (function(){
+    const tabLogin   = document.getElementById('tabLogin');
+    const tabReg     = document.getElementById('tabRegister');
+    const loginForm  = document.getElementById('loginForm');
+    const regForm    = document.getElementById('regForm');
+
+    const lg_identifier = document.getElementById('lg_identifier');
+    const lg_password   = document.getElementById('lg_password');
+    const lg_showpw     = document.getElementById('lg_showpw');
+    const lg_remember_id= document.getElementById('lg_remember_id');
+
+    const rg_email      = document.getElementById('rg_email');
+    const rg_password   = document.getElementById('rg_password');
+    const rg_showpw     = document.getElementById('rg_showpw');
+
+    const resendEmail = document.getElementById('resend_email');
+    const resendBtn   = document.getElementById('resend_btn');
+
+    // mini auth (samo localStorage – za DEV)
+    const Auth = {
+      loginPersist(user, opts = { method: 'login' }){
+        const nowIso = new Date().toISOString();
+        localStorage.setItem('isLoggedIn','true');
+        if (user) localStorage.setItem('me', JSON.stringify(user));
+        localStorage.setItem('last_login_at', nowIso);
+        localStorage.setItem('last_login_method', opts.method || 'login');
+        try {
+          const log = JSON.parse(localStorage.getItem('auth_events') || '[]');
+          log.push({ type:'login', method: opts.method || 'login', at: nowIso, user: user?.email || null });
+          localStorage.setItem('auth_events', JSON.stringify(log.slice(-50)));
+        } catch(_) {}
+      }
+    };
+
+    // ===== TABS: bulletproof bez ovisnosti o hash-u =====
+    function openTab(which){
+      const isLogin = (which === 'login');
+      tabLogin?.setAttribute('aria-selected', String(isLogin));
+      tabReg?.setAttribute('aria-selected', String(!isLogin));
+      if (loginForm) loginForm.style.display = isLogin ? 'grid' : 'none';
+      if (regForm)   regForm.style.display   = isLogin ? 'none' : 'grid';
+    }
+    tabLogin?.addEventListener('click',  () => openTab('login'));
+    tabReg?.addEventListener('click',    () => openTab('register'));
+    (function initTabs(){
+      const h = (location.hash || '').toLowerCase();
+      const q = new URLSearchParams(location.search);
+      if (h === '#register' || q.get('open') === 'register') openTab('register');
+      else openTab('login');
+    })();
+
+    // UX: auto-prebaci mail iz login polja u resend polje
+    lg_identifier?.addEventListener('input', ()=>{
+      const v = lg_identifier.value.trim();
+      if (v.includes('@') && v.includes('.')) resendEmail.value = v;
+    });
+
+    // toggle prikaza lozinke
+    function bindShowPw(toggle, input){
+      toggle?.addEventListener('change', ()=>{ input.type = toggle.checked ? 'text' : 'password'; });
+    }
+    bindShowPw(lg_showpw, lg_password);
+    bindShowPw(rg_showpw, rg_password);
+
+    // zapamti me (samo identifier – DEV; ne uvjetujemo redirect)
+    (function loadRemember(){
+      const rid = localStorage.getItem('remember_id') === '1';
+      const sv_id = localStorage.getItem('saved_identifier') || '';
+      if (lg_remember_id) lg_remember_id.checked = rid;
+      if (rid && sv_id && lg_identifier) lg_identifier.value = sv_id;
+    })();
+
+    // ==========================
+    // CONSENT / UVJETI KORIŠTENJA
+    // ==========================
+    const termsLink = document.querySelector('.terms-text a');
+    const TERMS_VERSION = termsLink?.dataset.termsVersion || '2025-10-26';
+    const termsCheckbox = document.getElementById('rg_terms');
+
+    function buildConsent() {
+      return {
+        accepted: true,
+        version: TERMS_VERSION,
+        acceptedAt: new Date().toISOString(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+        userAgent: navigator.userAgent || null,
+        pagePath: location.pathname
+      };
+    }
+
+    // Ako se verzija promijeni, traži re-potvrdu
+    (function ensureFreshTerms(){
+      try {
+        const draft = JSON.parse(localStorage.getItem('dogovoreno_reg_draft') || 'null');
+        if (draft?.consent && draft.consent.version !== TERMS_VERSION) {
+          if (termsCheckbox) termsCheckbox.checked = false;
+        }
+      } catch(_) {}
+    })();
+
+    // ==========================
+    // DEV BYPASS (bez backenda)
+    // ==========================
+    loginForm?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+
+      // "Zapamti me"
+      if (lg_remember_id?.checked){
+        localStorage.setItem('remember_id', '1');
+        if (lg_identifier?.value) localStorage.setItem('saved_identifier', lg_identifier.value.trim());
+      } else {
+        localStorage.removeItem('remember_id');
+        localStorage.removeItem('saved_identifier');
+      }
+
+      Auth.loginPersist({ id:'dev', email: lg_identifier?.value || 'dev@local' }, { method:'login' });
+      location.href = 'majstor.html';
+    });
+
+    regForm?.addEventListener('submit', (e)=>{
+      e.preventDefault();
+
+      // browser required već blokira ako nema checkboxa
+      const consent = buildConsent();
+      const payload = {
+        email: (rg_email?.value || '').trim().toLowerCase(),
+        password: rg_password?.value || '',
+        consent
+      };
+
+      try {
+        localStorage.setItem('dogovoreno_reg_draft', JSON.stringify(payload));
+        localStorage.setItem('last_consent_version', consent.version);
+        localStorage.setItem('last_consent_at', consent.acceptedAt);
+      } catch(_) {}
+
+      Auth.loginPersist({ id:'dev', email: payload.email || 'dev@local' }, { method:'register' });
+      location.href = 'nudimuslugu.html';
+    });
+
+    // Resend: spremi posljednji email + consent (za budući backend poziv)
+    resendBtn?.addEventListener('click', ()=>{
+      const email = (resendEmail?.value || rg_email?.value || '').trim().toLowerCase();
+      if (!email) return; // tvoj toast već upozorava
+      const consent = buildConsent();
+      try {
+        localStorage.setItem('dogovoreno_resend_last', JSON.stringify({ email, consent }));
+      } catch(_){}
+    });
+
+    // ==========================
+    // ADMIN INFO MODAL (Ctrl+Alt+D / ⌘+Alt+D)
+    // ==========================
+    const $ = (sel) => document.querySelector(sel);
+
+    function readJSON(key){
+      try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch(_) { return null; }
+    }
+    function renderAdminInfo(){
+      const lastAt     = localStorage.getItem('last_login_at') || '—';
+      const lastMethod = localStorage.getItem('last_login_method') || '—';
+      const consentVer = localStorage.getItem('last_consent_version') || null;
+      const consentAt  = localStorage.getItem('last_consent_at') || null;
+      const draft      = readJSON('dogovoreno_reg_draft');
+      const resend     = readJSON('dogovoreno_resend_last');
+      const me         = readJSON('me');
+      const events     = readJSON('auth_events');
+
+      $('#info_last_login_at').textContent = lastAt;
+      $('#info_last_login_method').textContent = lastMethod;
+
+      const consentObj = {
+        last_consent_version: consentVer,
+        last_consent_at: consentAt,
+        draft_consent: draft?.consent || null
+      };
+      $('#info_consent').textContent = JSON.stringify(consentObj, null, 2);
+
+      const pack = {
+        me,
+        dogovoreno_reg_draft: draft,
+        dogovoreno_resend_last: resend,
+        auth_events: events
+      };
+      $('#info_draft').textContent = JSON.stringify(pack, null, 2);
+    }
+
+    function adminOpen(){
+      renderAdminInfo();
+      $('#adminInfoOverlay').style.display = 'block';
+      $('#adminInfoModal').style.display = 'grid';
+    }
+    function adminClose(){
+      $('#adminInfoOverlay').style.display = 'none';
+      $('#adminInfoModal').style.display = 'none';
+    }
+
+    // Hotkey: Ctrl+Alt+D ili ⌘+Alt+D
+    window.addEventListener('keydown', (e)=>{
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+      if (ctrlOrCmd && e.altKey && (e.key === 'd' || e.key === 'D')){
+        e.preventDefault();
+        const isOpen = $('#adminInfoModal').style.display !== 'none' && $('#adminInfoModal').style.display !== '';
+        if (isOpen) adminClose(); else adminOpen();
+      }
+    });
+
+    // Buttons
+    $('#adminInfoClose')?.addEventListener('click', adminClose);
+    $('#adminInfoOverlay')?.addEventListener('click', adminClose);
+
+    $('#adminInfoCopy')?.addEventListener('click', async ()=>{
+      const data = {
+        last_login_at: localStorage.getItem('last_login_at') || null,
+        last_login_method: localStorage.getItem('last_login_method') || null,
+        last_consent_version: localStorage.getItem('last_consent_version') || null,
+        last_consent_at: localStorage.getItem('last_consent_at') || null,
+        me: readJSON('me'),
+        dogovoreno_reg_draft: readJSON('dogovoreno_reg_draft'),
+        dogovoreno_resend_last: readJSON('dogovoreno_resend_last'),
+        auth_events: readJSON('auth_events')
+      };
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+        console.log('Admin info copied');
+      } catch(_){
+        console.log('Copy failed');
+      }
+    });
+
+    $('#adminInfoClear')?.addEventListener('click', ()=>{
+      const keys = [
+        'last_login_at','last_login_method','last_consent_version','last_consent_at',
+        'dogovoreno_reg_draft','dogovoreno_resend_last','auth_events'
+      ];
+      keys.forEach(k => localStorage.removeItem(k));
+      renderAdminInfo();
+    });
+  })();
+  </script>
+
+  <!-- ADMIN INFO MODAL (HTML) -->
+  <div id="adminInfoOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:9998"></div>
+
+  <div id="adminInfoModal" style="display:none;position:fixed;inset:0;z-index:9999;display:grid;place-items:center;">
+    <div class="card" style="max-width:860px;width:min(92vw,860px);background:rgba(17,17,20,.98);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.45);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)">
+        <strong>Admin info (localStorage debug)</strong>
+        <button id="adminInfoClose" class="btn btn-ghost" type="button" style="color:#fff">Zatvori ✕</button>
+      </div>
+
+      <div style="padding:12px 16px;display:grid;gap:10px">
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <button id="adminInfoCopy"   class="btn btn-blue"   type="button">Copy JSON</button>
+          <button id="adminInfoClear"  class="btn btn-orange" type="button">Clear debug keys</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="card" style="padding:10px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+            <div class="muted" style="font-size:12px">Last login at</div>
+            <div id="info_last_login_at" style="font-size:14px">—</div>
+          </div>
+          <div class="card" style="padding:10px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+            <div class="muted" style="font-size:12px">Last login method</div>
+            <div id="info_last_login_method" style="font-size:14px">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:10px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+          <div class="muted" style="font-size:12px;margin-bottom:6px">Consent</div>
+          <pre id="info_consent" style="margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;max-height:220px;overflow:auto;background:rgba(255,255,255,.03);padding:8px;border-radius:8px"></pre>
+        </div>
+
+        <div class="card" style="padding:10px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+          <div class="muted" style="font-size:12px;margin-bottom:6px">Draft / Events</div>
+          <pre id="info_draft" style="margin:0;white-space:pre-wrap;word-break:break-word;font-size:12px;max-height:220px;overflow:auto;background:rgba(255,255,255,.03);padding:8px;border-radius:8px"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
 </html>
