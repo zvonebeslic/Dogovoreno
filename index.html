@@ -44,8 +44,7 @@
     .slogan{display:grid;place-items:center;text-align:center;padding:0 16px;background:linear-gradient(to top, rgba(255,255,255,.04), rgba(255,255,255,0))}
     .slogan p{margin:0;color:#ffffff;font-size:14px}
 
-    @media (min-width:768px){ .duo{max-width:820px} .slogan p{font-size:15px} }
-
+    
 /* ===== TOP PROMO (OVERLAY – NE GURA) ===== */
 :root{
   --header-h: 35px;   /* visina tvog headera; po potrebi promijeni */
@@ -109,14 +108,7 @@
 .promo-toggle:hover{ filter:brightness(1.08); }
 .promo-toggle:active{ transform:translateY(1px); }
 
-@media (max-width:420px){
-  .promo-inner{ padding:10px; }
-  .promo-toggle{ width:34px; height:34px; }
-}
 
-@media (prefers-reduced-motion: reduce){
-  .promo-banner{ transition:none; }
-}
 
   /* DONJI SLIDER IZMEĐU SLOGANA I FOOTERA */
 .section-promos{
@@ -168,12 +160,12 @@
 .ad-cta:hover{ filter:brightness(1.08); }
 .ad-cta:active{ transform:translateY(1px); }
 
-@media (max-width:520px){
-  .ad-card{ padding:10px 12px; gap:10px; }
+@media (min-width: 900px){
+  body{
+    max-width: 480px;
+    margin-inline:auto;
+  }
 }
-@media (prefers-reduced-motion: reduce){
-  .ad-enter.ad-animate, .ad-leave.ad-animate{ transition:none; }
-}  
     
   </style>
 </head>
