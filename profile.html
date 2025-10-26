@@ -18,26 +18,26 @@
     .field-inline{ display:flex; align-items:center; gap:8px; }  
   
      /* Registracija – prihvat uvjeta */
+
 .accept-terms{
-  display:inline-flex;      /* inline zbog finog baselininga */
+  display:flex;
   align-items:center;
-  gap:0;                    /* nema službenog razmaka */
   font-size:13px;
   line-height:1.1;
   margin:2px 0 6px;
 }
 
 .accept-terms input[type="checkbox"]{
-  appearance:auto;          /* normalan checkbox, ne custom */
-  -webkit-appearance:auto;
-  accent-color:#000;        /* crna kvačica */
+  appearance:auto;
+  accent-color:#000;
   margin:0;
   padding:0;
-  /* ↓ ključ: ubij nevidljivi desni luft koji neki browseri dodaju */
-  margin-right:-3px;        /* probaj -2px do -4px po ukusu */
+  transform:translateX(-4px); /* PRAVI pomak */
 }
 
-.accept-terms span{ margin-left:6px; }  /* precizan, kontroliran razmak */
+.accept-terms span{
+  transform:translateX(-4px); /* da se poravna sa checkboxom */
+}
 
 .accept-terms a{
   text-decoration:underline;
