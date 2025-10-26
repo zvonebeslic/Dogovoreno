@@ -333,15 +333,16 @@
       $('#adminInfoModal').style.display = 'none';
     }
 
-    // Hotkey: Ctrl+Alt+D ili ⌘+Alt+D
-    window.addEventListener('keydown', (e)=>{
-      const ctrlOrCmd = e.ctrlKey || e.metaKey;
-      if (ctrlOrCmd && e.altKey && (e.key === 'd' || e.key === 'D')){
-        e.preventDefault();
-        const isOpen = $('#adminInfoModal').style.display !== 'none' && $('#adminInfoModal').style.display !== '';
-        if (isOpen) adminClose(); else adminOpen();
-      }
-    });
+    // Hotkey: Ctrl+Alt+D ili ⌘+Alt+D — samo kad je devMode=1
+window.addEventListener('keydown', (e)=>{
+  if (localStorage.getItem('devMode') !== '1') return;
+  const ctrlOrCmd = e.ctrlKey || e.metaKey;
+  if (ctrlOrCmd && e.altKey && (e.key === 'd' || e.key === 'D')){
+    e.preventDefault();
+    const isOpen = $('#adminInfoModal').style.display !== 'none' && $('#adminInfoModal').style.display !== '';
+    if (isOpen) adminClose(); else adminOpen();
+  }
+});
 
     // Buttons
     $('#adminInfoClose')?.addEventListener('click', adminClose);
@@ -374,7 +375,65 @@
       keys.forEach(k => localStorage.removeItem(k));
       renderAdminInfo();
     });
-  })();
+// 5× tap/klik na logo u headeru otvara admin panel (samo kad je devMode=1)
+(function attachTapToLogo(){
+  const $ = (sel) => document.querySelector(sel);
+  const LOGO_EMOJI = '🤝';
+  const TAP_WINDOW = 800; // ms između tapova
+  let tapCount = 0, lastTapMs = 0;
+
+  function devEnabled(){ return localStorage.getItem('devMode') === '1'; }
+
+  function onTap(){
+    if (!devEnabled()) return;
+    const now = Date.now();
+    if (now - lastTapMs > TAP_WINDOW) tapCount = 0;
+    tapCount++; lastTapMs = now;
+    if (tapCount >= 5){
+      tapCount = 0;
+      const isOpen = $('#adminInfoModal').style.display !== 'none' && $('#adminInfoModal').style.display !== '';
+      if (isOpen) adminClose(); else adminOpen();
+    }
+  }
+
+  function findLogoEl(){
+    // ako u header.html možeš dodati data-logo na taj element, bit će instant:
+    let el = document.querySelector('[data-logo]');
+    if (el) return el;
+
+    // fallback: traži element s emojiem 🤝 ili tekstom “dogovoreno”
+    const host = document.querySelector('[data-include="header.html"]') || document;
+    const candidates = host.querySelectorAll('a, button, span, div');
+    for (const c of candidates){
+      const t = (c.textContent || '').trim();
+      if (!t) continue;
+      if (t.includes(LOGO_EMOJI) || /dogovoreno/i.test(t)) return c;
+    }
+    return null;
+  }
+
+  function attach(){
+    const el = findLogoEl();
+    if (!el) return false;
+    el.addEventListener('click', onTap);
+    el.addEventListener('touchend', onTap);
+    return true;
+  }
+
+  // header dolazi preko include.js → čekaj dok se ubaci
+  function waitAndAttach(){
+    if (attach()) return;
+    const root = document.querySelector('[data-include="header.html"]') || document.body;
+    const mo = new MutationObserver(()=>{ if (attach()) mo.disconnect(); });
+    mo.observe(root, { childList:true, subtree:true });
+    let tries = 0; const iv = setInterval(()=>{ if (attach() || ++tries > 20) clearInterval(iv); }, 250);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', waitAndAttach);
+  else waitAndAttach();
+})();
+  
+    })();
   </script>
 
   <!-- ADMIN INFO MODAL (HTML) -->
@@ -416,5 +475,26 @@
       </div>
     </div>
   </div>
+  
+<!--
+🔑 DEV PODSJETNIK (koristenje)
+
+uključi dev:
+javascript:localStorage.setItem('devMode','1')
+
+isključi dev:
+javascript:localStorage.removeItem('devMode')
+
+otvori panel:
+5× tap na 🤝 ili “Dogovoreno”
+
+PC prečac:
+Ctrl + Alt + D   (kad je devMode=1)
+
+napomena:
+Ovo radi SAMO na tvom uređaju jer je localStorage lokalna memorija browsera. 
+Ne otključava ništa javno, ne daje admin pristup i nitko drugi to ne vidi.
+-->
+
 </body>
 </html>
